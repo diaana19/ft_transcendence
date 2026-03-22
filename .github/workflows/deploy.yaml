@@ -1,0 +1,44 @@
+---
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Debug SSH Agent
+        run: |
+          ssh-add -l
+
+      - name: Configure Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Install Ansible Dependencies
+        working-directory: ./deploy
+        run: |
+          ansible-galaxy collection install community.docker community.general
+
+      - name: Run Ansible Playbook
+        working-directory: ./deploy
+        run: |
+          ansible-playbook -i inventory.ini playbook.yaml
+        env:
+          GITHUB_USER: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANSIBLE_HOST_KEY_CHECKING: "True"

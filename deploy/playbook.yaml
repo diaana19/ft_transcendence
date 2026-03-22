@@ -1,0 +1,69 @@
+---
+- name: Deploy Transcendence with Pure Ansible
+  hosts: alpine
+  remote_user: ansible
+  become: true
+  become_method: doas
+
+  vars:
+    registry: ghcr.io
+    github_username: "{{ lookup('env', 'GITHUB_USER') }}"
+    github_token: "{{ lookup('env', 'GITHUB_TOKEN') }}"
+    image_path: "{{ registry }}/{{ github_username | lower }}"
+    network_name: transcendence_network
+
+  tasks:
+    - name: Ensure Docker network exists
+      docker_network:
+        name: "{{ network_name }}"
+        state: present
+
+    - name: Log into GHCR
+      docker_login:
+        registry_url: "{{ registry }}"
+        username: "{{ github_username }}"
+        password: "{{ github_token }}"
+
+    - name: Start Backend Container
+      docker_container:
+        name: backend
+        image: "{{ image_path }}/transcendence-backend:latest"
+        state: started
+        pull: true
+        recreate: true
+        restart_policy: always
+        networks: [{name: "{{ network_name }}"}]
+        healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost:80/"]
+          interval: 5s
+          retries: 3
+
+    - name: Start Frontend Container
+      docker_container:
+        name: frontend
+        image: "{{ image_path }}/transcendence-frontend:latest"
+        state: started
+        pull: true
+        recreate: true
+        restart_policy: always
+        networks: [{name: "{{ network_name }}"}]
+        healthcheck:
+          test: ["CMD", "wget", "--spider", "http://frontend:80/"]
+          interval: 5s
+          retries: 3
+
+    - name: Start Nginx Container
+      docker_container:
+        name: nginx
+        image: "{{ image_path }}/transcendence-nginx:latest"
+        state: started
+        pull: true
+        recreate: true
+        restart_policy: always
+        ports: ["80:80"]
+        networks: [{name: "{{ network_name }}"}]
+
+    - name: Cleanup
+      docker_prune:
+        images: true
+        images_filters: {dangling: true}
