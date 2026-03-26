@@ -51,7 +51,7 @@ services:
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: PTGS_pa$5'no"h4ck
-      POSTGRES_DB: PTGS_dataBase
+      POSTGRES_DB: PTGS_database
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
