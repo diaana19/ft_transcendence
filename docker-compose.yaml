@@ -41,6 +41,24 @@ services:
     build: ./backend
     networks:
       - transcendence_network
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: SuperPa55
+      POSTGRES_DB: PTGS_dataBase
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - transcendence_network
+
+volumes:
+  postgres_data:
 
 networks:
   transcendence_network:
