@@ -50,7 +50,7 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: admin
-      POSTGRES_DB: PTGS_database
+      POSTGRES_DB: postgres_database
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
