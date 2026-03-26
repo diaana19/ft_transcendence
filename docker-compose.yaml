@@ -50,7 +50,7 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: SuperPa55
+      POSTGRES_PASSWORD: PTGS_pa$5'no"h4ck
       POSTGRES_DB: PTGS_dataBase
     volumes:
       - postgres_data:/var/lib/postgresql/data
