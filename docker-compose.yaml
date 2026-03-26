@@ -50,12 +50,14 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: PTGS_pa$5'no"h4ck
+      # POSTGRES_PASSWORD: POSTGRES_PASSWORD
       POSTGRES_DB: PTGS_database
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - transcendence_network
+    env_file:
+      - .env
 
 volumes:
   postgres_data:
