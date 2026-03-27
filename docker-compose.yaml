@@ -41,6 +41,12 @@ services:
     build: ./backend
     networks:
       - transcendence_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 
 networks:
   transcendence_network:
