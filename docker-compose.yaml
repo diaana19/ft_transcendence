@@ -47,6 +47,25 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_DB: postgres_database
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - transcendence_network
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
 
 networks:
   transcendence_network:
