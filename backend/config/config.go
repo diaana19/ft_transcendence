@@ -1,28 +1,48 @@
 package config
 
 import (
+	"database/sql"
+	"fmt"
 	"log"
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	DatabaseURL		string
-	DatabasePort	string
+	DatabaseName		string
+	DatabaseHost		string
+	DatabasePort		string
+	DatabaseUser		string
+	DatabasePassword	string
+
+	ApiPort				string
+	DebugMode			string
+
+	JWT					string
 }
 
-func Load() (*Config, error) {
-	var err error = godotenv.Load()
-
-	if (err != nil) {
-		log.Println("[WARNING] .env file not found")
-	}
-
+func Load() (*sql.DB, *Config, error) {
 	var config *Config = &Config {
-		DatabaseURL: os.Getenv("DATABASE_URL"),
-		DatabasePort: os.Getenv("DATABASE_PORT"),
+		DatabaseName: os.Getenv("DB_NAME"),
+		DatabaseHost: os.Getenv("DB_HOST"),
+		DatabasePort: os.Getenv("DB_PORT"),
+		DatabaseUser: os.Getenv("DB_USER"),
+		DatabasePassword: os.Getenv("DB_PASSWORD"),
+		ApiPort: os.Getenv("API_PORT"),
+		DebugMode: os.Getenv("GIN_MODE"),
+		JWT: os.Getenv("JWT_SECRET"),
 	}
 
-	return config, nil
+	connString := fmt.Sprintf(
+        "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+        config.DatabaseHost, config.DatabasePort, config.DatabaseUser, config.DatabasePassword, config.DatabaseName,
+    )
+
+	DB, err := sql.Open("postgres", connString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer DB.Close()
+
+	return DB, config, nil
 }
