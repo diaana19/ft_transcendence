@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	_"github.com/lib/pq"
 )
 
 type DBConfig struct {
@@ -33,8 +34,6 @@ func ConnectDB() (*sql.DB, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	defer DB.Close()
 
 	return DB, nil
 }

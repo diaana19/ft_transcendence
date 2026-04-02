@@ -10,11 +10,11 @@ import (
 
 func main() {
 	var conf, err = config.Load()
-	if err == nil {
+	if err != nil {
 		log.Fatal(err)
 	}
 	var DB, dberr = config.ConnectDB()
-	if dberr == nil {
+	if dberr != nil {
 		log.Fatal(err)
 	}
 
@@ -42,6 +42,8 @@ func main() {
 	if (conf.ApiPort == "") {
 		conf.ApiPort = "8000"
 	}
+
+	defer DB.Close()
 
 	router.Run(":" + conf.ApiPort)
 }
