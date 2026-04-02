@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/Lord-Lucius/Transcendence/internal/router"
+	"github.com/Lord-Lucius/Transcendence/routes"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,7 +24,7 @@ func main() {
 		})
 	})
 
-	handlers.SetupRoutes(router)
+	routes.SetupRoutes(router)
 
 	port := os.Getenv("API_PORT")
 	if (port == "") {
