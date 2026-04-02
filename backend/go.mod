@@ -1,4 +1,4 @@
-module github.com/Lord-Lucius/Transcendence
+module github.com/Transcendence
 
 go 1.25.0
 
