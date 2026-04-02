@@ -10,10 +10,11 @@ import (
 
 func main() {
 	var DB, config, err = config.Load()
-	if err == nil {
+	if err != nil {
 		log.Fatal(err)
 	}
-
+	defer DB.Close()
+	
 	var router *gin.Engine = gin.Default()
 	router.SetTrustedProxies(nil)
 

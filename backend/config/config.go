@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	_ "github.com/lib/pq"
 )
 
 type Config struct {
@@ -41,8 +42,6 @@ func Load() (*sql.DB, *Config, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	defer DB.Close()
 
 	return DB, config, nil
 }
