@@ -36,7 +36,7 @@ func RegisterUser(c *gin.Context, DB *gorm.DB) {
 		return
 	}
 
-	response_service, err := services.AuthService(&user, DB)
+	response_service, err := services.CreateAuthUserService(&user, DB)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "authentification service didn't work well",

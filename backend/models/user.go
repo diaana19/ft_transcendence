@@ -1,17 +1,16 @@
 package models
 
-import "time"
+import (
+	"gorm.io/gorm"
+)
 
 type User struct {
-	ID        string    `json:"id"`
+	gorm.Model          `gorm:"embedded"`
 	Name      string    `json:"name"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
+	Username  string    `json:"username" gorm:"unique;not null"`
+	Email     string    `json:"email" gorm:"unique;not null"`
 	Password  string    `json:"password"`
 	Wallpaper string    `json:"wallpaper"`
 	Avatar    string    `json:"avatar"`
 	Bio       string    `json:"bio"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	DeletedAt time.Time `json:"deleted_at"`
 }
