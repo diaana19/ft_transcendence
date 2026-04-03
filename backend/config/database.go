@@ -1,11 +1,11 @@
 package config
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"os"
-	_"github.com/lib/pq"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type DBConfig struct {
@@ -16,7 +16,7 @@ type DBConfig struct {
 	DatabasePassword	string
 }
 
-func ConnectDB() (*sql.DB, error) {
+func ConnectDB() (*gorm.DB, error) {
 	var conf *DBConfig = &DBConfig {
 		DatabaseName: os.Getenv("DB_NAME"),
 		DatabaseHost: os.Getenv("DB_HOST"),
@@ -30,9 +30,9 @@ func ConnectDB() (*sql.DB, error) {
         conf.DatabaseHost, conf.DatabasePort, conf.DatabaseUser, conf.DatabasePassword, conf.DatabaseName,
     )
 
-	DB, err := sql.Open("postgres", connString)
+	DB, err := gorm.Open(postgres.Open(connString), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return DB, nil
