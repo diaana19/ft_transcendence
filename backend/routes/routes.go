@@ -11,6 +11,8 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB) {
 	// Routes
 	api := router.Group("/api")
 	{
-		api.POST("/auth/register", controllers.RegisterUser)
+		api.POST("/auth/register", func(c *gin.Context) {
+			controllers.RegisterUser(c, DB)
+		})
 	}
 }
