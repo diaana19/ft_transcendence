@@ -35,15 +35,11 @@ func main() {
 		})
 	})
 
-	DB.Ping()
-
-	routes.SetupRoutes(router)
+	routes.SetupRoutes(router, DB)
 
 	if (conf.ApiPort == "") {
 		conf.ApiPort = "8000"
 	}
-
-	defer DB.Close()
 
 	router.Run(":" + conf.ApiPort)
 }
