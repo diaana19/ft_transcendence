@@ -1,28 +1,16 @@
 package routes
 
 import (
+	"gorm.io/gorm"
 	"github.com/gin-gonic/gin"
+	"github.com/Transcendence/controllers"
 )
 
-func SetupRoutes(router *gin.Engine) {
+func SetupRoutes(router *gin.Engine, DB *gorm.DB) {
 
 	// Routes
 	api := router.Group("/api")
 	{
-		// Test route
-		api.GET("/tweets", getTweets)
-		api.POST("/tweets", createTweet)
+		api.POST("/auth/register", controllers.RegisterUser)
 	}
-}
-
-func getTweets(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "TODO: Implement getTweets",
-	})
-}
-
-func createTweet(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "TODO: Implement createTweet",
-	})
 }

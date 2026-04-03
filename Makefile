@@ -76,7 +76,7 @@ dev-backend:
 	@$(DOCKER_COMPOSE) up -d --build $(SERVICES_BACKEND)
 	@echo ""
 	@echo "╔════════════════════════════════════════╗"
-	@echo "║     Backend Dev Started!              ║"
+	@echo "║     Backend Dev Started!               ║"
 	@echo "╚════════════════════════════════════════╝"
 	@echo ""
 	@echo "Backend:   http://localhost:8080"
@@ -103,7 +103,7 @@ up:
 	@sleep 2
 	@echo ""
 	@echo "╔════════════════════════════════════════╗"
-	@echo "║     Services Started!                 ║"
+	@echo "║     Services Started!                  ║"
 	@echo "╚════════════════════════════════════════╝"
 	@echo ""
 	@echo "Frontend:  http://localhost"

@@ -3,18 +3,22 @@ package main
 import (
 	"log"
 
-	"github.com/Lord-Lucius/Transcendence/config"
-	"github.com/Lord-Lucius/Transcendence/routes"
+	"github.com/Transcendence/config"
+	"github.com/Transcendence/routes"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	var DB, config, err = config.Load()
+	var conf, err = config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer DB.Close()
-	
+	var DB, dberr = config.ConnectDB()
+	if dberr != nil {
+		log.Fatal(err)
+	}
+
+
 	var router *gin.Engine = gin.Default()
 	router.SetTrustedProxies(nil)
 
@@ -31,13 +35,11 @@ func main() {
 		})
 	})
 
-	DB.Ping()
+	routes.SetupRoutes(router, DB)
 
-	routes.SetupRoutes(router)
-
-	if (config.ApiPort == "") {
-		config.ApiPort = "8000"
+	if (conf.ApiPort == "") {
+		conf.ApiPort = "8000"
 	}
 
-	router.Run(":" + config.ApiPort)
+	router.Run(":" + conf.ApiPort)
 }
