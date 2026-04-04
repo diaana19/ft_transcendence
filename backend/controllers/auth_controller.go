@@ -1,39 +1,48 @@
 package controllers
 
 import (
-	"fmt"
-	"log"
-	"strings"
-
 	"github.com/Transcendence/models"
+	"github.com/Transcendence/services"
+	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func checkEmail(email string) bool {
-	if email == "" {
-		return false
-	}
-	if !strings.Contains(email, "@") {
-		return false
-	}
-	after_arobase := email[strings.Index(email, "@"):]
-	if strings.Contains(after_arobase, "@") || !strings.Contains(after_arobase, ".") {
-		return false
-	}
-	return true
-}
-
 // auth route
-func RegisterUser(c *gin.Context) {
+func RegisterUser(c *gin.Context, DB *gorm.DB) {
 	var user models.User 
 	err := c.BindJSON(&user);
+	password_error_message := []string{"Password too short", "Password contains the user name or name"}
+
 	if err != nil {
-		log.Fatal(err);
+		c.JSON(400, gin.H{
+			"error": "couldn't bind user",
+		})
+		return
 	}
-	fmt.Println(user)
-	// parse email
-	checkEmail(user.Email)
-	c.JSON(200, gin.H{
-		"msg": "mon msg",
-	})
+
+	has_password_check_worked, password_check_err_code := utils.CheckPasswordFormat(user.Password, user.Name, user.Username)
+
+	if !utils.CheckEmailFormat(user.Email) {
+		c.JSON(400, gin.H{
+			"error": "invalid email format",
+		})
+		return
+	} else if !has_password_check_worked {
+		msg := password_error_message[password_check_err_code]
+		c.JSON(400, gin.H{
+			"error": msg,
+		})
+		return
+	}
+
+	response_service, err := services.CreateAuthUserService(&user, DB)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "authentification service didn't work well",
+		})
+		return
+	}
+
+	c.JSON(200, response_service)
 }

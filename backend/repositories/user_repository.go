@@ -11,16 +11,17 @@ type userRepository struct {
 
 type UserRepository interface {
 	GetAll() ([]models.User, error)
-	GetByID(id string) (*models.User, error)
+	GetByID(id string) (*models.User, error) 
 	Update(id string, input models.UpdateUserInput) (*models.User, error)
 	Delete(id string) error
+	CreateUser(user *models.User) error
 }
 
 func NewUserRepository(db *gorm.DB) UserRepository {
 	return &userRepository{db: db}
 }
 
-func (r *userRepository) GetAll() ([]models.User, error) {
+func (r *userRepository) GetAll() ([]models.User, error) { 
 	var users []models.User
 	result := r.db.Find(&users)
 	return users, result.Error
@@ -45,4 +46,8 @@ func (r *userRepository) Update(id string, input models.UpdateUserInput) (*model
 func (r *userRepository) Delete(id string) error {
 	result := r.db.Delete(&models.User{}, "id = ?", id)
 	return result.Error
+}
+
+func (r *userRepository) CreateUser(user *models.User) error {
+	return r.db.Create(user).Error
 }
