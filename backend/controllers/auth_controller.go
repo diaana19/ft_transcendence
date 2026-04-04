@@ -5,11 +5,18 @@ import (
 	"github.com/Transcendence/services"
 	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
+type AuthController struct {
+	authService *services.AuthService
+}
+
+func NewAuthController( authService *services.AuthService) *AuthController {
+	return &AuthController{authService: authService}
+}
+
 // auth route
-func RegisterUser(c *gin.Context, DB *gorm.DB) {
+func (ac *AuthController) RegisterUser(c *gin.Context) {
 	var user models.User 
 	err := c.BindJSON(&user);
 	password_error_message := []string{"Password too short", "Password contains the user name or name"}
@@ -36,7 +43,7 @@ func RegisterUser(c *gin.Context, DB *gorm.DB) {
 		return
 	}
 
-	response_service, err := services.CreateAuthUserService(&user, DB)
+	response_service, err := ac.authService.CreateAuthUserService(&user)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "authentification service didn't work well",

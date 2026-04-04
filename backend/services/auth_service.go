@@ -6,20 +6,25 @@ import (
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/repositories"
 	"github.com/Transcendence/utils"
-	"gorm.io/gorm"
 )
 
-func CreateAuthUserService(infos *models.User, DB *gorm.DB) (*models.User, error) {
+type AuthService struct {
+	repo repositories.UserRepository
+}
+
+func NewAuthService( repo repositories.UserRepository) *AuthService {
+	return &AuthService{repo: repo}
+}
+
+func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.User, error) {
 	var err error
-	user := models.User{}
-	result := DB.Where("email = ?", infos.Email).First(&user)
-	if result.RowsAffected > 0 {
+	result, err := s.repo.GetByEmail(infos.Email)
+	if result != nil {
 		return nil, errors.New("user already exist")
 	}
 
-	user = models.User{}
-	result = DB.Where("username = ?", infos.Username).First(&user)
-	if result.RowsAffected > 0 {
+	result, err = s.repo.GetByUsername(infos.Username)
+	if result != nil {
 		return nil, errors.New("user already exist")
 	}
 
@@ -28,7 +33,7 @@ func CreateAuthUserService(infos *models.User, DB *gorm.DB) (*models.User, error
 		return nil, err
 	}
 
-	err = repositories.CreateUser(DB, infos)
+	err = s.repo.CreateUser(infos)
 	if err != nil {
 		return nil, err
 	}
