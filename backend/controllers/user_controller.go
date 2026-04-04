@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/Transcendence/models"
 	"github.com/Transcendence/services"
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +18,7 @@ func NewUserController(userService *services.UserService) *UserController {
 
 func (uc *UserController) GetUsers(c *gin.Context) {
 	users, err := uc.userService.GetUsers()
-	if (err != nil) {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -27,38 +28,23 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 func (uc *UserController) GetUser(c *gin.Context) {
 	id := c.Param("id")
 	user, err := uc.userService.GetUser(id)
-	if (err != nil) {
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 	c.JSON(http.StatusOK, user)
 }
 
-func (uc *UserController) CreateUser(c *gin.Context) {
-	var input services.CreateUserInput
-	err := c.ShouldBindJSON(&input)
-	if (err != nil) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	user, errC := uc.userService.CreateUser(input)
-	if (errC != nil) {
-		c.JSON(http.StatusInternalServerError, gin.H{"error:": errC.Error()})
-		return
-	}
-	c.JSON(http.StatusCreated, user)
-}
-
 func (uc *UserController) UpdateUser(c *gin.Context) {
 	id := c.Param("id")
-	var input services.UpdateUserInput
+	var input models.UpdateUserInput
 	err := c.ShouldBindJSON(&input)
-	if (err != nil) {
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error:": err.Error()})
-		return 
+		return
 	}
 	user, errorU := uc.userService.UpdateUser(id, input)
-	if (errorU != nil) {
+	if errorU != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error:": errorU.Error()})
 		return
 	}
@@ -68,7 +54,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 func (uc *UserController) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
 	err := uc.userService.DeleteUser(id)
-	if (err != nil) {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
