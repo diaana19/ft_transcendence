@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Transcendence/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -29,11 +30,14 @@ func ConnectDB() (*gorm.DB, error) {
         "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
         conf.DatabaseHost, conf.DatabasePort, conf.DatabaseUser, conf.DatabasePassword, conf.DatabaseName,
     )
-
+	
 	DB, err := gorm.Open(postgres.Open(connString), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
-
+	errA := DB.AutoMigrate(&models.User{})
+	if errA != nil {
+		return nil, errA
+	}
 	return DB, nil
 }

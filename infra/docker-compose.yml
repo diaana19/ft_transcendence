@@ -34,5 +34,13 @@ services:
       - db_data:/var/lib/postgresql/data
       - ../database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  flyway:
+    image: flyway/flyway:9.25.1
+    depends_on:
+      - db
+    command: -url=jdbc:postgresql://db:5432/app_db -user=app -password=app migrate
+    volumes:
+      - ../database/migrations:/flyway/sql
+
 volumes:
   db_data:
