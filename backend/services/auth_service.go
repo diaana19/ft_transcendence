@@ -12,7 +12,6 @@ import (
 func CreateAuthUserService(infos *models.User, DB *gorm.DB) (*models.User, error) {
 	var err error
 	user := models.User{}
-
 	result := DB.Where("email = ?", infos.Email).First(&user)
 	if result.RowsAffected > 0 {
 		return nil, errors.New("user already exist")
