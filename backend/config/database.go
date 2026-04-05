@@ -2,9 +2,11 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/Transcendence/models"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -18,6 +20,8 @@ type DBConfig struct {
 }
 
 func ConnectDB() (*gorm.DB, error) {
+	godotenv.Load(".env")
+	
 	var conf *DBConfig = &DBConfig {
 		DatabaseName: os.Getenv("DB_NAME"),
 		DatabaseHost: os.Getenv("DB_HOST"),
@@ -35,9 +39,14 @@ func ConnectDB() (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	log.Printf("DEBUG: Running AutoMigrate for User model\n")
 	errA := DB.AutoMigrate(&models.User{})
 	if errA != nil {
+		log.Printf("DEBUG: AutoMigrate error: %v\n", errA)
 		return nil, errA
 	}
+	
+	log.Printf("DEBUG: AutoMigrate completed successfully\n")
 	return DB, nil
 }

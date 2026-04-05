@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"log"
+	"time"
+
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/services"
 	"github.com/Transcendence/utils"
@@ -11,45 +14,65 @@ type AuthController struct {
 	authService *services.AuthService
 }
 
-func NewAuthController( authService *services.AuthService) *AuthController {
+func NewAuthController(authService *services.AuthService) *AuthController {
 	return &AuthController{authService: authService}
 }
 
-// auth route
+// Input JSON struct séparé du modèle DB
+type RegisterInput struct {
+	Username    string `json:"username" binding:"required"`
+	Email       string `json:"email" binding:"required,email"`
+	Password    string `json:"password" binding:"required"`
+	DateOfBirth string `json:"dateOfBirth" binding:"required"` // string pour parser
+}
+
 func (ac *AuthController) RegisterUser(c *gin.Context) {
-	var user models.User 
-	err := c.BindJSON(&user);
-	password_error_message := []string{"Password too short", "Password contains the user name or name"}
+	var input RegisterInput
 
+	// Bind et validation automatique par Gin
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": "invalid input: " + err.Error()})
+		return
+	}
+
+	log.Printf("DEBUG: Received input: %+v\n", input)
+	log.Printf("DEBUG: Password length: %d\n", len(input.Password))
+	log.Printf("DEBUG: Password: %s\n", input.Password)
+
+	// Parse la date
+	parsedDate, err := time.Parse("2006-01-02", input.DateOfBirth)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "couldn't bind user",
-		})
+		c.JSON(400, gin.H{"error": "invalid date format (expected YYYY-MM-DD)"})
 		return
 	}
 
-	has_password_check_worked, password_check_err_code := utils.CheckPasswordFormat(user.Password, user.Name, user.Username)
-
-	if !utils.CheckEmailFormat(user.Email) {
-		c.JSON(400, gin.H{
-			"error": "invalid email format",
-		})
-		return
-	} else if !has_password_check_worked {
-		msg := password_error_message[password_check_err_code]
-		c.JSON(400, gin.H{
-			"error": msg,
-		})
+	// Vérifie âge
+	if !utils.CheckUserAge(parsedDate) {
+		c.JSON(400, gin.H{"error": "user must be older than 13"})
 		return
 	}
 
-	response_service, err := ac.authService.CreateAuthUserService(&user)
+	// Vérifie password
+	if ok, errCode := utils.CheckPasswordFormat(input.Password, input.Username); !ok {
+		passwordMessages := []string{"Password too short", "Password contains the user name or name"}
+		c.JSON(400, gin.H{"error": passwordMessages[errCode-1]})
+		return
+	}
+
+	// Crée le user à passer au service
+	user := models.User{
+		Username:    input.Username,
+		Email:       input.Email,
+		Password:    input.Password,
+		DateOfBirth: parsedDate,
+	}
+
+	// Appelle le service pour créer le user
+	response, err := ac.authService.CreateAuthUserService(&user)
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": "authentification service didn't work well",
-		})
+		c.JSON(500, gin.H{"error": "creation didn't worked"})
 		return
 	}
 
-	c.JSON(200, response_service)
+	c.JSON(200, response)
 }
