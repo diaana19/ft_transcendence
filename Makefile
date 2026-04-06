@@ -86,7 +86,7 @@ all: build up
 	@echo ""
 	@echo "All services started!"
 
-re: down clean build up
+re: down clean dev
 	@echo ""
 	@echo "Full restart complete!"
 
