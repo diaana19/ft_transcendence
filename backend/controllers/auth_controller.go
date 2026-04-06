@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/Transcendence/models"
@@ -54,7 +55,7 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 
 	// Vérifie password
 	if ok, errCode := utils.CheckPasswordFormat(input.Password, input.Username); !ok {
-		passwordMessages := []string{"Password too short", "Password contains the user name or name"}
+		passwordMessages := []string{"Password too short", "Password contains the user name or name", "Password need to contain at least maj, min,"}
 		c.JSON(400, gin.H{"error": passwordMessages[errCode-1]})
 		return
 	}
@@ -74,5 +75,5 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, response)
+	c.JSON(http.StatusCreated, response)
 }

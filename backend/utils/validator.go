@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"time"
 	"regexp"
 	"strings"
+	"time"
 )
 
 func CheckUserAge(birthDate time.Time) bool {
@@ -25,13 +25,14 @@ func CheckEmailFormat(email string) bool {
 }
 
 func CheckPasswordFormat(password string, username string) (bool, int) {
-	// Vérifier que le password ne contient pas username ou name
-	if strings.Contains(password, username) {
-		return false, 1
-	}
 
 	// Vérifier la longueur minimum
 	if len(password) < 8 {
+		return false, 1
+	}
+
+	// Vérifier que le password ne contient pas username ou name
+	if strings.Contains(password, username) {
 		return false, 2
 	}
 
@@ -52,7 +53,7 @@ func CheckPasswordFormat(password string, username string) (bool, int) {
 	}
 
 	if !hasLower || !hasUpper || !hasDigit {
-		return false, 2
+		return false, 3
 	}
 
 	return true, 0
