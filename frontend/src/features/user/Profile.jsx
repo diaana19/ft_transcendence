@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
-import { getUser, updateUser, deleteUser } from "./backend/services/user_service";
-import { useAuth } from "../../backend/useAuth";
-import { useEffect, useState } from "react";
-import { useAuth } from "./useAuth";
 
 export default function Profile() {
-  const { token, logout } = useAuth();
+  const userId = "1"; // 🔥 usuario fijo temporal
 
   const [user, setUser] = useState({
     name: "",
@@ -16,7 +12,6 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-
   const [form, setForm] = useState(user);
 
   // 🔄 GET USER
@@ -27,13 +22,10 @@ export default function Profile() {
   const fetchUser = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/user/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
 
+      const res = await fetch(`/api/users/${userId}`);
       const data = await res.json();
+
       setUser(data);
       setForm(data);
     } catch (err) {
@@ -46,16 +38,17 @@ export default function Profile() {
   // ✏️ UPDATE USER
   const handleUpdate = async () => {
     try {
-      await fetch("/api/user/update", {
+      const res = await fetch(`/api/users/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(form),
       });
 
-      setUser(form);
+      const updatedUser = await res.json();
+
+      setUser(updatedUser);
       setShowEdit(false);
     } catch (err) {
       console.error(err);
@@ -65,14 +58,11 @@ export default function Profile() {
   // ❌ DELETE USER
   const handleDelete = async () => {
     try {
-      await fetch("/api/user/delete", {
+      await fetch(`/api/users/${userId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
-      logout(); // cerrar sesión después de eliminar
+      alert("Usuario eliminado");
     } catch (err) {
       console.error(err);
     }
@@ -82,7 +72,6 @@ export default function Profile() {
 
   return (
     <div style={{ maxWidth: "500px", margin: "auto" }}>
-      {/* 🧑 PERFIL */}
       <h2>Perfil</h2>
 
       <div style={{ border: "1px solid #ccc", padding: "16px", borderRadius: "10px" }}>
@@ -110,7 +99,6 @@ export default function Profile() {
 
             <input
               type="text"
-              placeholder="Nombre"
               value={form.name}
               onChange={(e) =>
                 setForm({ ...form, name: e.target.value })
@@ -119,7 +107,6 @@ export default function Profile() {
 
             <input
               type="email"
-              placeholder="Email"
               value={form.email}
               onChange={(e) =>
                 setForm({ ...form, email: e.target.value })
@@ -127,22 +114,14 @@ export default function Profile() {
             />
 
             <textarea
-              placeholder="Bio"
               value={form.bio}
               onChange={(e) =>
                 setForm({ ...form, bio: e.target.value })
               }
             />
 
-            <div style={{ marginTop: "10px" }}>
-              <button onClick={handleUpdate}>
-                Guardar
-              </button>
-
-              <button onClick={() => setShowEdit(false)}>
-                Cancelar
-              </button>
-            </div>
+            <button onClick={handleUpdate}>Guardar</button>
+            <button onClick={() => setShowEdit(false)}>Cancelar</button>
           </div>
         </div>
       )}
@@ -152,11 +131,11 @@ export default function Profile() {
         <div style={overlayStyle}>
           <div style={modalStyle}>
             <h3>Eliminar cuenta</h3>
-            <p>Esta acción es permanente. No se puede deshacer.</p>
+            <p>Esta acción es permanente</p>
 
             <button
               onClick={handleDelete}
-              style={{ color: "white", backgroundColor: "red" }}
+              style={{ backgroundColor: "red", color: "white" }}
             >
               Sí, eliminar
             </button>
@@ -171,7 +150,7 @@ export default function Profile() {
   );
 }
 
-// 🎨 estilos simples tipo modal
+// 🎨 estilos
 const overlayStyle = {
   position: "fixed",
   top: 0,
