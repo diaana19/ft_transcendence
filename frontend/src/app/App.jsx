@@ -1,13 +1,13 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import RegisterForm from '../features/auth/RegisterForm.jsx'
-import Profile from '../features/user/Profile.jsx'
+import LoginForm from '../features/auth/LoginForm.jsx'
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/register" element={<RegisterForm />} />
-                <Route path="/profile" element={<Profile />} />
+                <Route path="/login" element={<LoginForm />} />
             </Routes>
         </BrowserRouter>
     )
