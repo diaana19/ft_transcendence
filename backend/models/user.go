@@ -31,3 +31,27 @@ type UpdateUserInput struct {
 	Avatar    string `json:"avatar"`
 	Wallpaper string `json:"wallpaper"`
 }
+
+type UserResponse struct {
+	ID        string    `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Name      string    `json:"name,omitempty"`
+	Bio       string    `json:"bio,omitempty"`
+	Avatar    string    `json:"avatar,omitempty"`
+	Wallpaper string    `json:"wallpaper,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (u *User) ToResponse() UserResponse {
+	return UserResponse{
+		ID:        u.ID,
+		Username:  u.Username,
+		Email:     u.Email,
+		Name:      u.Name,
+		Bio:       u.Bio,
+		Avatar:    u.Avatar,
+		Wallpaper: u.Wallpaper,
+		CreatedAt: u.CreatedAt,
+	}
+}

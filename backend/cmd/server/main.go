@@ -18,7 +18,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-
 	var router *gin.Engine = gin.Default()
 	router.SetTrustedProxies(nil)
 

@@ -18,18 +18,16 @@ func NewAuthController(authService *services.AuthService) *AuthController {
 	return &AuthController{authService: authService}
 }
 
-// Input JSON struct séparé du modèle DB
 type RegisterInput struct {
 	Username    string `json:"username" binding:"required"`
 	Email       string `json:"email" binding:"required,email"`
 	Password    string `json:"password" binding:"required"`
-	DateOfBirth string `json:"dateOfBirth" binding:"required"` // string pour parser
+	DateOfBirth string `json:"dateOfBirth" binding:"required"`
 }
 
 func (ac *AuthController) RegisterUser(c *gin.Context) {
 	var input RegisterInput
 
-	// Bind et validation automatique par Gin
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(400, gin.H{"error": "invalid input: " + err.Error()})
 		return
@@ -39,27 +37,26 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 	log.Printf("DEBUG: Password length: %d\n", len(input.Password))
 	log.Printf("DEBUG: Password: %s\n", input.Password)
 
-	// Parse la date
 	parsedDate, err := time.Parse("2006-01-02", input.DateOfBirth)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "invalid date format (expected YYYY-MM-DD)"})
 		return
 	}
 
-	// Vérifie âge
 	if !utils.CheckUserAge(parsedDate) {
 		c.JSON(400, gin.H{"error": "user must be older than 13"})
 		return
 	}
 
-	// Vérifie password
 	if ok, errCode := utils.CheckPasswordFormat(input.Password, input.Username); !ok {
-		passwordMessages := []string{"Password too short", "Password contains the user name or name"}
+		passwordMessages := []string{
+			"Password contains the username",
+			"Password too short or missing character types",
+		}
 		c.JSON(400, gin.H{"error": passwordMessages[errCode-1]})
 		return
 	}
 
-	// Crée le user à passer au service
 	user := models.User{
 		Username:    input.Username,
 		Email:       input.Email,
@@ -67,10 +64,9 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 		DateOfBirth: parsedDate,
 	}
 
-	// Appelle le service pour créer le user
 	response, err := ac.authService.CreateAuthUserService(&user)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "creation didn't worked"})
+		c.JSON(400, gin.H{"error": "creation didn't worked"})
 		return
 	}
 
