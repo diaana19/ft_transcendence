@@ -51,9 +51,13 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 	if ok, errCode := utils.CheckPasswordFormat(input.Password, input.Username); !ok {
 		passwordMessages := []string{
 			"Password contains the username",
-			"Password too short or missing character types",
+			"Password too short",
+			"Password don't contains lowercase",
+			"Passowrd don't contains uppercase",
+			"Password don't contains digit",
+			"Password don't contains specials",
 		}
-		c.JSON(400, gin.H{"error": passwordMessages[errCode-1]})
+		c.JSON(400, gin.H{"error": passwordMessages[errCode]})
 		return
 	}
 

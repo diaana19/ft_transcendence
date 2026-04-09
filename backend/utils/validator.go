@@ -32,18 +32,19 @@ func CheckPasswordFormat(password string, username string) (bool, int) {
 		for i := 0; i <= len(lowerUser)-4; i++ {
 			sub := lowerUser[i : i+4]
 			if strings.Contains(lowerPass, sub) {
-				return false, 1
+				return false, 0
 			}
 		}
 	}
 
 	if len(password) < 8 {
-		return false, 2
+		return false, 1
 	}
 
 	hasLower := false
 	hasUpper := false
 	hasDigit := false
+	hasSpecial := false
 
 	for _, char := range password {
 		switch {
@@ -53,12 +54,21 @@ func CheckPasswordFormat(password string, username string) (bool, int) {
 			hasUpper = true
 		case char >= '0' && char <= '9':
 			hasDigit = true
+		case (char >= '!' && char <= '/') || (char >= ':' && char <= '@') || (char >= '[' && char <= '`') || (char >= '{' && char <= '~'):
+			hasSpecial = true
 		}
 	}
 
-	if !hasLower || !hasUpper || !hasDigit {
+	switch {
+	case !hasLower:
 		return false, 2
+	case !hasUpper:
+		return false, 3
+	case !hasDigit:
+		return false, 4
+	case !hasSpecial:
+		return false, 5
 	}
 
-	return true, 0
+	return true, -1
 }
