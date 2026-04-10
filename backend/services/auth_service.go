@@ -20,12 +20,12 @@ func NewAuthService(repo repositories.UserRepository) *AuthService {
 
 func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.User, error) {
 	log.Printf("DEBUG: Starting CreateAuthUserService with: %+v\n", infos)
-	
+
 	if infos.ID == "" {
 		infos.ID = uuid.New().String()
 		log.Printf("DEBUG: Generated UUID: %s\n", infos.ID)
 	}
-	
+
 	var err error
 	result, err := s.repo.GetByEmail(infos.Email)
 	if err == nil && result != nil {
@@ -57,4 +57,17 @@ func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.User, e
 	infos.Password = ""
 
 	return infos, nil
+}
+
+func (s *AuthService) LoginAuthUserService(identifier, password string) (*models.User, error) {
+	user, err := s.repo.GetByIdentifier(identifier)
+	if err != nil {
+		return nil, errors.New("invalid credential")
+	}
+	if !utils.CheckHashString(password, user.Password) {
+		return nil, errors.New("invalid credential")
+	}
+
+	user.Password = ""
+	return user, nil
 }

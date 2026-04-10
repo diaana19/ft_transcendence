@@ -31,3 +31,4 @@ type UpdateUserInput struct {
 	Avatar    string `json:"avatar"`
 	Wallpaper string `json:"wallpaper"`
 }
+
