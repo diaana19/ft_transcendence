@@ -18,43 +18,40 @@ func NewAuthService(repo repositories.UserRepository) *AuthService {
 	return &AuthService{repo: repo}
 }
 
-func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.User, error) {
+func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserResponse, error) {
 	log.Printf("DEBUG: Starting CreateAuthUserService with: %+v\n", infos)
-	
+
 	if infos.ID == "" {
 		infos.ID = uuid.New().String()
-		log.Printf("DEBUG: Generated UUID: %s\n", infos.ID)
 	}
-	
+
+	if _, err := s.repo.GetByEmail(infos.Email); err == nil {
+		return nil, errors.New("user with this email already exists")
+	}
+
+	if _, err := s.repo.GetByUsername(infos.Username); err == nil {
+		return nil, errors.New("user with this username already exists")
+	}
+
 	var err error
-	result, err := s.repo.GetByEmail(infos.Email)
-	if err == nil && result != nil {
-		log.Printf("DEBUG: Email already exists\n")
-		return nil, errors.New("user already exist")
-	}
-
-	result, err = s.repo.GetByUsername(infos.Username)
-	if err == nil && result != nil {
-		log.Printf("DEBUG: Username already exists\n")
-		return nil, errors.New("user already exist")
-	}
-
-	log.Printf("DEBUG: Hashing password\n")
 	infos.Password, err = utils.HashString(infos.Password)
 	if err != nil {
 		log.Printf("DEBUG: Error hashing password: %v\n", err)
 		return nil, err
 	}
 
-	log.Printf("DEBUG: Creating user in DB with: %+v\n", infos)
 	err = s.repo.CreateUser(infos)
 	if err != nil {
 		log.Printf("DEBUG: Error creating user: %v\n", err)
 		return nil, err
 	}
 
-	log.Printf("DEBUG: User created successfully\n")
-	infos.Password = ""
+	response := models.UserResponse{
+		ID:        infos.ID,
+		Username:  infos.Username,
+		Email:     infos.Email,
+		CreatedAt: infos.CreatedAt,
+	}
 
-	return infos, nil
+	return &response, nil
 }

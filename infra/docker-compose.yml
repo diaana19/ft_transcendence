@@ -42,14 +42,14 @@ services:
       timeout: 5s
       retries: 5
 
-  flyway:
-    image: flyway/flyway:9.25.1
-    depends_on:
-      db:
-        condition: service_healthy
-    command: -url=jdbc:postgresql://db:5432/${DB_NAME} -user=${DB_USER} -password=${DB_PASSWORD} migrate
-    volumes:
-      - ../database/migrations:/flyway/sql
+  # flyway:
+  #   image: flyway/flyway:latest
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   command: -url=jdbc:postgresql://db:5432/${DB_NAME} -user=${DB_USER} -password=${DB_PASSWORD} migrate
+  #   volumes:
+  #     - ../database/migrations:/flyway/sql
 
 volumes:
   db_data:

@@ -17,11 +17,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB) {
 	userService := services.NewUserService(userRepo)
 	userController := controllers.NewUserController(userService)
 
-	// Routes
 	api := router.Group("/api")
 	{
 		api.POST("/auth/register", authController.RegisterUser)
-		//api.POST("/auth/login", authController.LoginUser)
+
 		api.GET("/users", userController.GetUsers)
 		api.GET("/users/:id", userController.GetUser)
 		api.PUT("/users/:id", userController.UpdateUser)

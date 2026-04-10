@@ -176,15 +176,13 @@ test-frontend:
 
 # ==================== Database ====================
 
-migrate:
-	@echo "Running migrations..."
-	@$(DOCKER_COMPOSE) exec -T backend go run cmd/migrate/main.go
-	@echo "Migrations complete!"
-
 seed:
-	@echo "Seeding database..."
-	@$(DOCKER_COMPOSE) exec -T db psql -U postgres -d transcendence -f /docker-entrypoint-initdb.d/seed.sql
-	@echo "Database seeded!"
+	@echo "Seeding database with users..."
+	@cd backend/cmd/seed && DB_HOST=localhost go run main.go
+
+seed-clean:
+	@echo "Cleaning and seeding database..."
+	@cd backend/cmd/seed && DB_HOST=localhost go run main.go -clean
 
 # ==================== Shell Access ====================
 
@@ -202,7 +200,7 @@ shell-frontend:
 
 shell-db:
 	@echo "Accessing database container..."
-	@$(DOCKER_COMPOSE) exec db psql -U postgres -d transcendence
+	@$(DOCKER_COMPOSE) exec db psql -U app -d app_db
 
 # ==================== Health Checks ====================
 
