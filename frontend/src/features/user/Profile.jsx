@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 export default function Profile() {
-  const userId = "1"; // 🔥 usuario fijo temporal
+  const userId = useParams();
 
   const [user, setUser] = useState({
     name: "",
@@ -14,10 +15,11 @@ export default function Profile() {
   const [showDelete, setShowDelete] = useState(false);
   const [form, setForm] = useState(user);
 
-  // 🔄 GET USER
   useEffect(() => {
-    fetchUser();
-  }, []);
+     if (userId) {
+        fetchUser();
+      }
+  }, [userId]);
 
   const fetchUser = async () => {
     try {
@@ -35,7 +37,7 @@ export default function Profile() {
     }
   };
 
-  // ✏️ UPDATE USER
+
   const handleUpdate = async () => {
     try {
       const res = await fetch(`/api/users/${userId}`, {
@@ -55,7 +57,7 @@ export default function Profile() {
     }
   };
 
-  // ❌ DELETE USER
+
   const handleDelete = async () => {
     try {
       await fetch(`/api/users/${userId}`, {
@@ -70,34 +72,52 @@ export default function Profile() {
 
   if (loading) return <p>Cargando perfil...</p>;
 
-  return (
-    <div style={{ maxWidth: "500px", margin: "auto" }}>
-      <h2>Perfil</h2>
+    return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Banner */}
+      <div className="h-40 bg-blue-500"></div>
 
-      <div style={{ border: "1px solid #ccc", padding: "16px", borderRadius: "10px" }}>
-        <p><strong>Nombre:</strong> {user.name}</p>
-        <p><strong>Email:</strong> {user.email}</p>
-        <p><strong>Bio:</strong> {user.bio}</p>
+      <div className="max-w-2xl mx-auto bg-white shadow">
+        {/* Avatar + acciones */}
+        <div className="relative px-4">
+          <div className="absolute -top-16">
+            <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-300"></div>
+          </div>
 
-        <button onClick={() => setShowEdit(true)}>
-          Editar perfil
-        </button>
+          <div className="flex justify-end pt-4">
+            <button
+              onClick={() => setShowEdit(true)}
+              className="border px-4 py-2 rounded-full font-semibold hover:bg-gray-100"
+            >
+              Editar perfil
+            </button>
 
-        <button
-          onClick={() => setShowDelete(true)}
-          style={{ marginLeft: "10px", color: "red" }}
-        >
-          Eliminar cuenta
-        </button>
+            <button
+              onClick={() => setShowDelete(true)}
+              className="ml-2 border px-4 py-2 rounded-full text-red-500 hover:bg-red-50"
+            >
+              Eliminar
+            </button>
+          </div>
+
+          {/* Info */}
+          <div className="mt-20 pb-4">
+            <h2 className="text-xl font-bold">{user.name}</h2>
+            <p className="text-gray-500">@{user.email}</p>
+
+            <p className="mt-3 text-gray-800">{user.bio}</p>
+          </div>
+        </div>
       </div>
 
-      {/* ✏️ MODAL EDIT */}
+      {/* MODAL EDIT */}
       {showEdit && (
-        <div style={overlayStyle}>
-          <div style={modalStyle}>
-            <h3>Editar perfil</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-xl w-96 shadow-lg">
+            <h3 className="text-lg font-bold mb-4">Editar perfil</h3>
 
             <input
+              className="w-full border p-2 rounded mb-2"
               type="text"
               value={form.name}
               onChange={(e) =>
@@ -106,6 +126,7 @@ export default function Profile() {
             />
 
             <input
+              className="w-full border p-2 rounded mb-2"
               type="email"
               value={form.email}
               onChange={(e) =>
@@ -114,61 +135,59 @@ export default function Profile() {
             />
 
             <textarea
+              className="w-full border p-2 rounded mb-4"
               value={form.bio}
               onChange={(e) =>
                 setForm({ ...form, bio: e.target.value })
               }
             />
 
-            <button onClick={handleUpdate}>Guardar</button>
-            <button onClick={() => setShowEdit(false)}>Cancelar</button>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowEdit(false)}
+                className="px-4 py-2 rounded bg-gray-200"
+              >
+                Cancelar
+              </button>
+
+              <button
+                onClick={handleUpdate}
+                className="px-4 py-2 rounded bg-blue-500 text-white"
+              >
+                Guardar
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ⚠️ MODAL DELETE */}
+      {/* MODAL DELETE */}
       {showDelete && (
-        <div style={overlayStyle}>
-          <div style={modalStyle}>
-            <h3>Eliminar cuenta</h3>
-            <p>Esta acción es permanente</p>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-xl w-80 shadow-lg">
+            <h3 className="text-lg font-bold mb-2">Eliminar cuenta</h3>
+            <p className="text-gray-600 mb-4">
+              Esta acción es permanente
+            </p>
 
-            <button
-              onClick={handleDelete}
-              style={{ backgroundColor: "red", color: "white" }}
-            >
-              Sí, eliminar
-            </button>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowDelete(false)}
+                className="px-4 py-2 rounded bg-gray-200"
+              >
+                Cancelar
+              </button>
 
-            <button onClick={() => setShowDelete(false)}>
-              Cancelar
-            </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 rounded bg-red-500 text-white"
+              >
+                Sí, eliminar
+              </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
-}
-
-// 🎨 estilos
-const overlayStyle = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: "100%",
-  backgroundColor: "rgba(0,0,0,0.5)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-};
-
-const modalStyle = {
-  background: "white",
-  padding: "20px",
-  borderRadius: "10px",
-  width: "300px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "10px",
 };
