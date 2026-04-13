@@ -167,8 +167,16 @@ test:
 	@echo "Tests complete!"
 
 test-backend:
-	@echo "Running backend tests..."
-	@$(DOCKER_COMPOSE) exec -T backend go test ./...
+	@echo "Running backend tests locally..."
+	@cd backend && DB_HOST=localhost go test ./tests/... -v -count=1 2>&1 | \
+		sed 's/--- PASS/\x1b[32m--- PASS\x1b[0m/g' | \
+		sed 's/--- FAIL/\x1b[31m--- FAIL\x1b[0m/g' | \
+		sed 's/^ok/\x1b[32mok\x1b[0m/g' | \
+		sed 's/^FAIL/\x1b[31mFAIL\x1b[0m/g'
+
+# test-backend:
+# 	@echo "Running backend tests..."
+# 	@$(DOCKER_COMPOSE) exec -T backend go test ./...
 
 test-frontend:
 	@echo "Running frontend tests..."

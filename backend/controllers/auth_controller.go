@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"log"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Transcendence/models"
@@ -9,6 +11,11 @@ import (
 	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
 )
+
+type LoginInput struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
 
 type AuthController struct {
 	authService *services.AuthService
@@ -75,4 +82,45 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 	}
 
 	c.JSON(200, response)
+}
+
+func (ac *AuthController) LoginUser(c *gin.Context) {
+	var input LoginInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input: " + err.Error()})
+		return
+	}
+
+	user, err := ac.authService.LoginAuthUserService(input.Email, input.Password)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	token, err := utils.GenerateJWT(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+		"user":  user,
+	})
+}
+
+func (ac *AuthController) RefreshToken(c *gin.Context) {
+	tokenStr := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
+	if tokenStr == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
+		return
+	}
+
+	newToken, err := utils.RefreshToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": newToken})
 }
