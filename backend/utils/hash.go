@@ -12,3 +12,11 @@ func HashString(str string) (string, error) {
 
 	return string(hashedPassword), nil
 }
+
+func CheckHashString(plain, hashed string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain))
+	if err != nil {
+		return false
+	}
+	return true
+}
