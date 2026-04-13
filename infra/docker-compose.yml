@@ -42,6 +42,20 @@ services:
       timeout: 5s
       retries: 5
 
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   healthcheck:
+  #     test: ["CMD", "redis_data", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+
   # flyway:
   #   image: flyway/flyway:latest
   #   depends_on:
