@@ -10,6 +10,7 @@ import (
 	"github.com/Transcendence/services"
 	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 type LoginInput struct {
@@ -19,10 +20,11 @@ type LoginInput struct {
 
 type AuthController struct {
 	authService *services.AuthService
+	rdb         *redis.Client
 }
 
-func NewAuthController(authService *services.AuthService) *AuthController {
-	return &AuthController{authService: authService}
+func NewAuthController(authService *services.AuthService, rdb *redis.Client) *AuthController {
+	return &AuthController{authService: authService, rdb: rdb}
 }
 
 type RegisterInput struct {
@@ -123,4 +125,28 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": newToken})
+}
+
+// logout use redis by putting the token in redis db
+
+func (ac *AuthController) LogoutUser(c *gin.Context) {
+	tokenStr := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
+	if tokenStr == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
+		return
+	}
+
+	claims, err := utils.ValidateJWT(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		return
+	}
+
+	expiry := time.Until(claims.ExpiresAt.Time)
+	if err := ac.authService.LogoutAuthUserService(tokenStr, expiry, ac.rdb); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }

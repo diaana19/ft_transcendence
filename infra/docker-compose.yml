@@ -11,6 +11,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
   frontend:
     build:
@@ -42,18 +44,18 @@ services:
       timeout: 5s
       retries: 5
 
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: redis
-  #   ports:
-  #     - "6379:6379"
-  #   volumes:
-  #     - redis_data:/data
-  #   healthcheck:
-  #     test: ["CMD", "redis_data", "ping"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 
   # flyway:
@@ -67,3 +69,4 @@ services:
 
 volumes:
   db_data:
+  redis_data:

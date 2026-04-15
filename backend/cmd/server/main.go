@@ -21,10 +21,15 @@ func main() {
 	var router *gin.Engine = gin.Default()
 	router.SetTrustedProxies(nil)
 
+	rdb, err := config.InitRedis()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
 			"message": "Backend API is running",
-			"status": "success",
+			"status":  "success",
 		})
 	})
 
@@ -34,9 +39,9 @@ func main() {
 		})
 	})
 
-	routes.SetupRoutes(router, DB)
+	routes.SetupRoutes(router, DB, rdb)
 
-	if (conf.ApiPort == "") {
+	if conf.ApiPort == "" {
 		conf.ApiPort = "8000"
 	}
 
