@@ -9,6 +9,26 @@ import (
 	"gorm.io/gorm"
 )
 
+func create_post_routes(api *gin.RouterGroup, DB *gorm.DB) {
+	postRepo := repositories.NewPostRepository(DB)
+	postService := services.NewPostService(postRepo)
+	postController := controllers.NewPostController(postService)
+
+	posts := api.Group("/posts")
+	{
+		posts.GET("/", postController.GetPosts)
+		posts.GET("/:id", postController.GetPost)
+
+		protected := posts.Group("/")
+		protected.Use(middleware.AuthMiddleware())
+		{
+			protected.POST("/", postController.CreatePost)
+			protected.PUT("/:id", postController.UpdatePost)
+			protected.DELETE("/:id", postController.DeletePost)
+		}
+	}
+}
+
 func SetupRoutes(router *gin.Engine, DB *gorm.DB) {
 
 	userRepo := repositories.NewUserRepository(DB)
@@ -23,13 +43,16 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB) {
 		api.POST("/auth/register", authController.RegisterUser)
 		api.POST("/auth/login", authController.LoginUser)
 		api.POST("/auth/refresh", authController.RefreshToken)
+
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware())
 		{
-			api.GET("/users", userController.GetUsers)
-			api.GET("/users/:id", userController.GetUser)
-			api.PUT("/users/:id", userController.UpdateUser)
-			api.DELETE("/users/:id", userController.DeleteUser)
+			protected.GET("/users", userController.GetUsers)
+			protected.GET("/users/:id", userController.GetUser)
+			protected.PUT("/users/:id", userController.UpdateUser)
+			protected.DELETE("/users/:id", userController.DeleteUser)
 		}
+
+		create_post_routes(api, DB)
 	}
 }
