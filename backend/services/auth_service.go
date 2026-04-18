@@ -55,3 +55,16 @@ func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserRes
 
 	return &response, nil
 }
+
+func (s *AuthService) LoginAuthUserService(identifier, password string) (*models.User, error) {
+	user, err := s.repo.GetByIdentifier(identifier)
+	if err != nil {
+		return nil, errors.New("invalid credential")
+	}
+	if !utils.CheckHashString(password, user.Password) {
+		return nil, errors.New("invalid credential")
+	}
+
+	user.Password = ""
+	return user, nil
+}
