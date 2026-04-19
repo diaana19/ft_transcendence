@@ -9,6 +9,7 @@
 
 import { useState } from 'react'
 import { deletePost, updatePost } from './postService.js'
+import { Pencil, Trash2, MessageCircle, Heart } from 'lucide-react'
 
 function PostCard({ post, onDelete, onUpdate, currentUserId }) {
     const [isEditing, setIsEditing] = useState(false)
@@ -90,22 +91,22 @@ return (
           )}
 
           <div className="flex gap-6 mt-3 text-gray-500 text-sm">
-            <span>💬 {post.comments_count}</span>
-            <span>❤️ {post.likes_count}</span>
+           <span className="flex items-center gap-1"><MessageCircle size={16} />{post.comments_count}</span>
+           <span className="flex items-center gap-1"><Heart size={16} />{post.likes_count}</span>
             {post.author_id === currentUserId && (
               <div className="flex gap-3 ml-auto">
                 <button
                   onClick={() => setIsEditing(true)}
                   className="hover:text-blue-400"
                 >
-                  ✏️
+                 <Pencil size={16} />
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={loading}
                   className="hover:text-red-400"
                 >
-                  🗑️
+                  <Trash2 size={16} />
                 </button>
               </div>
             )}
