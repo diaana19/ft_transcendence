@@ -11,6 +11,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import FriendsList from './FriendsList'
+import FollowButton from "../../components/common/FollowButton";
 
 export default function Profile() {
 	const { user: authUser, token, logout } = useAuth();
@@ -122,6 +124,8 @@ export default function Profile() {
 		</div>
 
 		<div className="flex justify-end pt-4">
+		  {authUser?.userId === userId ? (
+    	<>
 		<button
 			onClick={() => setShowEdit(true)}
 			className="border px-4 py-2 rounded-full font-semibold hover:bg-gray-100"
@@ -135,6 +139,13 @@ export default function Profile() {
 		>
 			Delete
 		</button>
+		</>
+		) : (
+		<FollowButton
+			targetId={userId}
+			isFollowing={false}
+		/>
+		)}
 		</div>
 
 		{/* Info */}
@@ -144,6 +155,7 @@ export default function Profile() {
 
 		<p className="mt-3 text-gray-800">{user.bio}</p>
 		</div>
+		<FriendsList userId={userId} />
 	</div>
 	</div>
 
