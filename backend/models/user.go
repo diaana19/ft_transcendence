@@ -15,9 +15,9 @@ type User struct {
 	Username string `json:"username" binding:"required" gorm:"unique;not null"`
 	Email    string `json:"email" binding:"required,email" gorm:"unique;not null"`
 	Password string `json:"password" binding:"required,min=8"`
-	
+
 	DateOfBirth time.Time `json:"dateOfBirth" binding:"required"`
-	
+
 	Wallpaper string `json:"wallpaper"`
 	Avatar    string `json:"avatar"`
 	Bio       string `json:"bio"`
@@ -54,4 +54,11 @@ func (u *User) ToResponse() UserResponse {
 		Wallpaper: u.Wallpaper,
 		CreatedAt: u.CreatedAt,
 	}
+}
+
+type Friend struct {
+    ID        uint `gorm:"primaryKey"`
+    UserID    uint
+    FriendID  uint
+    Status    string // "pending", "accepted"
 }
