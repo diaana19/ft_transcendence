@@ -14,32 +14,32 @@ function LoginForm() {
 const [error, setError] = useState(null)
 const [loading, setLoading] = useState(false)
 
-const handleChange = (e) => { //name = username... value = lo q escribio el usuario
+const handleChange = (e) => {
     setFormData({
         ...formData,
-        [e.target.name]: e.target.value //se actualizo solo lo q cambio
+        [e.target.name]: e.target.value
     })
 }
 
 const handleSubmit = async (e) => {
     e.preventDefault()
 
-    console.log("🔥 SUBMIT FIRED")
+    console.log("SUBMIT FIRED")
 
     setLoading(true)
     setError(null)
 
     try {
-        console.log("📤 calling login...")
+        console.log("calling login...")
 
         const data = await login(formData.email, formData.password)
 
-        console.log("✅ RESPONSE:", data)
+        console.log("RESPONSE:", data)
 
         loginUser(data.token)
         navigate('/')
     } catch (err) {
-        console.log("❌ ERROR:", err)
+        console.log("ERROR:", err)
         setError(err.response?.data?.error || 'Something went wrong')
     } finally {
         setLoading(false)
