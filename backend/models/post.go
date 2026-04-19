@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// TEST COMMET ( TEST COMMIT )
 type Post struct {
     ID        string    `gorm:"primaryKey;type:varchar(36)"`
     AuthorID  string    `gorm:"type:varchar(36);not null"`
