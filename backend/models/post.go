@@ -2,21 +2,18 @@ package models
 
 import (
 	"time"
-
 	"gorm.io/gorm"
 )
 
-// ─── Post ───────────────────────────────────────────────────────────────────
-
 type Post struct {
-	ID            string         `gorm:"primaryKey;type:varchar(36)"`
-	AuthorID      string         `gorm:"type:varchar(36);not null"`
-	Author        User           `gorm:"foreignKey:AuthorID"`
+	ID            string         `gorm:"primaryKey;type:uuid"`
+	AuthorID      string         `gorm:"type:uuid;not null"`
+	Author        User           `gorm:"foreignKey:AuthorID;references:ID"`
 	Content       string         `gorm:"type:text;not null"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	DeletedAt     gorm.DeletedAt `gorm:"index"`
-	LikesCount    int            `json:"likes_count"    gorm:"default:0"`
+	LikesCount    int            `json:"likes_count" gorm:"default:0"`
 	CommentsCount int            `json:"comments_count" gorm:"default:0"`
 }
 
@@ -31,7 +28,7 @@ type PostResponse struct {
 	Author        UserResponse `json:"author"`
 	LikesCount    int          `json:"likes_count"`
 	CommentsCount int          `json:"comments_count"`
-	Liked         bool         `json:"liked"` // true when the requesting user already liked it
+	Liked         bool         `json:"liked"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
 }
@@ -49,33 +46,27 @@ func (p *Post) ToResponse() PostResponse {
 	}
 }
 
-// ─── Like ────────────────────────────────────────────────────────────────────
-
-// Like stores a single user↔post like relationship.
-// The composite unique index prevents a user from liking the same post twice.
 type Like struct {
-	ID        string    `gorm:"primaryKey;type:varchar(36)"`
-	UserID    string    `gorm:"type:varchar(36);not null;uniqueIndex:idx_like_user_post"`
-	User      User      `gorm:"foreignKey:UserID"`
-	PostID    string    `gorm:"type:varchar(36);not null;uniqueIndex:idx_like_user_post"`
-	Post      Post      `gorm:"foreignKey:PostID"`
+	ID        string    `gorm:"primaryKey;type:uuid"`
+	UserID    string    `gorm:"type:uuid;not null;uniqueIndex:idx_like_user_post"`
+	User      User      `gorm:"foreignKey:UserID;references:ID"`
+	PostID    string    `gorm:"type:uuid;not null;uniqueIndex:idx_like_user_post"`
+	Post      Post      `gorm:"foreignKey:PostID;references:ID"`
 	CreatedAt time.Time
 }
 
 type LikeResponse struct {
-	PostID    string    `json:"post_id"`
-	Liked     bool      `json:"liked"`
-	LikesCount int      `json:"likes_count"`
+	PostID     string `json:"post_id"`
+	Liked      bool   `json:"liked"`
+	LikesCount int    `json:"likes_count"`
 }
 
-// ─── Comment (Reply) ─────────────────────────────────────────────────────────
-
 type Reply struct {
-	ID        string         `gorm:"primaryKey;type:varchar(36)"`
-	PostID    string         `gorm:"type:varchar(36);not null;index"`
-	Post      Post           `gorm:"foreignKey:PostID"`
-	AuthorID  string         `gorm:"type:varchar(36);not null"`
-	Author    User           `gorm:"foreignKey:AuthorID"`
+	ID        string         `gorm:"primaryKey;type:uuid"`
+	PostID    string         `gorm:"type:uuid;not null;index"`
+	Post      Post           `gorm:"foreignKey:PostID;references:ID"`
+	AuthorID  string         `gorm:"type:uuid;not null"`
+	Author    User           `gorm:"foreignKey:AuthorID;references:ID"`
 	Content   string         `gorm:"type:text;not null"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -112,14 +103,12 @@ func (r *Reply) ToResponse() CommentResponse {
 	}
 }
 
-// ─── Repost ──────────────────────────────────────────────────────────────────
-
 type Repost struct {
-	ID        string         `gorm:"primaryKey;type:varchar(36)"`
-	PostID    string         `gorm:"type:varchar(36);not null;index"`
-	Post      Post           `gorm:"foreignKey:PostID"`
-	AuthorID  string         `gorm:"type:varchar(36);not null"`
-	Author    User           `gorm:"foreignKey:AuthorID"`
+	ID        string         `gorm:"primaryKey;type:uuid"`
+	PostID    string         `gorm:"type:uuid;not null;index"`
+	Post      Post           `gorm:"foreignKey:PostID;references:ID"`
+	AuthorID  string         `gorm:"type:uuid;not null"`
+	Author    User           `gorm:"foreignKey:AuthorID;references:ID"`
 	CreatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

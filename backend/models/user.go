@@ -6,7 +6,7 @@ import (
 )
 
 type User struct {
-	ID        string         `gorm:"primaryKey;type:varchar(36)" json:"id"`
+	ID        string         `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
@@ -57,8 +57,8 @@ func (u *User) ToResponse() UserResponse {
 }
 
 type Friend struct {
-    ID        uint `gorm:"primaryKey"`
-    UserID    uint
-    FriendID  uint
-    Status    string // "pending", "accepted"
+	ID       string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	UserID   string `gorm:"type:uuid;not null;index"`
+	FriendID string `gorm:"type:uuid;not null;index"`
+	Status   string
 }
