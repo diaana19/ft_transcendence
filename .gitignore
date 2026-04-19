@@ -1309,3 +1309,4 @@ FodyWeavers.xsd
 tmp
 post_implementation.*
 *:Zone.Identifier
+*.zip
