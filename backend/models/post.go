@@ -2,10 +2,10 @@ package models
 
 import (
 	"time"
+
 	"gorm.io/gorm"
 )
 
-// TEST COMMET ( TEST COMMIT )
 type Post struct {
     ID        string    `gorm:"primaryKey;type:varchar(36)"`
     AuthorID  string    `gorm:"type:varchar(36);not null"`
@@ -20,7 +20,7 @@ type Post struct {
 
 type Reply struct {
     ID        string    `gorm:"primaryKey;type:varchar(36)"`
-    PostID    string    `gorm:"type:varchar(36);not null;index"`  // Quel post on répond
+    PostID    string    `gorm:"type:varchar(36);not null;index"`
     Post      Post      `gorm:"foreignKey:PostID"`
     AuthorID  string    `gorm:"type:varchar(36);not null"`
     Author    User      `gorm:"foreignKey:AuthorID"`
@@ -32,7 +32,7 @@ type Reply struct {
 
 type Repost struct {
     ID        string    `gorm:"primaryKey;type:varchar(36)"`
-    PostID    string    `gorm:"type:varchar(36);not null;index"`  // Quel post on partage
+    PostID    string    `gorm:"type:varchar(36);not null;index"`
     Post      Post      `gorm:"foreignKey:PostID"`
     AuthorID  string    `gorm:"type:varchar(36);not null"`
     Author    User      `gorm:"foreignKey:AuthorID"`
