@@ -16,16 +16,27 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB) {
 
 	posts := api.Group("/posts")
 	{
-		posts.GET("", postController.GetPosts)
-		posts.GET("/:id", postController.GetPost)
+		// Public – read (liked field populated only when token is present)
+		posts.GET("", middleware.OptionalAuthMiddleware(), postController.GetPosts)
+		posts.GET("/:id", middleware.OptionalAuthMiddleware(), postController.GetPost)
+		posts.GET("/:id/comments", postController.GetComments)
 
-		// Routes protégées
+		// Protected – require authentication
 		protected := posts.Group("")
 		protected.Use(middleware.AuthMiddleware())
 		{
+			// Post CRUD
 			protected.POST("", postController.CreatePost)
 			protected.PUT("/:id", postController.UpdatePost)
 			protected.DELETE("/:id", postController.DeletePost)
+
+			// Likes
+			protected.POST("/:id/like", postController.ToggleLike)
+
+			// Comments
+			protected.POST("/:id/comments", postController.CreateComment)
+			protected.PUT("/:id/comments/:commentId", postController.UpdateComment)
+			protected.DELETE("/:id/comments/:commentId", postController.DeleteComment)
 		}
 	}
 }
