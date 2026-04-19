@@ -16,13 +16,14 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB) {
 
 	posts := api.Group("/posts")
 	{
-		posts.GET("/", postController.GetPosts)
+		posts.GET("", postController.GetPosts)
 		posts.GET("/:id", postController.GetPost)
 
-		protected := posts.Group("/")
+		// Routes protégées
+		protected := posts.Group("")
 		protected.Use(middleware.AuthMiddleware())
 		{
-			protected.POST("/", postController.CreatePost)
+			protected.POST("", postController.CreatePost)
 			protected.PUT("/:id", postController.UpdatePost)
 			protected.DELETE("/:id", postController.DeletePost)
 		}
