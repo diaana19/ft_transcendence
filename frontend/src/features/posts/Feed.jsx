@@ -18,6 +18,7 @@ function Feed() {
     try {
       setFetching(true)
       const data = await getPosts()
+      console.log('DATA:', data)
       setPosts(data)
     } catch (err) {
       console.error('Error fetching posts:', err)
