@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { login } from './authService.js'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 
 function LoginForm() {
     const navigate = useNavigate()
-
+    const { loginUser } = useAuth()
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -22,14 +23,23 @@ const handleChange = (e) => { //name = username... value = lo q escribio el usua
 
 const handleSubmit = async (e) => {
     e.preventDefault()
+
+    console.log("🔥 SUBMIT FIRED")
+
     setLoading(true)
     setError(null)
 
     try {
-        const data = await login(formData.email, formData.password) //await, espera rpta de go
-        localStorage.setItem('token', data.token) //guarda el JWT en localStorage(memoria del navegador)
-        navigate ('/') //si go esta ok, redirige a home
+        console.log("📤 calling login...")
+
+        const data = await login(formData.email, formData.password)
+
+        console.log("✅ RESPONSE:", data)
+
+        loginUser(data.token)
+        navigate('/')
     } catch (err) {
+        console.log("❌ ERROR:", err)
         setError(err.response?.data?.error || 'Something went wrong')
     } finally {
         setLoading(false)

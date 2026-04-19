@@ -10,10 +10,12 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function Profile() {
-	const { id } = useParams();
-	const userId = id;
+	const { user: authUser, token, logout } = useAuth();
+	const userId = authUser?.userId;
+	const navigate = useNavigate();
 
 	const [user, setUser] = useState({
 	name: "",
@@ -43,7 +45,9 @@ export default function Profile() {
 	try {
 	setLoading(true);
 
-	const res = await fetch(`/api/users/${userId}`);
+	const res = await fetch(`/api/users/${userId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    });
 	const data = await res.json();
 
 	setUser(data);
@@ -69,6 +73,7 @@ export default function Profile() {
 		method: "PUT",
 		headers: {
 			"Content-Type": "application/json",
+			Authorization: `Bearer ${token}`
 		},
 		body: JSON.stringify(form),
 		});
@@ -93,9 +98,10 @@ export default function Profile() {
 		try {
 			await fetch(`/api/users/${userId}`, {
 			method: "DELETE",
+			headers: { Authorization: `Bearer ${token}` },
 			});
-
-			alert("User Deleted");
+			logout();
+			navigate("/login");
 		} catch (err) {
 			console.error(err);
 		}
