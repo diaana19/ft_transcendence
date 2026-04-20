@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { getPosts, createPost } from './postService'
 import PostCard from './PostCard'
+import CreatePost from './CreatePost'
 
 function Feed() {
   const { user } = useAuth()
@@ -53,29 +54,7 @@ function Feed() {
     <div className="max-w-xl mx-auto">
 
       {/* Composer */}
-      <div className="border-b border-gray-200 p-4 flex gap-3">
-        <div className="w-10 h-10 rounded-full bg-gray-300 flex-shrink-0" />
-        <div className="flex-1">
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="What's happening?"
-            maxLength={280}
-            rows={3}
-            className="w-full text-black placeholder-gray-500 text-lg focus:outline-none resize-none"
-          />
-          <div className="flex justify-between items-center mt-2">
-            <span className="text-sm text-gray-400">{content.length}/280</span>
-            <button
-              onClick={handleCreate}
-              disabled={loading || !content.trim()}
-              className="bg-blue-400 hover:bg-blue-500 text-white font-bold px-5 py-2 rounded-full disabled:opacity-50 transition-colors"
-            >
-              {loading ? 'Posting...' : 'Post'}
-            </button>
-          </div>
-        </div>
-      </div>
+      <CreatePost onPostCreated={(newPost) => setPosts([newPost, ...posts])} />
 
       {/* Posts */}
       {fetching ? (
