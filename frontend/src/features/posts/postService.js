@@ -15,12 +15,12 @@ function getToken() {
 
 export async function getPosts(page = 1, limit = 10) {
     const response = await axios.get(`/api/posts?page=${page}&limit=${limit}`)
-    return response.data
+    return response.data.data
 }
 
 export async function getPost(id) {
     const response = await axios.get(`/api/posts/${id}`)
-    return response.data
+    return response.data.data
 }
 
 export async function createPost(content) {
@@ -33,7 +33,7 @@ export async function createPost(content) {
             }
         }
     )
-    return response.data
+    return response.data.data
 }
 
 export async function updatePost(id, content) {
@@ -46,7 +46,7 @@ export async function updatePost(id, content) {
             }
         }
     )
-    return response.data
+    return response.data.data
 }
 
 export async function deletePost(id) {
@@ -58,5 +58,5 @@ export async function deletePost(id) {
             }
         }
     )
-    return response.data
+    return response.data.data
 }
