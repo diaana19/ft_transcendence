@@ -13,7 +13,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import FriendsList from './FriendsList'
 import FollowButton from "../../components/common/FollowButton";
-import FileUploader from '../../features/upload/FileUploader.jsx'
 
 export default function Profile() {
 	const { user: authUser, token, logout } = useAuth();
