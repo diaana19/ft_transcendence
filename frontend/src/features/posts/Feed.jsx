@@ -55,8 +55,7 @@ function Feed() {
     <div className="max-w-xl mx-auto">
 
       {/* Composer */}
-      <CreatePost onPostCreated={(newPost) => setPosts([newPost, ...posts])} />
-
+        <CreatePost onPostCreated={() => fetchPosts()} />
       {/* Posts */}
       {fetching ? (
         <p className="text-center text-gray-400 py-8">Loading...</p>

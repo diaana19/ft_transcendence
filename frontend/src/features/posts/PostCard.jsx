@@ -46,15 +46,15 @@ return (
 
       <div className="flex gap-3">
         <img
-          src={post.author.avatar}
-          alt={post.author.username}
+          src={post.author?.avatar || ''}
+          alt={post.author?.username || ''}
           className="w-10 h-10 rounded-full"
         />
         <div className="flex-1">
 
           <div className="flex items-center gap-2">
-            <span className="font-bold text-black">{post.author.name}</span>
-            <span className="text-gray-500">@{post.author.username}</span>
+            <span className="font-bold text-black">{post.author?.name || 'Unknown'}</span>
+            <span className="text-gray-500">@{post.author?.username || 'unknown'}</span>
             <span className="text-gray-500">·</span>
             <span className="text-gray-500 text-sm">
               {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

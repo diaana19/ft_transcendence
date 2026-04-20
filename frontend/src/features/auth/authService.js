@@ -1,7 +1,7 @@
 import api from '../../services/axiosInstance'
 
 export async function register(username, email, password, dateOfBirth) {
-    const response = await axios.post('/api/auth/register', {
+    const response = await api.post('/api/auth/register', {
         username,
         email,
         password,
@@ -16,6 +16,3 @@ export async function login(email, password) {
     })
     return response.data
 }
-
-
-
