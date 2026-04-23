@@ -42,7 +42,7 @@ const handleUpdate = async() => {
 }
 
 return (
-    <div className="border-b border-gray-200 p-4 hover:bg-gray-50">
+    <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4 hover:shadow-sm transition">
 
       <div className="flex gap-3">
         <img
