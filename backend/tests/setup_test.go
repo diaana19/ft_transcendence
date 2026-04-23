@@ -8,6 +8,7 @@ import (
 
 	"github.com/Transcendence/config"
 	"github.com/Transcendence/models"
+	"github.com/Transcendence/redis"
 	"github.com/Transcendence/routes"
 )
 
@@ -22,7 +23,7 @@ func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 		panic(err)
 	}
 
-	rdb, err := config.InitRedis()
+	rdb, err := redis.InitRedis()
 	if err != nil {
 		panic(err)
 	}
