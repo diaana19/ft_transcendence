@@ -21,13 +21,23 @@ export default function Sidebar() {
                       px-4 py-6">
 
       {/* Logo */}
-      <div className="mb-8 px-2">
-        <h1 className="text-xl font-bold text-gray-900">
-          Transcendence
-        </h1>
-        <p className="text-xs text-gray-400">
-          University Community
-        </p>
+      <div className="mb-8 px-2 flex items-center gap-3">
+        {/* Logo */}
+        <img
+          src="/logo.png"
+          alt="Synk logo"
+          className="w-10 h-10 object-contain"
+        />
+
+        {/* Text column */}
+        <div className="flex flex-col leading-tight">
+          <h1 className="text-xl font-bold text-gray-900">
+            Synk
+          </h1>
+          <p className="text-xs text-gray-400">
+            Join your people
+          </p>
+        </div>
       </div>
 
       {/* Navigation */}
