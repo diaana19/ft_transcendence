@@ -50,9 +50,9 @@ return (
    <div className="min-h-screen bg-white flex items-center justify-center">
       <div className="flex flex-col items-center w-full max-w-sm px-8 py-12">
 
-        <img 
-          src="/logo.png" 
-          className="w-10 h-10 object-cover mb-6 rounded"
+        <img
+          src="logo.png"
+          className="w-15 h-15 object-cover mb-6 rounded"
         />
 
         <h1 className="text-black text-2xl font-bold mb-8">
