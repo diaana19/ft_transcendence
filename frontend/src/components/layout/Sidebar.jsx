@@ -1,4 +1,10 @@
 import { NavLink } from "react-router-dom"
+import {
+  HomeIcon,
+  UserIcon,
+  SparklesIcon,
+  QuestionMarkCircleIcon
+} from "@heroicons/react/24/outline"
 
 export default function Sidebar() {
 
@@ -8,6 +14,7 @@ export default function Sidebar() {
         ? "bg-white/60 text-gray-700" 
         : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`
   
+        
   return (
     <aside className="w-64 h-screen fixed left-0 top-0 
                      border-r border-gray-200
@@ -27,19 +34,23 @@ export default function Sidebar() {
       <nav className="space-y-2">
 
         <NavLink to="/" className={linkClass}>
+          <HomeIcon className="w-5 h-5" />
           <span>Home</span>
         </NavLink>
 
         <NavLink to="/profile" className={linkClass}>
+          <UserIcon className="w-5 h-5" />
           <span>Profile</span>
         </NavLink>
 
-        <NavLink to="/messages" className={linkClass}>
-          <span>Messages</span>
+        <NavLink to="/comunities" className={linkClass}>
+          <SparklesIcon className="w-5 h-5" />
+          <span>Comunities</span>
         </NavLink>
 
-        <NavLink to="/search" className={linkClass}>
-          <span>Search</span>
+        <NavLink to="/help" className={linkClass}>
+          <QuestionMarkCircleIcon className="w-5 h-5" />
+          <span>Help</span>
         </NavLink>
 
       </nav>
