@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func create_post_routes(api *gin.RouterGroup, DB *gorm.DB) {
+func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 	postRepo := repositories.NewPostRepository(DB)
 	postService := services.NewPostService(postRepo)
 	postController := controllers.NewPostController(postService)
@@ -22,7 +22,7 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB) {
 		posts.GET("/:id/comments", postController.GetComments)
 
 		protected := posts.Group("")
-		protected.Use(middleware.AuthMiddleware())
+		protected.Use(middleware.AuthMiddleware(rdb))
 		{
 			protected.POST("", postController.CreatePost)
 			protected.PUT("/:id", postController.UpdatePost)
@@ -37,7 +37,7 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB) {
 	}
 }
 
-func SetupRoutes(router *gin.Engine, DB *gorm.DB) {
+func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client) {
 
 	userRepo := repositories.NewUserRepository(DB)
 	authService := services.NewAuthService(userRepo)
@@ -76,6 +76,6 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB) {
 			protected.POST("upload", uploadController.UploadFile)
 		}
 
-		create_post_routes(api, DB)
+		create_post_routes(api, DB, rdb)
 	}
 }
