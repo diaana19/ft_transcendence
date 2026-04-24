@@ -54,6 +54,8 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client) {
 		Service: uploadService,
 	}
 
+	router.Static("/uploads", "./uploads")
+
 	api := router.Group("/api")
 	{
 		api.POST("/auth/register", authController.RegisterUser)
