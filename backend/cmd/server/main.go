@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/Transcendence/config"
+	"github.com/Transcendence/redis"
 	"github.com/Transcendence/routes"
 	"github.com/gin-gonic/gin"
 )
@@ -21,10 +22,22 @@ func main() {
 	var router *gin.Engine = gin.Default()
 	router.SetTrustedProxies(nil)
 
+	rdb, err := redis.InitRedis()
+	if err != nil {
+		log.Fatal(err)
+	}
+	redis.Subscribe(rdb, "test-channel", func(message string) {
+		log.Printf("Handler received: %s", message)
+	})
+
+	if err := redis.Publish(rdb, "test-channel", "Redis pub/sub is working"); err != nil {
+		log.Printf("Publish error: %v\n", err)
+	}
+
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
 			"message": "Backend API is running",
-			"status": "success",
+			"status":  "success",
 		})
 	})
 
@@ -34,11 +47,12 @@ func main() {
 		})
 	})
 
-	routes.SetupRoutes(router, DB)
+	routes.SetupRoutes(router, DB, rdb)
 
-	if (conf.ApiPort == "") {
+	if conf.ApiPort == "" {
 		conf.ApiPort = "8000"
 	}
 
 	router.Run(":" + conf.ApiPort)
+
 }

@@ -1,13 +1,16 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/repositories"
 	"github.com/Transcendence/utils"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 type AuthService struct {
@@ -67,4 +70,13 @@ func (s *AuthService) LoginAuthUserService(identifier, password string) (*models
 
 	user.Password = ""
 	return user, nil
+}
+
+func (s *AuthService) LogoutAuthUserService(token string, expire time.Duration, rdb *redis.Client) error {
+	ctx := context.Background()
+	err := rdb.Set(ctx, "blacklist:"+token, "1", expire).Err()
+	if err != nil {
+		return errors.New("could not logout")
+	}
+	return nil
 }

@@ -6,19 +6,27 @@ import (
 
 	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
-// AuthMiddleware rejects requests that do not carry a valid Bearer token.
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing or invalid token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missin or invalid token"})
 			c.Abort()
 			return
 		}
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+		_, err := rdb.Get(c.Request.Context(), tokenStr).Result()
+		if err == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "token is invalid or logout"})
+			c.Abort()
+			return
+		}
+
 		claims, err := utils.ValidateJWT(tokenStr)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})

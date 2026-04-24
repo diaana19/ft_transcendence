@@ -2,11 +2,13 @@ package tests
 
 import (
 	"os"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
 	"github.com/Transcendence/config"
 	"github.com/Transcendence/models"
+	"github.com/Transcendence/redis"
 	"github.com/Transcendence/routes"
 )
 
@@ -21,11 +23,16 @@ func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 		panic(err)
 	}
 
+	rdb, err := redis.InitRedis()
+	if err != nil {
+		panic(err)
+	}
+
 	db.Exec("DROP TABLE IF EXISTS users CASCADE")
 	db.AutoMigrate(&models.User{})
 
 	router := gin.Default()
-	routes.SetupRoutes(router, db)
+	routes.SetupRoutes(router, db, rdb)
 
 	return router, db
 }
