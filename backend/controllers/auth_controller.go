@@ -44,7 +44,6 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 
 	log.Printf("DEBUG: Received input: %+v\n", input)
 	log.Printf("DEBUG: Password length: %d\n", len(input.Password))
-	log.Printf("DEBUG: Password: %s\n", input.Password)
 
 	parsedDate, err := time.Parse("2006-01-02", input.DateOfBirth)
 	if err != nil {
@@ -70,11 +69,15 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 		return
 	}
 
+	// Build the User struct using pointers for the nullable fields
+	// (Password, DateOfBirth are now *string / *time.Time to support OAuth users).
+	password := input.Password
 	user := models.User{
 		Username:    input.Username,
 		Email:       input.Email,
-		Password:    input.Password,
-		DateOfBirth: parsedDate,
+		Password:    &password,
+		DateOfBirth: &parsedDate,
+		Provider:    "local",
 	}
 
 	response, err := ac.authService.CreateAuthUserService(&user)

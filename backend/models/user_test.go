@@ -5,17 +5,23 @@ import (
 	"time"
 )
 
+func ptrStr(s string) *string {
+	return &s
+}
+
 func TestToResponse_MapsFieldsCorrectly(t *testing.T) {
 	now := time.Now()
+	avatar := "avatar.jpg"
+	wallpaper := "wall.jpg"
 	user := User{
 		ID:        "abc-123",
 		Username:  "testuser",
 		Email:     "test@example.com",
-		Password:  "should-not-appear",
+		Password:  ptrStr("should-not-appear"),
 		Name:      "Test User",
 		Bio:       "A bio",
-		Avatar:    "avatar.jpg",
-		Wallpaper: "wall.jpg",
+		Avatar:    &avatar,
+		Wallpaper: &wallpaper,
 		CreatedAt: now,
 	}
 
@@ -36,11 +42,12 @@ func TestToResponse_MapsFieldsCorrectly(t *testing.T) {
 	if resp.Bio != user.Bio {
 		t.Errorf("expected Bio %s, got %s", user.Bio, resp.Bio)
 	}
-	if resp.Avatar != user.Avatar {
-		t.Errorf("expected Avatar %s, got %s", user.Avatar, resp.Avatar)
+	// Avatar and Wallpaper are now *string; compare pointed values when both non-nil.
+	if resp.Avatar == nil || *resp.Avatar != *user.Avatar {
+		t.Errorf("expected Avatar %v, got %v", user.Avatar, resp.Avatar)
 	}
-	if resp.Wallpaper != user.Wallpaper {
-		t.Errorf("expected Wallpaper %s, got %s", user.Wallpaper, resp.Wallpaper)
+	if resp.Wallpaper == nil || *resp.Wallpaper != *user.Wallpaper {
+		t.Errorf("expected Wallpaper %v, got %v", user.Wallpaper, resp.Wallpaper)
 	}
 	if !resp.CreatedAt.Equal(now) {
 		t.Errorf("expected CreatedAt %v, got %v", now, resp.CreatedAt)
@@ -52,7 +59,7 @@ func TestToResponse_ExcludesPassword(t *testing.T) {
 		ID:       "abc-123",
 		Username: "testuser",
 		Email:    "test@example.com",
-		Password: "secret-password",
+		Password: ptrStr("secret-password"),
 	}
 
 	resp := user.ToResponse()
@@ -79,10 +86,13 @@ func TestToResponse_EmptyFields(t *testing.T) {
 	if resp.Bio != "" {
 		t.Error("empty Bio should remain empty")
 	}
-	if resp.Avatar != "" {
-		t.Error("empty Avatar should remain empty")
+	// When Avatar and Wallpaper are not set on the User, they remain nil
+	// pointers on the response — which is the desired behaviour with
+	// omitempty in JSON output.
+	if resp.Avatar != nil {
+		t.Error("empty Avatar should remain nil")
 	}
-	if resp.Wallpaper != "" {
-		t.Error("empty Wallpaper should remain empty")
+	if resp.Wallpaper != nil {
+		t.Error("empty Wallpaper should remain nil")
 	}
 }

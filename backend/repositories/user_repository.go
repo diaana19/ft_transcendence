@@ -20,6 +20,7 @@ type UserRepository interface {
 	GetByEmail(email string) (*models.User, error)
 	GetByUsername(username string) (*models.User, error)
 	GetByIdentifier(identifier string) (*models.User, error)
+	GetByGithubID(githubID string) (*models.User, error)
 }
 
 func NewUserRepository(db *gorm.DB) UserRepository {
@@ -83,5 +84,14 @@ func (r *userRepository) GetByIdentifier(identifier string) (*models.User, error
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
-	return &user, nil 
+	return &user, nil
+}
+
+// GetByGithubID retrieves a user by their GitHub ID.
+// Used during the OAuth callback flow to recognize returning users.
+// Returns gorm.ErrRecordNotFound if no user matches.
+func (r *userRepository) GetByGithubID(githubID string) (*models.User, error) {
+	var user models.User
+	result := r.db.First(&user, "github_id = ?", githubID)
+	return &user, result.Error
 }

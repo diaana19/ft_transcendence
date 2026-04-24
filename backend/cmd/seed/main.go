@@ -82,6 +82,45 @@ func ensureSchema(db *gorm.DB) error {
 	)
 }
 
+// seedUserInput is an intermediate struct for JSON parsing.
+// We can't unmarshal directly into models.User anymore because Password
+// and DateOfBirth are now pointers — parsing a flat JSON string into a
+// *string is awkward. This intermediate struct keeps the JSON simple
+// while letting us convert to the right pointer types before insert.
+type seedUserInput struct {
+	Name        string    `json:"name"`
+	Username    string    `json:"username"`
+	Email       string    `json:"email"`
+	Password    string    `json:"password"`
+	DateOfBirth time.Time `json:"dateOfBirth"`
+	Bio         string    `json:"bio"`
+	Wallpaper   string    `json:"wallpaper"`
+	Avatar      string    `json:"avatar"`
+}
+
+func (s seedUserInput) toUser() models.User {
+	hashed := hashPassword(s.Password)
+	dob := s.DateOfBirth
+	wallpaper := s.Wallpaper
+	avatar := s.Avatar
+	now := time.Now()
+
+	return models.User{
+		ID:          uuid.NewString(),
+		Name:        s.Name,
+		Username:    s.Username,
+		Email:       s.Email,
+		Password:    &hashed,
+		DateOfBirth: &dob,
+		Bio:         s.Bio,
+		Wallpaper:   &wallpaper,
+		Avatar:      &avatar,
+		Provider:    "local",
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+}
+
 func main() {
 	db, err := config.ConnectDB()
 	if err != nil {
@@ -101,34 +140,25 @@ func main() {
 		panic(err)
 	}
 
-	var users []models.User
-	if err := json.Unmarshal(file, &users); err != nil {
+	var inputs []seedUserInput
+	if err := json.Unmarshal(file, &inputs); err != nil {
 		panic(err)
 	}
 
-	for i := range users {
-		users[i].ID = uuid.NewString()
-		users[i].Password = hashPassword(users[i].Password)
-
-		if users[i].CreatedAt.IsZero() {
-			users[i].CreatedAt = time.Now()
-		}
-		if users[i].UpdatedAt.IsZero() {
-			users[i].UpdatedAt = time.Now()
-		}
-
+	for _, in := range inputs {
 		var existing models.User
-		err := db.Where("email = ? OR username = ?", users[i].Email, users[i].Username).First(&existing).Error
+		err := db.Where("email = ? OR username = ?", in.Email, in.Username).First(&existing).Error
 
 		if err == nil {
-			fmt.Println("User already exists:", users[i].Email)
+			fmt.Println("User already exists:", in.Email)
 			continue
 		}
 
-		if err := db.Create(&users[i]).Error; err != nil {
+		user := in.toUser()
+		if err := db.Create(&user).Error; err != nil {
 			fmt.Println("Error inserting user:", err)
 		} else {
-			fmt.Println("✓ Inserted user:", users[i].Email)
+			fmt.Println("✓ Inserted user:", user.Email)
 		}
 	}
 

@@ -36,11 +36,23 @@ func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserRes
 		return nil, errors.New("user with this username already exists")
 	}
 
-	var err error
-	infos.Password, err = utils.HashString(infos.Password)
+	// Classic registration requires a password.
+	// For OAuth users, creation goes through OAuthService.FindOrCreateUser instead
+	// (so this branch is only reached for local/classic users).
+	if infos.Password == nil || *infos.Password == "" {
+		return nil, errors.New("password is required")
+	}
+
+	hashed, err := utils.HashString(*infos.Password)
 	if err != nil {
 		log.Printf("DEBUG: Error hashing password: %v\n", err)
 		return nil, err
+	}
+	infos.Password = &hashed
+
+	// All classic users get "local" provider explicitly.
+	if infos.Provider == "" {
+		infos.Provider = "local"
 	}
 
 	err = s.repo.CreateUser(infos)
@@ -64,11 +76,18 @@ func (s *AuthService) LoginAuthUserService(identifier, password string) (*models
 	if err != nil {
 		return nil, errors.New("invalid credential")
 	}
-	if !utils.CheckHashString(password, user.Password) {
+
+	// OAuth-only users don't have a password set and cannot log in via form.
+	if user.Password == nil || *user.Password == "" {
 		return nil, errors.New("invalid credential")
 	}
 
-	user.Password = ""
+	if !utils.CheckHashString(password, *user.Password) {
+		return nil, errors.New("invalid credential")
+	}
+
+	// Strip password from response (never expose hashed password).
+	user.Password = nil
 	return user, nil
 }
 
