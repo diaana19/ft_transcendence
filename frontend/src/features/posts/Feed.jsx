@@ -33,7 +33,7 @@ function Feed() {
     setLoading(true)
     try {
       const newPost = await createPost(content)
-      setPosts([newPost, ...posts]) // aparece arriba sin recargar
+      setPosts([newPost, ...posts])
       setContent('')
     } catch (err) {
       console.error('Error creating post:', err)
@@ -42,7 +42,7 @@ function Feed() {
     }
   }
 
-  // Callbacks que le pasa a PostCard
+
   const handleDelete = (postId) => {
     setPosts(posts.filter((p) => p.id !== postId))
   }
@@ -52,7 +52,7 @@ function Feed() {
   }
 
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="max-w-2xl mx-auto space-y-4">
 
       {/* Composer */}
         <CreatePost onPostCreated={() => fetchPosts()} />
