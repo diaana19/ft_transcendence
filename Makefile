@@ -185,12 +185,15 @@ test-frontend:
 # ==================== Database ====================
 
 seed:
-	@echo "Seeding database with users..."
-	@cd backend/cmd/seed && DB_HOST=localhost go run main.go
+	@echo "Seeding database via Docker..."
+	@$(DOCKER_COMPOSE) --profile seed run --rm seed
+	@echo "Seed complete!"
 
-seed-clean:
-	@echo "Cleaning and seeding database..."
-	@cd backend/cmd/seed && DB_HOST=localhost go run main.go -clean
+seed-clean: clean up
+	@echo "Fresh DB, now seeding..."
+	@sleep 3
+	@$(DOCKER_COMPOSE) --profile seed run --rm seed
+	@echo "Clean seed complete!"
 
 # ==================== Shell Access ====================
 

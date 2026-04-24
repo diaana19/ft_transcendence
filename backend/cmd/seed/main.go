@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Transcendence/models"
 	"github.com/Transcendence/config"
+	"github.com/Transcendence/models"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -50,9 +50,9 @@ func seedPosts(db *gorm.DB) {
 
 	for contentIdx, content := range postContents {
 		post := models.Post{
-			ID:       uuid.NewString(),
-			Content:  content,
-			AuthorID: users[contentIdx%len(users)].ID,
+			ID:        uuid.NewString(),
+			Content:   content,
+			AuthorID:  users[contentIdx%len(users)].ID,
 			CreatedAt: time.Now().Add(-time.Duration((len(postContents)-contentIdx)*24) * time.Hour),
 			UpdatedAt: time.Now().Add(-time.Duration((len(postContents)-contentIdx)*24) * time.Hour),
 		}
@@ -71,14 +71,31 @@ func seedPosts(db *gorm.DB) {
 	}
 }
 
+func ensureSchema(db *gorm.DB) error {
+	fmt.Println("🔧 Ensuring schema is up to date...")
+	return db.AutoMigrate(
+		&models.User{},
+		&models.Post{},
+		&models.Like{},
+		&models.Reply{},
+		&models.Repost{},
+	)
+}
+
 func main() {
 	db, err := config.ConnectDB()
 	if err != nil {
 		panic(err)
 	}
 
+	// Make sure all tables exist, even when seeding against a fresh DB
+	// without the backend having started yet.
+	if err := ensureSchema(db); err != nil {
+		panic(fmt.Errorf("schema migration failed: %w", err))
+	}
+
 	// Seed Users
-	fmt.Println("🌱 Seeding users...")
+	fmt.Println("\n🌱 Seeding users...")
 	file, err := os.ReadFile("users.json")
 	if err != nil {
 		panic(err)
