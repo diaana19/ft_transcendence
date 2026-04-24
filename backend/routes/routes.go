@@ -9,6 +9,33 @@ import (
 	"gorm.io/gorm"
 )
 
+func create_post_routes(api *gin.RouterGroup, DB *gorm.DB) {
+	postRepo := repositories.NewPostRepository(DB)
+	postService := services.NewPostService(postRepo)
+	postController := controllers.NewPostController(postService)
+
+	posts := api.Group("/posts")
+	{
+		posts.GET("", middleware.OptionalAuthMiddleware(), postController.GetPosts)
+		posts.GET("/:id", middleware.OptionalAuthMiddleware(), postController.GetPost)
+		posts.GET("/:id/comments", postController.GetComments)
+
+		protected := posts.Group("")
+		protected.Use(middleware.AuthMiddleware())
+		{
+			protected.POST("", postController.CreatePost)
+			protected.PUT("/:id", postController.UpdatePost)
+			protected.DELETE("/:id", postController.DeletePost)
+
+			protected.POST("/:id/like", postController.ToggleLike)
+
+			protected.POST("/:id/comments", postController.CreateComment)
+			protected.PUT("/:id/comments/:commentId", postController.UpdateComment)
+			protected.DELETE("/:id/comments/:commentId", postController.DeleteComment)
+		}
+	}
+}
+
 func SetupRoutes(router *gin.Engine, DB *gorm.DB) {
 
 	userRepo := repositories.NewUserRepository(DB)
@@ -18,18 +45,36 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB) {
 	userService := services.NewUserService(userRepo)
 	userController := controllers.NewUserController(userService)
 
+	friendService := &services.FriendService{DB: DB}
+	friendController := &controllers.FriendController{Service: friendService}
+
+	uploadService := &services.UploadService{}
+	uploadController := &controllers.UploadController{
+		Service: uploadService,
+	}
+
 	api := router.Group("/api")
 	{
 		api.POST("/auth/register", authController.RegisterUser)
 		api.POST("/auth/login", authController.LoginUser)
 		api.POST("/auth/refresh", authController.RefreshToken)
+
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware())
 		{
-			api.GET("/users", userController.GetUsers)
-			api.GET("/users/:id", userController.GetUser)
-			api.PUT("/users/:id", userController.UpdateUser)
-			api.DELETE("/users/:id", userController.DeleteUser)
+			protected.GET("users", userController.GetUsers)
+			protected.GET("users/:id", userController.GetUser)
+			protected.PUT("users/:id", userController.UpdateUser)
+			protected.DELETE("users/:id", userController.DeleteUser)
+
+			protected.POST("friends/request/:id", friendController.SendFriendRequest)
+			protected.POST("friends/accept/:id", friendController.AcceptFriend)
+			protected.POST("friends/follow/:id", friendController.FollowUser)
+
+			protected.POST("upload", uploadController.UploadFile)
+
 		}
+
+		create_post_routes(api, DB)
 	}
 }

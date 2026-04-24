@@ -6,7 +6,7 @@ import (
 )
 
 type User struct {
-	ID        string         `gorm:"primaryKey;type:varchar(36)" json:"id"`
+	ID        string         `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
@@ -15,9 +15,9 @@ type User struct {
 	Username string `json:"username" binding:"required" gorm:"unique;not null"`
 	Email    string `json:"email" binding:"required,email" gorm:"unique;not null"`
 	Password string `json:"password" binding:"required,min=8"`
-	
+
 	DateOfBirth time.Time `json:"dateOfBirth" binding:"required"`
-	
+
 	Wallpaper string `json:"wallpaper"`
 	Avatar    string `json:"avatar"`
 	Bio       string `json:"bio"`
@@ -54,4 +54,11 @@ func (u *User) ToResponse() UserResponse {
 		Wallpaper: u.Wallpaper,
 		CreatedAt: u.CreatedAt,
 	}
+}
+
+type Friend struct {
+	ID       string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	UserID   string `gorm:"type:uuid;not null;index"`
+	FriendID string `gorm:"type:uuid;not null;index"`
+	Status   string
 }
