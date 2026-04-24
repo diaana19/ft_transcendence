@@ -8,6 +8,8 @@ services:
       - "8000:8000"
     volumes:
       - ../backend:/app
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
@@ -37,13 +39,12 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ../database/init.sql:/docker-entrypoint-initdb.d/init.sql/
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
-
+  
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -56,16 +57,25 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-
-  # flyway:
-  #   image: flyway/flyway:latest
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   command: -url=jdbc:postgresql://db:5432/${DB_NAME} -user=${DB_USER} -password=${DB_PASSWORD} migrate
-  #   volumes:
-  #     - ../database/migrations:/flyway/sql
+  
+  seed:
+    image: golang:1.25-alpine
+    container_name: seed
+    working_dir: /app/cmd/seed
+    volumes:
+      - ../backend:/app
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    profiles:
+      - seed
+    command: ["go", "run", "main.go"]
 
 volumes:
   db_data:

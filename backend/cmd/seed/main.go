@@ -6,10 +6,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/Transcendence/models"
 	"github.com/Transcendence/config"
+	"github.com/Transcendence/models"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func hashPassword(password string) string {
@@ -20,12 +21,81 @@ func hashPassword(password string) string {
 	return string(bytes)
 }
 
+var postContents = []string{
+	"Just finished an amazing project! Feeling proud 🎉",
+	"Anyone else love coding at 3am? Coffee is life ☕",
+	"Check out this cool new tech stack I'm learning about!",
+	"Weekend is here! Time to build something cool 🚀",
+	"Finally deployed to production! No more bugs (hopefully) 😅",
+	"Open source contributions are the best way to learn",
+	"Just discovered this incredible library, game changer!",
+	"Working on something secret, can't wait to share soon...",
+	"The debugging journey never ends... but that's what makes it fun!",
+	"New blog post is live! Check it out, feedback welcome 📝",
+	"Sometimes the best code is the code you delete 🗑️",
+	"Excited to announce we're hiring! Great team, great mission 💼",
+}
+
+func seedPosts(db *gorm.DB) {
+	var users []models.User
+	if err := db.Find(&users).Error; err != nil {
+		fmt.Println("Error fetching users:", err)
+		return
+	}
+
+	if len(users) == 0 {
+		fmt.Println("No users found, skipping post seeding")
+		return
+	}
+
+	for contentIdx, content := range postContents {
+		post := models.Post{
+			ID:        uuid.NewString(),
+			Content:   content,
+			AuthorID:  users[contentIdx%len(users)].ID,
+			CreatedAt: time.Now().Add(-time.Duration((len(postContents)-contentIdx)*24) * time.Hour),
+			UpdatedAt: time.Now().Add(-time.Duration((len(postContents)-contentIdx)*24) * time.Hour),
+		}
+
+		var existing models.Post
+		if err := db.Where("content = ? AND author_id = ?", post.Content, post.AuthorID).First(&existing).Error; err == nil {
+			fmt.Println("Post already exists for user:", users[contentIdx%len(users)].Username)
+			continue
+		}
+
+		if err := db.Create(&post).Error; err != nil {
+			fmt.Println("Error inserting post:", err)
+		} else {
+			fmt.Printf("✓ Inserted post for user: %s\n", users[contentIdx%len(users)].Username)
+		}
+	}
+}
+
+func ensureSchema(db *gorm.DB) error {
+	fmt.Println("🔧 Ensuring schema is up to date...")
+	return db.AutoMigrate(
+		&models.User{},
+		&models.Post{},
+		&models.Like{},
+		&models.Reply{},
+		&models.Repost{},
+	)
+}
+
 func main() {
 	db, err := config.ConnectDB()
 	if err != nil {
 		panic(err)
 	}
 
+	// Make sure all tables exist, even when seeding against a fresh DB
+	// without the backend having started yet.
+	if err := ensureSchema(db); err != nil {
+		panic(fmt.Errorf("schema migration failed: %w", err))
+	}
+
+	// Seed Users
+	fmt.Println("\n🌱 Seeding users...")
 	file, err := os.ReadFile("users.json")
 	if err != nil {
 		panic(err)
@@ -38,7 +108,6 @@ func main() {
 
 	for i := range users {
 		users[i].ID = uuid.NewString()
-
 		users[i].Password = hashPassword(users[i].Password)
 
 		if users[i].CreatedAt.IsZero() {
@@ -57,11 +126,15 @@ func main() {
 		}
 
 		if err := db.Create(&users[i]).Error; err != nil {
-			fmt.Println("Error inserting:", err)
+			fmt.Println("Error inserting user:", err)
 		} else {
-			fmt.Println("Inserted:", users[i].Email)
+			fmt.Println("✓ Inserted user:", users[i].Email)
 		}
 	}
 
-	fmt.Println("✅ Seeding Finished")
+	// Seed Posts
+	fmt.Println("\n🌱 Seeding posts...")
+	seedPosts(db)
+
+	fmt.Println("\n✅ Seeding finished!")
 }

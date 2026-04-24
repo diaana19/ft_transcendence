@@ -29,11 +29,27 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 
 		claims, err := utils.ValidateJWT(tokenStr)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()
 			return
 		}
-		c.Set("userID", claims.UserId)
+
+		c.Set("user_id", claims.UserId)
+		c.Next()
+	}
+}
+
+// OptionalAuthMiddleware parses the token when present but never rejects the request.
+// Controllers can check whether "user_id" is set to personalise the response (e.g. liked=true).
+func OptionalAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+			if claims, err := utils.ValidateJWT(tokenStr); err == nil {
+				c.Set("user_id", claims.UserId)
+			}
+		}
 		c.Next()
 	}
 }
