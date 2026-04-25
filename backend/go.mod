@@ -10,6 +10,7 @@ require (
 	github.com/lib/pq v1.12.2
 	github.com/redis/go-redis/v9 v9.18.0
 	golang.org/x/crypto v0.49.0
+	golang.org/x/oauth2 v0.36.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
 )

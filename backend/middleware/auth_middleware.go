@@ -39,8 +39,8 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	}
 }
 
-// OptionalAuthMiddleware parses the token when present but never rejects the request.
-// Controllers can check whether "user_id" is set to personalise the response (e.g. liked=true).
+
+
 func OptionalAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")

@@ -42,7 +42,7 @@ func TestToResponse_MapsFieldsCorrectly(t *testing.T) {
 	if resp.Bio != user.Bio {
 		t.Errorf("expected Bio %s, got %s", user.Bio, resp.Bio)
 	}
-	// Avatar and Wallpaper are now *string; compare pointed values when both non-nil.
+
 	if resp.Avatar == nil || *resp.Avatar != *user.Avatar {
 		t.Errorf("expected Avatar %v, got %v", user.Avatar, resp.Avatar)
 	}
@@ -64,8 +64,8 @@ func TestToResponse_ExcludesPassword(t *testing.T) {
 
 	resp := user.ToResponse()
 
-	// UserResponse struct has no Password field, so this is a compile-time guarantee.
-	// We verify the response only contains expected fields.
+
+
 	if resp.ID == "" || resp.Username == "" || resp.Email == "" {
 		t.Error("response should contain ID, Username, and Email")
 	}
@@ -86,9 +86,9 @@ func TestToResponse_EmptyFields(t *testing.T) {
 	if resp.Bio != "" {
 		t.Error("empty Bio should remain empty")
 	}
-	// When Avatar and Wallpaper are not set on the User, they remain nil
-	// pointers on the response — which is the desired behaviour with
-	// omitempty in JSON output.
+
+
+
 	if resp.Avatar != nil {
 		t.Error("empty Avatar should remain nil")
 	}

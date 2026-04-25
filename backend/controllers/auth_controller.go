@@ -69,8 +69,6 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	// Build the User struct using pointers for the nullable fields
-	// (Password, DateOfBirth are now *string / *time.Time to support OAuth users).
 	password := input.Password
 	user := models.User{
 		Username:    input.Username,
@@ -129,8 +127,6 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"token": newToken})
 }
-
-// logout use redis by putting the token in redis db
 
 func (ac *AuthController) LogoutUser(c *gin.Context) {
 	tokenStr := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")

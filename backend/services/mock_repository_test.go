@@ -60,8 +60,8 @@ func (m *mockUserRepository) Update(id string, input models.UpdateUserInput) (*m
 	if input.Bio != "" {
 		user.Bio = input.Bio
 	}
-	// Avatar and Wallpaper are now *string to allow null values.
-	// A non-nil pointer means the client wants to set/update the field.
+
+
 	if input.Avatar != nil {
 		user.Avatar = input.Avatar
 	}
@@ -117,7 +117,7 @@ func (m *mockUserRepository) GetByIdentifier(identifier string) (*models.User, e
 	return nil, errors.New("user not found")
 }
 
-// GetByGithubID added to satisfy the UserRepository interface after OAuth work.
+
 func (m *mockUserRepository) GetByGithubID(githubID string) (*models.User, error) {
 	for _, u := range m.users {
 		if u.GithubID != nil && *u.GithubID == githubID {
@@ -125,4 +125,18 @@ func (m *mockUserRepository) GetByGithubID(githubID string) (*models.User, error
 		}
 	}
 	return nil, errors.New("record not found")
+}
+
+func (m *mockUserRepository) LinkGithub(userID, githubID string) error {
+	if m.err != nil {
+		return m.err
+	}
+	user, ok := m.users[userID]
+	if !ok {
+		return errors.New("record not found")
+	}
+	gid := githubID  // need pointer
+	user.GithubID = &gid
+	user.Provider = "github"
+	return nil
 }

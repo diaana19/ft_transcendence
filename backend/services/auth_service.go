@@ -36,9 +36,9 @@ func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserRes
 		return nil, errors.New("user with this username already exists")
 	}
 
-	// Classic registration requires a password.
-	// For OAuth users, creation goes through OAuthService.FindOrCreateUser instead
-	// (so this branch is only reached for local/classic users).
+
+
+
 	if infos.Password == nil || *infos.Password == "" {
 		return nil, errors.New("password is required")
 	}
@@ -50,7 +50,7 @@ func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserRes
 	}
 	infos.Password = &hashed
 
-	// All classic users get "local" provider explicitly.
+
 	if infos.Provider == "" {
 		infos.Provider = "local"
 	}
@@ -77,7 +77,7 @@ func (s *AuthService) LoginAuthUserService(identifier, password string) (*models
 		return nil, errors.New("invalid credential")
 	}
 
-	// OAuth-only users don't have a password set and cannot log in via form.
+
 	if user.Password == nil || *user.Password == "" {
 		return nil, errors.New("invalid credential")
 	}
@@ -86,7 +86,7 @@ func (s *AuthService) LoginAuthUserService(identifier, password string) (*models
 		return nil, errors.New("invalid credential")
 	}
 
-	// Strip password from response (never expose hashed password).
+
 	user.Password = nil
 	return user, nil
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/Transcendence/utils"
 )
 
-// ptrStr is a small helper to take the address of a string literal,
-// now needed because User.Password is *string (nullable for OAuth users).
+
+
 func ptrStr(s string) *string {
 	return &s
 }
@@ -167,7 +167,7 @@ func TestCreateAuthUserService_ResponseExcludesPassword(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// UserResponse struct has no Password field - compile-time safety
+
 	if resp.Username == "" || resp.Email == "" {
 		t.Error("response should contain user info")
 	}
@@ -210,7 +210,7 @@ func TestLoginAuthUserService_ClearsPassword(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	// Password is now *string; login should nil it out before returning.
+
 	if user.Password != nil {
 		t.Error("password should be cleared (nil) in login response")
 	}

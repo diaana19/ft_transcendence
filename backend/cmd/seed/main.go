@@ -82,11 +82,6 @@ func ensureSchema(db *gorm.DB) error {
 	)
 }
 
-// seedUserInput is an intermediate struct for JSON parsing.
-// We can't unmarshal directly into models.User anymore because Password
-// and DateOfBirth are now pointers — parsing a flat JSON string into a
-// *string is awkward. This intermediate struct keeps the JSON simple
-// while letting us convert to the right pointer types before insert.
 type seedUserInput struct {
 	Name        string    `json:"name"`
 	Username    string    `json:"username"`
@@ -127,13 +122,10 @@ func main() {
 		panic(err)
 	}
 
-	// Make sure all tables exist, even when seeding against a fresh DB
-	// without the backend having started yet.
 	if err := ensureSchema(db); err != nil {
 		panic(fmt.Errorf("schema migration failed: %w", err))
 	}
 
-	// Seed Users
 	fmt.Println("\n🌱 Seeding users...")
 	file, err := os.ReadFile("users.json")
 	if err != nil {
@@ -162,7 +154,6 @@ func main() {
 		}
 	}
 
-	// Seed Posts
 	fmt.Println("\n🌱 Seeding posts...")
 	seedPosts(db)
 
