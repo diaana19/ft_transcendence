@@ -130,6 +130,13 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 
 func (ac *AuthController) LogoutUser(c *gin.Context) {
 	tokenStr := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
+
+	if tokenStr == "" {
+		if cookieToken, err := c.Cookie("auth_token"); err == nil {
+			tokenStr = cookieToken
+		}
+	}
+
 	if tokenStr == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
 		return
@@ -146,6 +153,7 @@ func (ac *AuthController) LogoutUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	c.SetCookie("auth_token", "", -1, "/", "", false, true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }
