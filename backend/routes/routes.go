@@ -67,6 +67,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 		api.POST("/auth/refresh", authController.RefreshToken)
 
 		api.GET("/auth/oauth/github/login", oauthController.OAuthLogin)
+		api.GET("/auth/oauth/github/callback", oauthController.OAuthCallback)
 
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware(rdb))
