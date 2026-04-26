@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebSocket Test</title>
+  <div>connect to socket then join a room</div>
+  <style>
+    body { font-family: monospace; padding: 20px; max-width: 800px; margin: 0 auto; }
+    #log { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 10px; margin: 10px 0; background: #f5f5f5; }
+    .received { color: green; }
+    .sent { color: blue; }
+    .error { color: red; }
+    .system { color: gray; }
+    input, button { padding: 8px; margin: 4px; }
+    input[type="text"] { width: 300px; }
+    hr { margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <h2>WebSocket Chat Test</h2>
+
+  <!-- REGISTER -->
+  <h3>Register</h3>
+  <div>
+    <input id="reg_username" type="text" placeholder="username" value="testuser" />
+    <input id="reg_email" type="text" placeholder="email" value="test@test.com" />
+    <input id="reg_password" type="password" placeholder="password" value="Secret1s!2ds3" />
+    <input id="reg_dob" type="date" value="1995-06-15" />
+    <button onclick="register()">Register</button>
+  </div>
+
+  <hr/>
+
+  <!-- LOGIN -->
+  <h3>Login</h3>
+  <div>
+    <!-- <input id="log_username" type="text" placeholder="username" value="testuser" /> -->
+    <input id="login_identifier" type="text" placeholder="username" value="testuser" />
+    <input id="login_password" type="password" placeholder="password" value="Secret1s!2ds3" />
+    <button onclick="login()">Login</button>
+  </div>
+
+  <hr/>
+
+  <!-- WEBSOCKET -->
+  <h3>WebSocket</h3>
+  <div>
+    <input id="roomId" type="text" placeholder="room_id" value="room-1" />
+    <button onclick="connectWS()">Connect WS</button>
+    <button onclick="joinRoom()">Join Room</button>
+    <button onclick="leaveRoom()">Leave Room</button>
+    <button onclick="disconnect()">Disconnect</button>
+  </div>
+
+  <hr/>
+
+  <!-- SEND MESSAGE -->
+  <h3>Send Message</h3>
+  <div>
+    <input id="message" type="text" placeholder="message content" />
+    <input id="parentId" type="text" placeholder="parent_id (optional)" />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <div id="log"></div>
+
+  <script>
+    let ws = null
+    let token = null
+
+    function log(msg, type = 'system') {
+      const div = document.getElementById('log')
+      const line = document.createElement('div')
+      line.className = type
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`
+      div.appendChild(line)
+      div.scrollTop = div.scrollHeight
+    }
+
+    async function register() {
+      const username = document.getElementById('reg_username').value
+      const email = document.getElementById('reg_email').value
+      const password = document.getElementById('reg_password').value
+      const dateOfBirth = document.getElementById('reg_dob').value
+
+      try {
+        const res = await fetch('http://localhost:8000/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password, dateOfBirth })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          log(`Registered: ${data.username}`, 'system')
+        } else {
+          log(`Register failed: ${data.error}`, 'error')
+        }
+      } catch (e) {
+        log(`Register error: ${e.message}`, 'error')
+      }
+    }
+
+    // a login with either email or username
+    async function login() {
+      const identifier = document.getElementById('login_identifier').value
+      const password = document.getElementById('login_password').value
+
+      const isEmail = identifier.includes('@')
+      const body = isEmail 
+          ? { email: identifier, password }
+          : { username: identifier, password }
+
+      const res = await fetch('http://localhost:8000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+      })
+      const data = await res.json()
+      if (data.token) {
+          token = data.token
+          log(`Logged in as ${data.user?.username} — token saved`, 'system')
+      } else {
+          log(`Login failed: ${JSON.stringify(data)}`, 'error')
+      }
+  }
+
+    function connectWS() {
+      if (!token) { log('Login first!', 'error'); return }
+      if (ws) ws.close()
+
+      ws = new WebSocket(`ws://localhost:8000/api/ws/chat?token=${token}`)
+      ws.onopen = () => log('WebSocket connected!', 'system')
+      ws.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data)
+          log(`RECEIVED: ${JSON.stringify(data)}`, 'received')
+        } catch {
+          log(`RECEIVED (raw): ${e.data}`, 'received')
+        }
+      }
+      ws.onerror = (e) => log(`WS error: ${e.message}`, 'error')
+      ws.onclose = () => log('WebSocket disconnected', 'system')
+    }
+
+    function send(payload) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        log('Not connected!', 'error')
+        return
+      }
+      const msg = JSON.stringify(payload)
+      ws.send(msg)
+      log(`SENT: ${msg}`, 'sent')
+    }
+
+    function joinRoom() {
+      send({ action: 'join', room_id: document.getElementById('roomId').value })
+    }
+
+    function leaveRoom() {
+      send({ action: 'leave', room_id: document.getElementById('roomId').value })
+    }
+
+    function sendMessage() {
+      const content = document.getElementById('message').value
+      const parentId = document.getElementById('parentId').value
+      const payload = {
+        action: 'message',
+        room_id: document.getElementById('roomId').value,
+        content
+      }
+      if (parentId) payload.parent_id = parentId
+      send(payload)
+      document.getElementById('message').value = ''
+    }
+
+    function disconnect() {
+      if (ws) ws.close()
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && document.activeElement.id === 'message') {
+        sendMessage()
+      }
+    })
+  </script>
+</body>
+</html>
