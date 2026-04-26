@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/Transcendence/models"
@@ -24,8 +25,10 @@ var upgrader = websocket.Upgrader{
 }
 
 type ChatHandler struct {
-	manager *WSManager
-	rdb     *redis.Client
+	manager         *WSManager
+	rdb             *redis.Client
+	subscribedRooms map[string]bool
+	subscribedMu    sync.Mutex
 }
 
 type IncomingMessage struct {
@@ -43,7 +46,7 @@ type OutgoingMessage struct {
 }
 
 func NewChatHandler(manager *WSManager, rdb *redis.Client) *ChatHandler {
-	return &ChatHandler{manager: manager, rdb: rdb}
+	return &ChatHandler{manager: manager, rdb: rdb, subscribedRooms: make(map[string]bool)}
 }
 
 func (h *ChatHandler) HandleWS(c *gin.Context) {
@@ -126,9 +129,14 @@ func (h *ChatHandler) handleJoin(client *Client, roomID string) {
 	}
 	h.manager.JoinRoom(client, roomID)
 
-	redispub.Subscribe(h.rdb, "chat:"+roomID, func(payload string) {
-		h.manager.BroadcastToRoom(roomID, []byte(payload), "")
-	})
+	h.subscribedMu.Lock()
+	if !h.subscribedRooms[roomID] {
+		h.subscribedRooms[roomID] = true
+		redispub.Subscribe(h.rdb, "chat:"+roomID, func(payload string) {
+			h.manager.BroadcastToRoom(roomID, []byte(payload), "")
+		})
+	}
+	h.subscribedMu.Unlock()
 
 	out := OutgoingMessage{
 		Type:   "joined",
