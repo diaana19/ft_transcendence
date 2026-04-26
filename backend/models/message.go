@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
 // Type is either "dm" or "tweet"
@@ -18,11 +16,4 @@ type Message struct {
 	Content   string    `json:"content" gorm:"not null"`
 	ParentID  *string   `json:"parent_id" gorm:"default:null"`
 	Replies   []Message `json:"replies,omitempty" gorm:"foreignKey:ParentID"`
-}
-
-type Client struct {
-	ID     string
-	RoomID string
-	Conn   *websocket.Conn
-	Send   chan []byte
 }
