@@ -61,7 +61,7 @@ func seedPosts(db *gorm.DB) {
 		if err := db.Where("content = ? AND author_id = ?", post.Content, post.AuthorID).First(&existing).Error; err == nil {
 			fmt.Println("Post already exists for user:", users[contentIdx%len(users)].Username)
 			continue
-		}
+		} 
 
 		if err := db.Create(&post).Error; err != nil {
 			fmt.Println("Error inserting post:", err)

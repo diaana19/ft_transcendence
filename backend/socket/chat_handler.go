@@ -39,10 +39,11 @@ type IncomingMessage struct {
 }
 
 type OutgoingMessage struct {
-	Type    string          `json:"type"`
-	Message *models.Message `json:"message,omitempty"`
-	UserID  string          `json:"user_id,omitempty"`
-	RoomID  string          `json:"room_id,omitempty"`
+	Type     string          `json:"type"`
+	Message  *models.Message `json:"message,omitempty"`
+	Username string          `json:"username,omitempty"`
+	UserID   string          `json:"user_id,omitempty"`
+	RoomID   string          `json:"room_id,omitempty"`
 }
 
 func NewChatHandler(manager *WSManager, rdb *redis.Client) *ChatHandler {
@@ -52,6 +53,7 @@ func NewChatHandler(manager *WSManager, rdb *redis.Client) *ChatHandler {
 func (h *ChatHandler) HandleWS(c *gin.Context) {
 
 	var userID string
+	var username string
 	if id, exists := c.Get("userID"); exists {
 		userID = id.(string)
 	} else {
@@ -67,6 +69,7 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 			return
 		}
 		userID = claims.UserId
+		username = claims.Username
 	}
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -76,9 +79,10 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 	}
 
 	client := &Client{
-		ID:   userID,
-		Conn: conn,
-		Send: make(chan []byte, 256),
+		ID:       userID,
+		Username: username,
+		Conn:     conn,
+		Send:     make(chan []byte, 256),
 	}
 
 	h.manager.RegisterClient(client)
@@ -139,9 +143,10 @@ func (h *ChatHandler) handleJoin(client *Client, roomID string) {
 	h.subscribedMu.Unlock()
 
 	out := OutgoingMessage{
-		Type:   "joined",
-		UserID: client.ID,
-		RoomID: roomID,
+		Type:     "joined",
+		UserID:   client.ID,
+		Username: client.Username,
+		RoomID:   roomID,
 	}
 	h.publishToRoom(roomID, out, "")
 }
@@ -153,9 +158,10 @@ func (h *ChatHandler) handleLeave(client *Client, roomID string) {
 	h.manager.LeaveRoom(client, roomID)
 
 	out := OutgoingMessage{
-		Type:   "left",
-		UserID: client.ID,
-		RoomID: roomID,
+		Type:     "left",
+		UserID:   client.ID,
+		Username: client.Username,
+		RoomID:   roomID,
 	}
 	h.publishToRoom(roomID, out, client.ID)
 }
@@ -169,6 +175,7 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		ID:        uuid.New().String(),
 		CreatedAt: time.Now(),
 		SenderID:  client.ID,
+		Username:  client.Username,
 		RoomID:    incoming.RoomID,
 		Content:   incoming.Content,
 		ParentID:  incoming.ParentID,

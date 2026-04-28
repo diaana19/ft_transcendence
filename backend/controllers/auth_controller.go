@@ -113,8 +113,8 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 		return
 	}
 
-	log.Printf("✅ Login success: userID=%s, ip=%s", user.ID, c.ClientIP())
-	token, err := utils.GenerateJWT(user.ID)
+	log.Printf("✅ Login success: userID=%s, ip=%s, username=%s", user.ID, c.ClientIP(), user.Username)
+	token, err := utils.GenerateJWT(user.ID, user.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
 		return
