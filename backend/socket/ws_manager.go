@@ -8,9 +8,10 @@ import (
 )
 
 type Client struct {
-	ID   string
-	Conn *websocket.Conn
-	Send chan []byte
+	ID       string
+	Username string
+	Conn     *websocket.Conn
+	Send     chan []byte
 }
 
 type WSManager struct {
