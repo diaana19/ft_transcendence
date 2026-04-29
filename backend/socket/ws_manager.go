@@ -32,7 +32,7 @@ func (m *WSManager) RegisterClient(client *Client) {
 	defer m.mu.Unlock()
 
 	m.clients[client.ID] = client
-	log.Printf("Client %s connected\n", client.ID)
+	log.Printf("Client %s connected\n", client.Username)
 }
 
 func (m *WSManager) UnregisterClient(client *Client) {
@@ -61,7 +61,7 @@ func (m *WSManager) JoinRoom(client *Client, roomID string) {
 		m.rooms[roomID] = make(map[string]*Client)
 	}
 	m.rooms[roomID][client.ID] = client
-	log.Printf("Client %s has joined room [%s]\n", client.ID, roomID)
+	log.Printf("Client %s has joined room [%s]\n", client.Username, roomID)
 }
 
 func (m *WSManager) LeaveRoom(client *Client, roomID string) {
@@ -70,10 +70,23 @@ func (m *WSManager) LeaveRoom(client *Client, roomID string) {
 
 	if room, ok := m.rooms[roomID]; ok {
 		delete(room, client.ID)
-		log.Printf("Client %s has left the room [%s\n]", client.ID, roomID)
+		log.Printf("Client %s has left the room [%s\n]", client.Username, roomID)
 		if len(room) == 0 {
 			delete(m.rooms, roomID)
 		}
+	}
+}
+
+func safeSend(ch chan []byte, msg []byte) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("safeSend: channel was closed, dropping message\n")
+		}
+	}()
+	select {
+	case ch <- msg:
+	default:
+		log.Printf("safeSend: buffer full, dropping message\n")
 	}
 }
 
@@ -89,11 +102,7 @@ func (m *WSManager) BroadcastToRoom(roomID string, message []byte, senderID stri
 		if client.ID == senderID {
 			continue
 		}
-		select {
-		case client.Send <- message:
-		default:
-			log.Printf("Client %s buffer full, dropping message\n", client.ID)
-		}
+		safeSend(client.Send, message)
 	}
 }
 
