@@ -47,6 +47,8 @@ func ConnectDB() (*gorm.DB, error) {
 		&models.Like{},
 		&models.Reply{},
 		&models.Repost{},
+		&models.Friend{},
+		&models.Notification{},
 	)
 	if err != nil {
 		log.Printf("AutoMigrate error: %v\n", err)

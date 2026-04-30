@@ -61,7 +61,7 @@ func seedPosts(db *gorm.DB) {
 		if err := db.Where("content = ? AND author_id = ?", post.Content, post.AuthorID).First(&existing).Error; err == nil {
 			fmt.Println("Post already exists for user:", users[contentIdx%len(users)].Username)
 			continue
-		} 
+		}
 
 		if err := db.Create(&post).Error; err != nil {
 			fmt.Println("Error inserting post:", err)
@@ -75,6 +75,8 @@ func ensureSchema(db *gorm.DB) error {
 	fmt.Println("🔧 Ensuring schema is up to date...")
 	return db.AutoMigrate(
 		&models.User{},
+		&models.Notification{},
+		&models.Friend{},
 		&models.Post{},
 		&models.Like{},
 		&models.Reply{},

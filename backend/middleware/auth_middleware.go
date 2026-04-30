@@ -54,7 +54,8 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user_id", claims.UserId)
+		c.Set("userID", claims.UserId)
+		c.Set("username", claims.Username)
 		c.Next()
 	}
 }
@@ -65,6 +66,12 @@ func OptionalAuthMiddleware() gin.HandlerFunc {
 		if token == "" {
 			c.Next()
 			return
+		authHeader := c.GetHeader("Authorization")
+		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+			if claims, err := utils.ValidateJWT(tokenStr); err == nil {
+				c.Set("userID", claims.UserId)
+			}
 		}
 
 		claims, err := utils.ValidateJWT(token)

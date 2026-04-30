@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/Transcendence/services"
 
@@ -10,54 +9,54 @@ import (
 )
 
 type FriendController struct {
-    Service *services.FriendService
+	Service             *services.FriendService
+	NotificationService *services.NotificationService
 }
 
 func (fc *FriendController) SendFriendRequest(c *gin.Context) {
-	userID := c.MustGet("userID").(uint)
-	targetID, _ := strconv.Atoi(c.Param("id"))
+	userID := c.MustGet("userID").(string)
+	userUsername := c.MustGet("username").(string)
+	targetID := c.Param("id")
 
-	err := fc.Service.SendRequest(
-        strconv.FormatUint(uint64(userID), 10),
-        strconv.Itoa(int(targetID)),
-    )
-
+	err := fc.Service.SendRequest(userID, targetID)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
+	fc.NotificationService.SendNotification(
+		targetID,
+		userUsername,
+		userID,
+		userUsername,
+		"friend_request",
+		userUsername+" sent you a friend request",
+	)
 	c.JSON(200, gin.H{"message": "request sent"})
 }
 
 func (fc *FriendController) AcceptFriend(c *gin.Context) {
-    userID := c.GetUint("userID")
-    requesterID, _ := strconv.Atoi(c.Param("id"))
+	userID := c.MustGet("userID").(string)
+	requesterID := c.Param("id")
 
-    err := fc.Service.AcceptRequest(
-        strconv.FormatUint(uint64(userID), 10),
-        strconv.Itoa(int(requesterID)),
-    )
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	err := fc.Service.AcceptRequest(userID, requesterID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"message": "friend request accepted"})
+	c.JSON(http.StatusOK, gin.H{"message": "friend request accepted"})
 }
 
 func (fc *FriendController) FollowUser(c *gin.Context) {
-    userID := c.GetUint("userID")
-    targetID, _ := strconv.Atoi(c.Param("id"))
+	userID := c.MustGet("userID").(string)
+	targetID := c.Param("id")
 
-    err := fc.Service.Follow(
-        strconv.FormatUint(uint64(userID), 10),
-        strconv.Itoa(int(targetID)),
-    )
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	err := fc.Service.Follow(userID, targetID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"message": "user followed"})
+	c.JSON(http.StatusOK, gin.H{"message": "user followed"})
 }

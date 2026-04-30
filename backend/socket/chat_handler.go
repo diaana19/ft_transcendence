@@ -9,6 +9,7 @@ import (
 
 	"github.com/Transcendence/models"
 	redispub "github.com/Transcendence/redis"
+	"github.com/Transcendence/services"
 	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -25,10 +26,11 @@ var upgrader = websocket.Upgrader{
 }
 
 type ChatHandler struct {
-	manager         *WSManager
-	rdb             *redis.Client
-	subscribedRooms map[string]bool
-	subscribedMu    sync.Mutex
+	manager             *WSManager
+	rdb                 *redis.Client
+	notificationService *services.NotificationService
+	subscribedRooms     map[string]bool
+	subscribedMu        sync.Mutex
 }
 
 type IncomingMessage struct {
@@ -46,8 +48,31 @@ type OutgoingMessage struct {
 	RoomID   string          `json:"room_id,omitempty"`
 }
 
-func NewChatHandler(manager *WSManager, rdb *redis.Client) *ChatHandler {
-	return &ChatHandler{manager: manager, rdb: rdb, subscribedRooms: make(map[string]bool)}
+func NewChatHandler(manager *WSManager, rdb *redis.Client, notifService *services.NotificationService) *ChatHandler {
+	return &ChatHandler{
+		manager:             manager,
+		rdb:                 rdb,
+		notificationService: notifService,
+		subscribedRooms:     make(map[string]bool),
+	}
+}
+
+func (h *ChatHandler) sendPendingNotifications(client *Client) {
+    notifs, err := h.notificationService.GetUnread(client.ID)
+    if err != nil || len(notifs) == 0 {
+        return
+    }
+    for _, n := range notifs {
+        payload, err := json.Marshal(map[string]interface{}{
+            "type":         "notification",
+            "notification": n,
+        })
+        if err != nil {
+            continue
+        }
+        client.Send <- payload
+    }
+    h.notificationService.MarkAllRead(client.ID)
 }
 
 func (h *ChatHandler) HandleWS(c *gin.Context) {
@@ -87,6 +112,11 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 
 	h.manager.RegisterClient(client)
 	defer h.manager.UnregisterClient(client)
+
+	redispub.Subscribe(h.rdb, "notifications:"+client.ID, func(payload string) {
+		client.Send <- []byte(payload)
+	})
+	h.sendPendingNotifications(client)
 
 	go client.WritePump()
 
