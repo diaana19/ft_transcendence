@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/Transcendence/config"
@@ -39,7 +40,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	redis.Subscribe(rdb, "test-channel", func(message string) {
+	redis.Subscribe(context.Background(), rdb, "test-channel", func(message string) {
 		log.Printf("Handler received: %s", message)
 	})
 

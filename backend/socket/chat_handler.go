@@ -1,6 +1,7 @@
 package socket
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -58,21 +59,21 @@ func NewChatHandler(manager *WSManager, rdb *redis.Client, notifService *service
 }
 
 func (h *ChatHandler) sendPendingNotifications(client *Client) {
-    notifs, err := h.notificationService.GetUnread(client.ID)
-    if err != nil || len(notifs) == 0 {
-        return
-    }
-    for _, n := range notifs {
-        payload, err := json.Marshal(map[string]interface{}{
-            "type":         "notification",
-            "notification": n,
-        })
-        if err != nil {
-            continue
-        }
-        client.Send <- payload
-    }
-    h.notificationService.MarkAllRead(client.ID)
+	notifs, err := h.notificationService.GetUnread(client.ID)
+	if err != nil || len(notifs) == 0 {
+		return
+	}
+	for _, n := range notifs {
+		payload, err := json.Marshal(map[string]interface{}{
+			"type":         "notification",
+			"notification": n,
+		})
+		if err != nil {
+			continue
+		}
+		safeSend(client.Send, payload)
+	}
+	h.notificationService.MarkAllRead(client.ID)
 }
 
 func (h *ChatHandler) HandleWS(c *gin.Context) {
@@ -111,10 +112,13 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 	}
 
 	h.manager.RegisterClient(client)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	defer h.manager.UnregisterClient(client)
 
-	redispub.Subscribe(h.rdb, "notifications:"+client.ID, func(payload string) {
-		client.Send <- []byte(payload)
+	redispub.Subscribe(ctx, h.rdb, "notifications:"+client.ID, func(payload string) {
+		safeSend(client.Send, []byte(payload))
 	})
 	h.sendPendingNotifications(client)
 
@@ -166,7 +170,7 @@ func (h *ChatHandler) handleJoin(client *Client, roomID string) {
 	h.subscribedMu.Lock()
 	if !h.subscribedRooms[roomID] {
 		h.subscribedRooms[roomID] = true
-		redispub.Subscribe(h.rdb, "chat:"+roomID, func(payload string) {
+		redispub.Subscribe(context.Background(), h.rdb, "chat:"+roomID, func(payload string) {
 			h.manager.BroadcastToRoom(roomID, []byte(payload), "")
 		})
 	}
