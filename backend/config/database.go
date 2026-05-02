@@ -40,8 +40,8 @@ func ConnectDB() (*gorm.DB, error) {
 		return nil, err
 	}
 	
-	log.Printf("DEBUG: Running AutoMigrate for User model\n")
-	errA := DB.AutoMigrate(&models.User{})
+	log.Printf("DEBUG: Running AutoMigrate for User and Message models\n")
+	errA := DB.AutoMigrate(&models.User{}, &models.Message{})
 	if errA != nil {
 		log.Printf("DEBUG: AutoMigrate error: %v\n", errA)
 		return nil, errA

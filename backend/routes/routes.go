@@ -18,6 +18,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB) {
 	userService := services.NewUserService(userRepo)
 	userController := controllers.NewUserController(userService)
 
+	messageRepo := repositories.NewMessageRepository(DB)
+	chatService := services.NewChatService(messageRepo, userRepo)
+	chatController := controllers.NewChatController(chatService)
+
 	api := router.Group("/api")
 	{
 		api.POST("/auth/register", authController.RegisterUser)
@@ -30,6 +34,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB) {
 			api.GET("/users/:id", userController.GetUser)
 			api.PUT("/users/:id", userController.UpdateUser)
 			api.DELETE("/users/:id", userController.DeleteUser)
+
+			protected.POST("/chat/messages", chatController.SendMessage)
+			protected.GET("/chat/messages", chatController.ListConversation)
+			protected.GET("/chat/poll", chatController.Poll)
 		}
 	}
 }

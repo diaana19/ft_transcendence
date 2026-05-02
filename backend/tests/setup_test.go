@@ -75,8 +75,9 @@ func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 		panic(fmt.Errorf("connect test db: %w", err))
 	}
 
+	db.Exec("DROP TABLE IF EXISTS messages CASCADE")
 	db.Exec("DROP TABLE IF EXISTS users CASCADE")
-	db.AutoMigrate(&models.User{})
+	db.AutoMigrate(&models.User{}, &models.Message{})
 
 	router := gin.Default()
 	routes.SetupRoutes(router, db)
