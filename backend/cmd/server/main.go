@@ -47,7 +47,7 @@ func main() {
 		})
 	})
 
-	routes.SetupRoutes(router, DB, rdb)
+	routes.SetupRoutes(router, DB, rdb, conf)
 
 	if conf.ApiPort == "" {
 		conf.ApiPort = "8000"

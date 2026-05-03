@@ -1305,8 +1305,8 @@ FodyWeavers.xsd
 
 //others
 .air.toml
-.env
 tmp
 post_implementation.*
 *:Zone.Identifier
 *.zip
+.env

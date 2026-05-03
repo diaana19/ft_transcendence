@@ -16,7 +16,7 @@ func NewPostService(repo repositories.PostRepository) *PostService {
 	return &PostService{repo: repo}
 }
 
-// ─── Posts ────────────────────────────────────────────────────────────────────
+
 
 func (s *PostService) GetPosts(page, limit int) ([]models.Post, int64, error) {
 	return s.repo.GetAll(page, limit)
@@ -66,12 +66,12 @@ func (s *PostService) DeletePost(id string, authorID string) error {
 	return s.repo.Delete(id)
 }
 
-// ─── Likes ────────────────────────────────────────────────────────────────────
 
-// ToggleLike likes a post if the user hasn't liked it yet, or unlikes it otherwise.
-// Returns (liked bool, updatedPost *Post, error).
+
+
+
 func (s *PostService) ToggleLike(userID, postID string) (bool, *models.Post, error) {
-	// Verify post exists
+
 	post, err := s.repo.GetByID(postID)
 	if err != nil {
 		return false, nil, err
@@ -100,12 +100,12 @@ func (s *PostService) ToggleLike(userID, postID string) (bool, *models.Post, err
 	return true, post, nil
 }
 
-// HasLiked returns whether a user has liked a post.
+
 func (s *PostService) HasLiked(userID, postID string) (bool, error) {
 	return s.repo.HasLiked(userID, postID)
 }
 
-// ─── Comments ─────────────────────────────────────────────────────────────────
+
 
 func (s *PostService) CreateComment(content, authorID, postID string) (*models.Reply, error) {
 	if content == "" {
@@ -115,7 +115,7 @@ func (s *PostService) CreateComment(content, authorID, postID string) (*models.R
 		return nil, errors.New("content must not exceed 280 characters")
 	}
 
-	// Verify post exists
+
 	if _, err := s.repo.GetByID(postID); err != nil {
 		return nil, errors.New("post not found")
 	}
@@ -131,12 +131,12 @@ func (s *PostService) CreateComment(content, authorID, postID string) (*models.R
 		return nil, err
 	}
 
-	// Reload with Author preloaded
+
 	return s.repo.GetCommentByID(comment.ID)
 }
 
 func (s *PostService) GetComments(postID string) ([]models.Reply, error) {
-	// Verify post exists
+
 	if _, err := s.repo.GetByID(postID); err != nil {
 		return nil, errors.New("post not found")
 	}

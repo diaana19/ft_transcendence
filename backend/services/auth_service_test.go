@@ -8,6 +8,12 @@ import (
 	"github.com/Transcendence/utils"
 )
 
+
+
+func ptrStr(s string) *string {
+	return &s
+}
+
 func TestCreateAuthUserService_Success(t *testing.T) {
 	repo := newMockRepo()
 	svc := NewAuthService(repo)
@@ -15,7 +21,7 @@ func TestCreateAuthUserService_Success(t *testing.T) {
 	user := &models.User{
 		Username: "testuser",
 		Email:    "test@example.com",
-		Password: "StrongPass123!",
+		Password: ptrStr("StrongPass123!"),
 	}
 
 	resp, err := svc.CreateAuthUserService(user)
@@ -40,7 +46,7 @@ func TestCreateAuthUserService_GeneratesUUID(t *testing.T) {
 	user := &models.User{
 		Username: "testuser",
 		Email:    "test@example.com",
-		Password: "StrongPass123!",
+		Password: ptrStr("StrongPass123!"),
 	}
 
 	resp, err := svc.CreateAuthUserService(user)
@@ -59,7 +65,7 @@ func TestCreateAuthUserService_HashesPassword(t *testing.T) {
 	user := &models.User{
 		Username: "testuser",
 		Email:    "test@example.com",
-		Password: "StrongPass123!",
+		Password: ptrStr("StrongPass123!"),
 	}
 
 	_, err := svc.CreateAuthUserService(user)
@@ -68,10 +74,13 @@ func TestCreateAuthUserService_HashesPassword(t *testing.T) {
 	}
 
 	stored := repo.users[user.ID]
-	if stored.Password == "StrongPass123!" {
+	if stored.Password == nil {
+		t.Fatal("stored password should not be nil after classic registration")
+	}
+	if *stored.Password == "StrongPass123!" {
 		t.Error("password should be hashed, not stored in plaintext")
 	}
-	if !utils.CheckHashString("StrongPass123!", stored.Password) {
+	if !utils.CheckHashString("StrongPass123!", *stored.Password) {
 		t.Error("hashed password should verify against original")
 	}
 }
@@ -83,14 +92,14 @@ func TestCreateAuthUserService_DuplicateEmail(t *testing.T) {
 	user1 := &models.User{
 		Username: "user1",
 		Email:    "dupe@example.com",
-		Password: "StrongPass123!",
+		Password: ptrStr("StrongPass123!"),
 	}
 	svc.CreateAuthUserService(user1)
 
 	user2 := &models.User{
 		Username: "user2",
 		Email:    "dupe@example.com",
-		Password: "StrongPass123!",
+		Password: ptrStr("StrongPass123!"),
 	}
 	_, err := svc.CreateAuthUserService(user2)
 	if err == nil {
@@ -108,14 +117,14 @@ func TestCreateAuthUserService_DuplicateUsername(t *testing.T) {
 	user1 := &models.User{
 		Username: "sameuser",
 		Email:    "user1@example.com",
-		Password: "StrongPass123!",
+		Password: ptrStr("StrongPass123!"),
 	}
 	svc.CreateAuthUserService(user1)
 
 	user2 := &models.User{
 		Username: "sameuser",
 		Email:    "user2@example.com",
-		Password: "StrongPass123!",
+		Password: ptrStr("StrongPass123!"),
 	}
 	_, err := svc.CreateAuthUserService(user2)
 	if err == nil {
@@ -134,7 +143,7 @@ func TestCreateAuthUserService_RepoError(t *testing.T) {
 	user := &models.User{
 		Username: "testuser",
 		Email:    "test@example.com",
-		Password: "StrongPass123!",
+		Password: ptrStr("StrongPass123!"),
 	}
 
 	_, err := svc.CreateAuthUserService(user)
@@ -150,7 +159,7 @@ func TestCreateAuthUserService_ResponseExcludesPassword(t *testing.T) {
 	user := &models.User{
 		Username: "testuser",
 		Email:    "test@example.com",
-		Password: "StrongPass123!",
+		Password: ptrStr("StrongPass123!"),
 	}
 
 	resp, err := svc.CreateAuthUserService(user)
@@ -158,7 +167,7 @@ func TestCreateAuthUserService_ResponseExcludesPassword(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// UserResponse struct has no Password field - compile-time safety
+
 	if resp.Username == "" || resp.Email == "" {
 		t.Error("response should contain user info")
 	}
@@ -173,7 +182,7 @@ func TestLoginAuthUserService_Success(t *testing.T) {
 		ID:       "user-1",
 		Email:    "test@example.com",
 		Username: "testuser",
-		Password: hashed,
+		Password: &hashed,
 	}
 
 	user, err := svc.LoginAuthUserService("test@example.com", "StrongPass123!")
@@ -194,15 +203,16 @@ func TestLoginAuthUserService_ClearsPassword(t *testing.T) {
 		ID:       "user-1",
 		Email:    "test@example.com",
 		Username: "testuser",
-		Password: hashed,
+		Password: &hashed,
 	}
 
 	user, err := svc.LoginAuthUserService("test@example.com", "StrongPass123!")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if user.Password != "" {
-		t.Error("password should be cleared in login response")
+
+	if user.Password != nil {
+		t.Error("password should be cleared (nil) in login response")
 	}
 }
 
@@ -215,7 +225,7 @@ func TestLoginAuthUserService_WrongPassword(t *testing.T) {
 		ID:       "user-1",
 		Email:    "test@example.com",
 		Username: "testuser",
-		Password: hashed,
+		Password: &hashed,
 	}
 
 	_, err := svc.LoginAuthUserService("test@example.com", "WrongPassword!")
@@ -249,7 +259,7 @@ func TestLoginAuthUserService_ByUsername(t *testing.T) {
 		ID:       "user-1",
 		Email:    "test@example.com",
 		Username: "testuser",
-		Password: hashed,
+		Password: &hashed,
 	}
 
 	user, err := svc.LoginAuthUserService("testuser", "StrongPass123!")

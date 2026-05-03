@@ -20,6 +20,8 @@ type UserRepository interface {
 	GetByEmail(email string) (*models.User, error)
 	GetByUsername(username string) (*models.User, error)
 	GetByIdentifier(identifier string) (*models.User, error)
+	GetByGithubID(githubID string) (*models.User, error)
+	LinkGithub(userID, githubID string) error
 }
 
 func NewUserRepository(db *gorm.DB) UserRepository {
@@ -83,5 +85,21 @@ func (r *userRepository) GetByIdentifier(identifier string) (*models.User, error
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
-	return &user, nil 
+	return &user, nil
+}
+
+func (r *userRepository) GetByGithubID(githubID string) (*models.User, error) {
+	var user models.User
+	result := r.db.First(&user, "github_id = ?", githubID)
+	return &user, result.Error
+}
+
+func (r *userRepository) LinkGithub(userID, githubID string) error {
+	result := r.db.Model(&models.User{}).
+		Where("id = ?", userID).
+		Updates(map[string]interface{}{
+			"github_id": githubID,
+			"provider":  "github",
+		})
+	return result.Error
 }

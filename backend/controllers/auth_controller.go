@@ -44,7 +44,6 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 
 	log.Printf("DEBUG: Received input: %+v\n", input)
 	log.Printf("DEBUG: Password length: %d\n", len(input.Password))
-	log.Printf("DEBUG: Password: %s\n", input.Password)
 
 	parsedDate, err := time.Parse("2006-01-02", input.DateOfBirth)
 	if err != nil {
@@ -70,11 +69,13 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 		return
 	}
 
+	password := input.Password
 	user := models.User{
 		Username:    input.Username,
 		Email:       input.Email,
-		Password:    input.Password,
-		DateOfBirth: parsedDate,
+		Password:    &password,
+		DateOfBirth: &parsedDate,
+		Provider:    "local",
 	}
 
 	response, err := ac.authService.CreateAuthUserService(&user)
@@ -127,10 +128,15 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": newToken})
 }
 
-// logout use redis by putting the token in redis db
-
 func (ac *AuthController) LogoutUser(c *gin.Context) {
 	tokenStr := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
+
+	if tokenStr == "" {
+		if cookieToken, err := c.Cookie("auth_token"); err == nil {
+			tokenStr = cookieToken
+		}
+	}
+
 	if tokenStr == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
 		return
@@ -147,6 +153,7 @@ func (ac *AuthController) LogoutUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	c.SetCookie("auth_token", "", -1, "/", "", false, true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }
