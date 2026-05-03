@@ -250,16 +250,15 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 
 	if post.AuthorID != authorID.(string) {
 		username, _ := c.Get("username")
-		pc.notificationService.SendNotification(
+		pc.notificationService.SendCommentNotification(
 			post.AuthorID,
-			post.Author.Username,
 			authorID.(string),
 			username.(string),
-			"comment",
-			username.(string)+" commented on your post",
+			postID,
+			comment.Content,
 		)
 	}
-	
+
 	c.JSON(http.StatusCreated, comment.ToResponse())
 }
 

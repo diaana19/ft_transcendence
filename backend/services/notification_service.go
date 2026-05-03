@@ -58,3 +58,24 @@ func (s *NotificationService) GetUnread(userID string) ([]models.Notification, e
 func (s *NotificationService) MarkAllRead(userID string) error {
 	return s.repo.MarkAllReadByUserID(userID)
 }
+
+// func (s *NotificationService) SendLikeNotification(receiverID string, actorID string, actorUsername string) error {
+// 	receiverUsername, err := s.repo.GetUsernameByID(receiverID)
+// 	if err != nil {
+// 		log.Printf("Warning could not get the username of receiverID: %v", err)
+// 	}
+// 	content := actorUsername + " liked your post"
+// 	return s.SendNotification(receiverID, receiverUsername, actorID, actorUsername, "like", content)
+// }
+
+func (s *NotificationService) SendCommentNotification(receiverID string, actorID string, actorUsername string, postID string, commentPreview string) error {
+	receiverUsername, err := s.repo.GetUsernameByID(receiverID)
+	if err != nil {
+		log.Printf("Warning could not get the username of receiverID: %v", err)
+	}
+	if len(commentPreview) > 50 {
+		commentPreview = commentPreview[:50] + "..."
+	}
+	content := actorUsername + " comment on your post \"" + commentPreview + "\""
+	return s.SendNotification(receiverID, receiverUsername, actorID, actorUsername, "comment", content)
+}
