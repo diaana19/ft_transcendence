@@ -117,7 +117,9 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 	defer cancel()
 	defer h.manager.UnregisterClient(client)
 
+	log.Printf("[WS] Client connected username=%q userID=%s , subscribing to notifications:%s", client.Username, client.ID, client.ID)
 	redispub.Subscribe(ctx, h.rdb, "notifications:"+client.ID, func(payload string) {
+		log.Printf("[WS] Forwarding notification to client username=%q userID=%s ", client.Username, client.ID)
 		safeSend(client.Send, []byte(payload))
 	})
 	h.sendPendingNotifications(client)

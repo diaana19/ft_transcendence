@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/Transcendence/services"
@@ -24,6 +25,7 @@ func (fc *FriendController) SendFriendRequest(c *gin.Context) {
 		return
 	}
 
+	log.Printf("[FriendRequest] sender userID=%s username=%q -> target userID=%s", userID, userUsername, targetID)
 	fc.NotificationService.SendNotification(
 		targetID,
 		userUsername,

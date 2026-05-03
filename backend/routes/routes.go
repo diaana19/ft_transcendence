@@ -13,7 +13,9 @@ import (
 )
 
 func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
-	notifService := services.NewNotificationService(DB, rdb)
+	notifRepo := repositories.NewNotificationRepositories(DB)
+	notifPubSub := repositories.NewNotiticationPubSub(rdb)
+	notifService := services.NewNotificationService(notifRepo, notifPubSub)
 
 	postRepo := repositories.NewPostRepository(DB)
 	postService := services.NewPostService(postRepo)
@@ -43,7 +45,9 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 
 func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config.Config) {
 
-	notifService := services.NewNotificationService(DB, rdb)
+	notifRepo := repositories.NewNotificationRepositories(DB)
+	notifPubSub := repositories.NewNotiticationPubSub(rdb)
+	notifService := services.NewNotificationService(notifRepo, notifPubSub)
 	notifController := controllers.NewNotificationController(notifService)
 
 	userRepo := repositories.NewUserRepository(DB)
