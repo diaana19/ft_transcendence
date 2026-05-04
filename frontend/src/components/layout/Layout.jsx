@@ -9,7 +9,7 @@ export default function Layout() {
       <Sidebar />
 
       {/* Content */}
-      <main className="ml-64 mr-80 flex-1 p-6">
+      <main className="ml-64 mr-80 flex-1 "> 
         <Outlet />
       </main>
 
