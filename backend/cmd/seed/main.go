@@ -82,57 +82,78 @@ func ensureSchema(db *gorm.DB) error {
 	)
 }
 
+type seedUserInput struct {
+	Name        string    `json:"name"`
+	Username    string    `json:"username"`
+	Email       string    `json:"email"`
+	Password    string    `json:"password"`
+	DateOfBirth time.Time `json:"dateOfBirth"`
+	Bio         string    `json:"bio"`
+	Wallpaper   string    `json:"wallpaper"`
+	Avatar      string    `json:"avatar"`
+}
+
+func (s seedUserInput) toUser() models.User {
+	hashed := hashPassword(s.Password)
+	dob := s.DateOfBirth
+	wallpaper := s.Wallpaper
+	avatar := s.Avatar
+	now := time.Now()
+
+	return models.User{
+		ID:          uuid.NewString(),
+		Name:        s.Name,
+		Username:    s.Username,
+		Email:       s.Email,
+		Password:    &hashed,
+		DateOfBirth: &dob,
+		Bio:         s.Bio,
+		Wallpaper:   &wallpaper,
+		Avatar:      &avatar,
+		Provider:    "local",
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+}
+
 func main() {
 	db, err := config.ConnectDB()
 	if err != nil {
 		panic(err)
 	}
 
-	// Make sure all tables exist, even when seeding against a fresh DB
-	// without the backend having started yet.
 	if err := ensureSchema(db); err != nil {
 		panic(fmt.Errorf("schema migration failed: %w", err))
 	}
 
-	// Seed Users
 	fmt.Println("\n🌱 Seeding users...")
 	file, err := os.ReadFile("users.json")
 	if err != nil {
 		panic(err)
 	}
 
-	var users []models.User
-	if err := json.Unmarshal(file, &users); err != nil {
+	var inputs []seedUserInput
+	if err := json.Unmarshal(file, &inputs); err != nil {
 		panic(err)
 	}
 
-	for i := range users {
-		users[i].ID = uuid.NewString()
-		users[i].Password = hashPassword(users[i].Password)
-
-		if users[i].CreatedAt.IsZero() {
-			users[i].CreatedAt = time.Now()
-		}
-		if users[i].UpdatedAt.IsZero() {
-			users[i].UpdatedAt = time.Now()
-		}
-
+	for _, in := range inputs {
 		var existing models.User
-		err := db.Where("email = ? OR username = ?", users[i].Email, users[i].Username).First(&existing).Error
+		err := db.Where("email = ? OR username = ?", in.Email, in.Username).First(&existing).Error
 
 		if err == nil {
-			fmt.Println("User already exists:", users[i].Email)
+			fmt.Println("User already exists:", in.Email)
 			continue
 		}
 
-		if err := db.Create(&users[i]).Error; err != nil {
+		user := in.toUser()
+		if err := db.Create(&user).Error; err != nil {
 			fmt.Println("Error inserting user:", err)
 		} else {
-			fmt.Println("✓ Inserted user:", users[i].Email)
+			fmt.Println("✓ Inserted user:", user.Email)
 		}
 	}
 
-	// Seed Posts
 	fmt.Println("\n🌱 Seeding posts...")
 	seedPosts(db)
 

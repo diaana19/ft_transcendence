@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/Transcendence/config"
 	"github.com/Transcendence/controllers"
 	"github.com/Transcendence/middleware"
 	"github.com/Transcendence/repositories"
@@ -38,7 +39,7 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 	}
 }
 
-func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client) {
+func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config.Config) {
 
 	userRepo := repositories.NewUserRepository(DB)
 	authService := services.NewAuthService(userRepo)
@@ -57,6 +58,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client) {
 
 	wsManager := socket.NewWSManager()
 	chatHandler := socket.NewChatHandler(wsManager, rdb)
+	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
+	oauthController := controllers.NewOAuthController(oauthService, cfg)
+
+	router.Static("/uploads", "./uploads")
 
 	api := router.Group("/api")
 	{
@@ -64,6 +69,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client) {
 		api.POST("/auth/login", authController.LoginUser)
 		api.POST("/auth/refresh", authController.RefreshToken)
 		api.GET("/ws/chat", chatHandler.HandleWS)
+
+		api.GET("/auth/oauth/github/login", oauthController.OAuthLogin)
+		api.GET("/auth/oauth/github/callback", oauthController.OAuthCallback)
+
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware(rdb))
 		{

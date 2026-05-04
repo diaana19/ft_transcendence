@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -9,28 +10,47 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+func extractToken(c *gin.Context) string {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader != "" {
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		if token != authHeader {
+			return token
+		}
+	}
+
+	cookieToken, err := c.Cookie("auth_token")
+	if err == nil && cookieToken != "" {
+		return cookieToken
+	}
+
+	return ""
+}
+
 func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missin or invalid token"})
-			c.Abort()
+		token := extractToken(c)
+		if token == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "missing token",
+			})
 			return
 		}
 
-		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-
-		_, err := rdb.Get(c.Request.Context(), tokenStr).Result()
-		if err == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "token is invalid or logout"})
-			c.Abort()
+		ctx := context.Background()
+		exists, err := rdb.Exists(ctx, "blacklist:"+token).Result()
+		if err == nil && exists > 0 {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "token revoked",
+			})
 			return
 		}
 
-		claims, err := utils.ValidateJWT(tokenStr)
+		claims, err := utils.ValidateJWT(token)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
-			c.Abort()
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "invalid token",
+			})
 			return
 		}
 
@@ -39,17 +59,21 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	}
 }
 
-// OptionalAuthMiddleware parses the token when present but never rejects the request.
-// Controllers can check whether "user_id" is set to personalise the response (e.g. liked=true).
 func OptionalAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-			if claims, err := utils.ValidateJWT(tokenStr); err == nil {
-				c.Set("user_id", claims.UserId)
-			}
+		token := extractToken(c)
+		if token == "" {
+			c.Next()
+			return
 		}
+
+		claims, err := utils.ValidateJWT(token)
+		if err != nil {
+			c.Next()
+			return
+		}
+
+		c.Set("user_id", claims.UserId)
 		c.Next()
 	}
 }

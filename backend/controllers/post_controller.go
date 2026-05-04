@@ -19,8 +19,6 @@ func NewPostController(postService *services.PostService) *PostController {
 	return &PostController{postService: postService}
 }
 
-// ─── Posts ────────────────────────────────────────────────────────────────────
-
 func (pc *PostController) GetPosts(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
@@ -31,7 +29,6 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 		return
 	}
 
-	// Enrich with liked=true when an authenticated user already liked the post
 	userID, _ := c.Get("user_id")
 	responses := make([]models.PostResponse, len(posts))
 	for i, p := range posts {
@@ -151,11 +148,11 @@ func (pc *PostController) DeletePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Post deleted"})
 }
 
-// ─── Likes ────────────────────────────────────────────────────────────────────
 
-// ToggleLike   POST /posts/:id/like
-// Likes the post if not yet liked, unlikes it otherwise.
-// Returns: { post_id, liked, likes_count }
+
+
+
+
 func (pc *PostController) ToggleLike(c *gin.Context) {
 	postID := c.Param("id")
 
@@ -182,9 +179,9 @@ func (pc *PostController) ToggleLike(c *gin.Context) {
 	})
 }
 
-// ─── Comments ─────────────────────────────────────────────────────────────────
 
-// GetComments   GET /posts/:id/comments
+
+
 func (pc *PostController) GetComments(c *gin.Context) {
 	postID := c.Param("id")
 
@@ -206,7 +203,7 @@ func (pc *PostController) GetComments(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses, "total": len(responses)})
 }
 
-// CreateComment   POST /posts/:id/comments
+
 func (pc *PostController) CreateComment(c *gin.Context) {
 	postID := c.Param("id")
 
@@ -235,7 +232,7 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 	c.JSON(http.StatusCreated, comment.ToResponse())
 }
 
-// UpdateComment   PUT /posts/:id/comments/:commentId
+
 func (pc *PostController) UpdateComment(c *gin.Context) {
 	commentID := c.Param("commentId")
 
@@ -267,7 +264,7 @@ func (pc *PostController) UpdateComment(c *gin.Context) {
 	c.JSON(http.StatusOK, comment.ToResponse())
 }
 
-// DeleteComment   DELETE /posts/:id/comments/:commentId
+
 func (pc *PostController) DeleteComment(c *gin.Context) {
 	commentID := c.Param("commentId")
 

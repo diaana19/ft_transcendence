@@ -36,11 +36,23 @@ func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserRes
 		return nil, errors.New("user with this username already exists")
 	}
 
-	var err error
-	infos.Password, err = utils.HashString(infos.Password)
+
+
+
+	if infos.Password == nil || *infos.Password == "" {
+		return nil, errors.New("password is required")
+	}
+
+	hashed, err := utils.HashString(*infos.Password)
 	if err != nil {
 		log.Printf("DEBUG: Error hashing password: %v\n", err)
 		return nil, err
+	}
+	infos.Password = &hashed
+
+
+	if infos.Provider == "" {
+		infos.Provider = "local"
 	}
 
 	err = s.repo.CreateUser(infos)
@@ -64,11 +76,18 @@ func (s *AuthService) LoginAuthUserService(identifier, password string) (*models
 	if err != nil {
 		return nil, errors.New("invalid credential")
 	}
-	if !utils.CheckHashString(password, user.Password) {
+
+
+	if user.Password == nil || *user.Password == "" {
 		return nil, errors.New("invalid credential")
 	}
 
-	user.Password = ""
+	if !utils.CheckHashString(password, *user.Password) {
+		return nil, errors.New("invalid credential")
+	}
+
+
+	user.Password = nil
 	return user, nil
 }
 

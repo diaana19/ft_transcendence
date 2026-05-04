@@ -9,7 +9,7 @@ import (
 func generateUUID() string { return uuid.New().String() }
 
 type PostRepository interface {
-	// Posts
+
 	GetAll(page, limit int) ([]models.Post, int64, error)
 	GetByID(id string) (*models.Post, error)
 	GetByAuthorID(authorID string) ([]models.Post, error)
@@ -17,12 +17,12 @@ type PostRepository interface {
 	Update(id string, input models.UpdatePostInput) (*models.Post, error)
 	Delete(id string) error
 
-	// Likes
+
 	LikePost(userID, postID string) error
 	UnlikePost(userID, postID string) error
 	HasLiked(userID, postID string) (bool, error)
 
-	// Comments
+
 	CreateComment(comment *models.Reply) error
 	GetCommentsByPostID(postID string) ([]models.Reply, error)
 	GetCommentByID(id string) (*models.Reply, error)
@@ -38,7 +38,7 @@ func NewPostRepository(db *gorm.DB) PostRepository {
 	return &postRepository{db: db}
 }
 
-// ─── Posts ────────────────────────────────────────────────────────────────────
+
 
 func (r *postRepository) GetAll(page, limit int) ([]models.Post, int64, error) {
 	var posts []models.Post
@@ -90,9 +90,9 @@ func (r *postRepository) Delete(id string) error {
 	return nil
 }
 
-// ─── Likes ────────────────────────────────────────────────────────────────────
 
-// LikePost creates a Like record and atomically increments the post counter.
+
+
 func (r *postRepository) LikePost(userID, postID string) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		like := models.Like{
@@ -108,7 +108,7 @@ func (r *postRepository) LikePost(userID, postID string) error {
 	})
 }
 
-// UnlikePost deletes the Like record and decrements the post counter.
+
 func (r *postRepository) UnlikePost(userID, postID string) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		result := tx.Where("user_id = ? AND post_id = ?", userID, postID).Delete(&models.Like{})
@@ -123,7 +123,7 @@ func (r *postRepository) UnlikePost(userID, postID string) error {
 	})
 }
 
-// HasLiked returns true when userID has already liked postID.
+
 func (r *postRepository) HasLiked(userID, postID string) (bool, error) {
 	var count int64
 	err := r.db.Model(&models.Like{}).
@@ -132,7 +132,7 @@ func (r *postRepository) HasLiked(userID, postID string) (bool, error) {
 	return count > 0, err
 }
 
-// ─── Comments ─────────────────────────────────────────────────────────────────
+
 
 func (r *postRepository) CreateComment(comment *models.Reply) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
@@ -172,7 +172,7 @@ func (r *postRepository) UpdateComment(id string, input models.UpdateCommentInpu
 }
 
 func (r *postRepository) DeleteComment(id string) error {
-	// Fetch comment first to get PostID for counter decrement
+
 	var comment models.Reply
 	if err := r.db.First(&comment, "id = ?", id).Error; err != nil {
 		return err
