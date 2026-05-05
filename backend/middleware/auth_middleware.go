@@ -66,12 +66,6 @@ func OptionalAuthMiddleware() gin.HandlerFunc {
 		if token == "" {
 			c.Next()
 			return
-		authHeader := c.GetHeader("Authorization")
-		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-			if claims, err := utils.ValidateJWT(tokenStr); err == nil {
-				c.Set("userID", claims.UserId)
-			}
 		}
 
 		claims, err := utils.ValidateJWT(token)

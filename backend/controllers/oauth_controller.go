@@ -11,18 +11,18 @@ import (
 )
 
 type OAuthController struct {
-	service		*services.OAuthService
-	frontendURL	string
+	service     *services.OAuthService
+	frontendURL string
 }
 
 func NewOAuthController(service *services.OAuthService, cfg *config.Config) *OAuthController {
 	return &OAuthController{
-		service: service,
+		service:     service,
 		frontendURL: cfg.FrontendURL,
 	}
 }
 
-func (oc *OAuthController) OAuthLogin(c * gin.Context) {
+func (oc *OAuthController) OAuthLogin(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	state, err := oc.service.GenerateState(ctx)
@@ -82,7 +82,7 @@ func (oc *OAuthController) OAuthCallback(c *gin.Context) {
 		return
 	}
 
-	jwt, err := utils.GenerateJWT(user.ID)
+	jwt, err := utils.GenerateJWT(user.ID, user.Username)
 	if err != nil {
 		log.Printf("OAuth: JWT generation failed: %v", err)
 		c.Redirect(http.StatusTemporaryRedirect, oc.frontendURL+"/login?error=oauth_failed")
