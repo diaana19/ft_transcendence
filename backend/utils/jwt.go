@@ -9,14 +9,16 @@ import (
 )
 
 type Claims struct {
-	UserId string `json:"userId"`
+	UserId   string `json:"userId"`
+	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
 
-func GenerateJWT(userId string) (string, error) {
+func GenerateJWT(userId string, username string) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
 	claims := Claims{
-		UserId: userId,
+		UserId:   userId,
+		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -52,5 +54,5 @@ func RefreshToken(tokenStr string) (string, error) {
 	if time.Until(claims.ExpiresAt.Time) > time.Hour {
 		return tokenStr, nil
 	}
-	return GenerateJWT(claims.UserId)
+	return GenerateJWT(claims.UserId, claims.Username)
 }

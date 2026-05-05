@@ -13,8 +13,10 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// Identifier can be either email or username
 type LoginInput struct {
-	Email    string `json:"email" binding:"required,email"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -94,22 +96,32 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 		return
 	}
 
-	user, err := ac.authService.LoginAuthUserService(input.Email, input.Password)
+	// determine identifier
+	identifier := input.Email
+	if identifier == "" {
+		identifier = input.Username
+	}
+	if identifier == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email or username required"})
+		return
+	}
+
+	log.Printf("🔐 Login attempt: identifier=%s, ip=%s", identifier, c.ClientIP())
+
+	user, err := ac.authService.LoginAuthUserService(identifier, input.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	token, err := utils.GenerateJWT(user.ID)
+	log.Printf("✅ Login success: userID=%s, ip=%s, username=%s", user.ID, c.ClientIP(), user.Username)
+	token, err := utils.GenerateJWT(user.ID, user.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-		"user":  user,
-	})
+	c.JSON(http.StatusOK, gin.H{"token": token, "user": user})
 }
 
 func (ac *AuthController) RefreshToken(c *gin.Context) {

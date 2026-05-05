@@ -19,7 +19,7 @@ func setupJWTSecret(t *testing.T) {
 func TestGenerateJWT_ReturnsToken(t *testing.T) {
 	setupJWTSecret(t)
 
-	token, err := GenerateJWT("user-123")
+	token, err := GenerateJWT("user-123", "user-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -31,8 +31,8 @@ func TestGenerateJWT_ReturnsToken(t *testing.T) {
 func TestGenerateJWT_DifferentUsersGetDifferentTokens(t *testing.T) {
 	setupJWTSecret(t)
 
-	token1, _ := GenerateJWT("user-1")
-	token2, _ := GenerateJWT("user-2")
+	token1, _ := GenerateJWT("user-1", "user-1")
+	token2, _ := GenerateJWT("user-2", "user-2")
 	if token1 == token2 {
 		t.Fatal("different users should get different tokens")
 	}
@@ -41,7 +41,7 @@ func TestGenerateJWT_DifferentUsersGetDifferentTokens(t *testing.T) {
 func TestValidateJWT_ValidToken(t *testing.T) {
 	setupJWTSecret(t)
 
-	token, _ := GenerateJWT("user-123")
+	token, _ := GenerateJWT("user-123", "user-123")
 	claims, err := ValidateJWT(token)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -111,7 +111,7 @@ func TestValidateJWT_EmptyToken(t *testing.T) {
 func TestRefreshToken_FreshToken_ReturnsSameToken(t *testing.T) {
 	setupJWTSecret(t)
 
-	token, _ := GenerateJWT("user-123")
+	token, _ := GenerateJWT("user-123", "user-123")
 	refreshed, err := RefreshToken(token)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
