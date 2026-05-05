@@ -21,6 +21,7 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 	{
 		posts.GET("", middleware.OptionalAuthMiddleware(), postController.GetPosts)
 		posts.GET("/:id", middleware.OptionalAuthMiddleware(), postController.GetPost)
+		posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(), postController.GetPostsByUser)
 		posts.GET("/:id/comments", postController.GetComments)
 
 		protected := posts.Group("")
@@ -68,7 +69,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 		api.POST("/auth/register", authController.RegisterUser)
 		api.POST("/auth/login", authController.LoginUser)
 		api.POST("/auth/refresh", authController.RefreshToken)
-		api.GET("/ws/chat", chatHandler.HandleWS)
+		api.GET("/ws/chat", middleware.WSAuthMiddleware(), chatHandler.HandleWS)
 
 		api.GET("/auth/oauth/github/login", oauthController.OAuthLogin)
 		api.GET("/auth/oauth/github/callback", oauthController.OAuthCallback)

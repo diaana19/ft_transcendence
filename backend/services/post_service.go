@@ -26,7 +26,11 @@ func (s *PostService) GetPost(id string) (*models.Post, error) {
 	return s.repo.GetByID(id)
 }
 
-func (s *PostService) CreatePost(content, authorID string) (*models.Post, error) {
+func (s *PostService) GetPostsByAuthor(authorID string) ([]models.Post, error) {
+	return s.repo.GetByAuthorID(authorID)
+}
+
+func (s *PostService) CreatePost(content, authorID string, media *string) (*models.Post, error) {
 	if content == "" {
 		return nil, errors.New("content is required")
 	}
@@ -37,6 +41,7 @@ func (s *PostService) CreatePost(content, authorID string) (*models.Post, error)
 	post := &models.Post{
 		ID:       uuid.New().String(),
 		Content:  content,
+		MediaURL: media,
 		AuthorID: authorID,
 	}
 
@@ -65,10 +70,6 @@ func (s *PostService) DeletePost(id string, authorID string) error {
 	}
 	return s.repo.Delete(id)
 }
-
-
-
-
 
 func (s *PostService) ToggleLike(userID, postID string) (bool, *models.Post, error) {
 

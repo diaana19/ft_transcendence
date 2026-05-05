@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	"errors"
-
 	"github.com/Transcendence/models"
 	"gorm.io/gorm"
 )
@@ -83,7 +81,7 @@ func (r *userRepository) GetByIdentifier(identifier string) (*models.User, error
 	var user models.User
 	err := r.db.Where("email = ? OR username = ?", identifier, identifier).First(&user).Error
 	if err != nil {
-		return nil, errors.New("user not found")
+		return nil, err
 	}
 	return &user, nil
 }

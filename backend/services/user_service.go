@@ -1,6 +1,8 @@
 package services
 
 import (
+	"errors"
+	"github.com/Transcendence/utils"
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/repositories"
 )
@@ -27,4 +29,18 @@ func (s *UserService) UpdateUser(id string, input models.UpdateUserInput) (*mode
 
 func (s *UserService) DeleteUser(id string) error {
 	return s.repo.Delete(id)
+}
+
+func (s *UserService) VerifyPassword(userID, password string) error {
+	user, err := s.repo.GetByID(userID)
+	if err != nil {
+		return err
+	}
+	if user.Password == nil || *user.Password == "" {
+		return errors.New("password verification not supported for this account")
+	}
+	if !utils.CheckHashString(password, *user.Password) {
+		return errors.New("invalid password")
+	}
+	return nil
 }

@@ -16,7 +16,7 @@ type User struct {
 	Name     string `json:"name"`
 	Username string `json:"username" binding:"required" gorm:"unique;not null"`
 	Email    string `json:"email" binding:"required,email" gorm:"unique;not null"`
-	Password *string `json:"password"`
+	Password *string `json:"-"`
 
 	DateOfBirth *time.Time `json:"dateOfBirth"`
 

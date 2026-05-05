@@ -22,7 +22,7 @@ func NewAuthService(repo repositories.UserRepository) *AuthService {
 }
 
 func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserResponse, error) {
-	log.Printf("DEBUG: Starting CreateAuthUserService with: %+v\n", infos)
+	log.Printf("DEBUG: Starting CreateAuthUserService with: username=%s email=%s\n", infos.Username, infos.Email)
 
 	if infos.ID == "" {
 		infos.ID = uuid.New().String()

@@ -15,20 +15,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var DB, dberr = config.ConnectDB()
+	DB, dberr := config.ConnectDB()
 	if dberr != nil {
-		log.Fatal(err)
+		log.Fatal(dberr)
 	}
 
 	var router *gin.Engine = gin.Default()
 	router.SetTrustedProxies(nil)
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: false,
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Cookie"},
+		ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},
+		AllowCredentials: true,
 	}))
 
 	router.OPTIONS("/*path", func(c *gin.Context) {

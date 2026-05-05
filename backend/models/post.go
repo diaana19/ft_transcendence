@@ -10,6 +10,7 @@ type Post struct {
 	AuthorID      string         `gorm:"type:uuid;not null"`
 	Author        User           `gorm:"foreignKey:AuthorID;references:ID"`
 	Content       string         `gorm:"type:text;not null"`
+	MediaURL      *string        `gorm:"type:text" json:"media_url,omitempty"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	DeletedAt     gorm.DeletedAt `gorm:"index"`
@@ -19,11 +20,13 @@ type Post struct {
 
 type UpdatePostInput struct {
 	Content string `json:"content" binding:"required,min=1,max=280"`
+	MediaURL      *string        `gorm:"type:text" json:"media_url,omitempty"`
 }
 
 type PostResponse struct {
 	ID            string       `json:"id"`
 	Content       string       `json:"content"`
+	MediaURL      *string        `gorm:"type:text" json:"media_url,omitempty"`
 	AuthorID      string       `json:"author_id"`
 	Author        UserResponse `json:"author"`
 	LikesCount    int          `json:"likes_count"`
@@ -37,6 +40,7 @@ func (p *Post) ToResponse() PostResponse {
 	return PostResponse{
 		ID:            p.ID,
 		Content:       p.Content,
+		MediaURL:      p.MediaURL,
 		AuthorID:      p.AuthorID,
 		Author:        p.Author.ToResponse(),
 		LikesCount:    p.LikesCount,
