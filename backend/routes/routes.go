@@ -6,6 +6,7 @@ import (
 	"github.com/Transcendence/middleware"
 	"github.com/Transcendence/repositories"
 	"github.com/Transcendence/services"
+	"github.com/Transcendence/socket"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -55,6 +56,8 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 		Service: uploadService,
 	}
 
+	wsManager := socket.NewWSManager()
+	chatHandler := socket.NewChatHandler(wsManager, rdb)
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
 	oauthController := controllers.NewOAuthController(oauthService, cfg)
 
@@ -65,6 +68,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 		api.POST("/auth/register", authController.RegisterUser)
 		api.POST("/auth/login", authController.LoginUser)
 		api.POST("/auth/refresh", authController.RefreshToken)
+		api.GET("/ws/chat", chatHandler.HandleWS)
 
 		api.GET("/auth/oauth/github/login", oauthController.OAuthLogin)
 		api.GET("/auth/oauth/github/callback", oauthController.OAuthCallback)
