@@ -56,5 +56,39 @@ func (s *TwoFAService) GenerateSecret(userID string) (*SetupResponse, error) {
 }
 
 func (s *TwoFAService) EnableTwoFA(userID string, code string) error {
-	
+	user, err := s.userRepo.GetByID(userID)
+	if err != nil {
+		return fmt.Errorf("user not found: %w", err)
+	}
+
+	if user.TwoFASecret == nil {
+		return errors.New("no 2FA setup in progress; call /setup first")
+	}
+
+	if user.TwoFAEnabled {
+		return errors.New("2FA is already enabled")
+	}
+
+	if !totp.Validate(code, *user.TwoFASecret) {
+		return errors.New("invalide ")
+	}
+
+	return s.userRepo.SetTwoFAEnabled(userID, true)
+}
+
+func (s *TwoFAService) ValidateCode(userID, code string) (bool, error) {
+	user, err := s.userRepo.GetByID(userID)
+	if err != nil {
+		return false, fmt.Errorf("user not found: %w", err)
+	}
+
+	if !user.TwoFAEnabled || user.TwoFASecret == nil {
+		return false, errors.New("2FA is not enabled for this user")
+	}
+
+	return totp.Validate(code, *user.TwoFASecret), nil
+}
+
+func (s *TwoFAService) DisableTwoFA(userID string) error {
+	return s.userRepo.ClearTwoFA(userID)
 }

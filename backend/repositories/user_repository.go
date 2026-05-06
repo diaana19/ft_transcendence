@@ -22,6 +22,9 @@ type UserRepository interface {
 	GetByIdentifier(identifier string) (*models.User, error)
 	GetByGithubID(githubID string) (*models.User, error)
 	LinkGithub(userID, githubID string) error
+	SetTwoFASecret(userID, secret string) error
+	SetTwoFAEnabled(userID, enabled bool) error
+	ClearTwoFA(userID string) error
 }
 
 func NewUserRepository(db *gorm.DB) UserRepository {
@@ -103,3 +106,12 @@ func (r *userRepository) LinkGithub(userID, githubID string) error {
 		})
 	return result.Error
 }
+
+func (r *userRepository) SetTwoFASecret(userID, secret string) error {
+	return r.db.Model(&models.User{}).Where("id = ?", userID).Update("two_fa_secret", secret).Error
+}
+
+func (r *userRepository) SetTwoFAEnabled(userID, enabled string) error {
+	return r.db.Model(&models.User{}).Where("id = ?", userID).Update("two_fa_enabled", enabled).Error
+}
+
