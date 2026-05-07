@@ -86,10 +86,6 @@ all: build up
 	@echo ""
 	@echo "All services started!"
 
-re: down clean dev
-	@echo ""
-	@echo "Full restart complete!"
-
 # ==================== Docker Commands ====================
 
 build:

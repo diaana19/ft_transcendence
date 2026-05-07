@@ -22,7 +22,15 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		// origin := r.Header.Get("Origin")
 		// return origin == "http://localhost:3000"
-		return true
+		// return true
+		origin := r.Header.Get("Origin")
+		allowed := []string{"http://localhost:3000", "http://localhost"}
+		for _, a := range allowed {
+			if origin == a {
+				return true
+			}
+		}
+		return false
 	},
 }
 
@@ -82,6 +90,7 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 	var username string
 	if id, exists := c.Get("userID"); exists {
 		userID = id.(string)
+
 	} else {
 
 		token := c.Query("token")

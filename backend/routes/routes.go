@@ -25,6 +25,7 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 	{
 		posts.GET("", middleware.OptionalAuthMiddleware(), postController.GetPosts)
 		posts.GET("/:id", middleware.OptionalAuthMiddleware(), postController.GetPost)
+		posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(), postController.GetPostsByUser)
 		posts.GET("/:id/comments", postController.GetComments)
 
 		protected := posts.Group("")
@@ -65,23 +66,22 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 		Service: uploadService,
 	}
 
+	wsManager := socket.NewWSManager()
+	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService)
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
 	oauthController := controllers.NewOAuthController(oauthService, cfg)
 
 	router.Static("/uploads", "./uploads")
-	wsManager := socket.NewWSManager()
-	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService)
 
 	api := router.Group("/api")
 	{
-		api.POST("/auth/register", authController.RegisterUser)
-		api.POST("/auth/login", authController.LoginUser)
-		api.POST("/auth/refresh", authController.RefreshToken)
+		api.POST("/auth/register", middleware.RateLimitMiddleware(rdb), authController.RegisterUser)
+		api.POST("/auth/login", middleware.RateLimitMiddleware(rdb), authController.LoginUser)
+		api.POST("/auth/refresh", middleware.RateLimitMiddleware(rdb), authController.RefreshToken)
+		api.GET("/ws/chat", middleware.WSAuthMiddleware(), chatHandler.HandleWS)
 
 		api.GET("/auth/oauth/github/login", oauthController.OAuthLogin)
 		api.GET("/auth/oauth/github/callback", oauthController.OAuthCallback)
-
-		api.GET("/ws/chat", chatHandler.HandleWS)
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware(rdb))
 		{

@@ -43,11 +43,13 @@ func ConnectDB() (*gorm.DB, error) {
 	log.Println("Running AutoMigrate…")
 	err = DB.AutoMigrate(
 		&models.User{},
+		&models.Friend{},
 		&models.Post{},
 		&models.Like{},
 		&models.Reply{},
 		&models.Repost{},
-		&models.Friend{},
+		// &models.Group{},
+		&models.Message{},
 		&models.Notification{},
 	)
 	if err != nil {

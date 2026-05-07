@@ -44,7 +44,7 @@ func (oc *OAuthController) OAuthCallback(c *gin.Context) {
 	state := c.Query("state")
 
 	if code == "" {
-		c.Redirect(http.StatusTemporaryRedirect, oc.frontendURL+"login?error=oauth_denied")
+		c.Redirect(http.StatusTemporaryRedirect, oc.frontendURL+"/login?error=oauth_denied")
 		return
 	}
 

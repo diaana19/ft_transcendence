@@ -16,8 +16,6 @@ func NewPostService(repo repositories.PostRepository) *PostService {
 	return &PostService{repo: repo}
 }
 
-
-
 func (s *PostService) GetPosts(page, limit int) ([]models.Post, int64, error) {
 	return s.repo.GetAll(page, limit)
 }
@@ -26,7 +24,11 @@ func (s *PostService) GetPost(id string) (*models.Post, error) {
 	return s.repo.GetByID(id)
 }
 
-func (s *PostService) CreatePost(content, authorID string) (*models.Post, error) {
+func (s *PostService) GetPostsByAuthor(authorID string) ([]models.Post, error) {
+	return s.repo.GetByAuthorID(authorID)
+}
+
+func (s *PostService) CreatePost(content, authorID string, media *string) (*models.Post, error) {
 	if content == "" {
 		return nil, errors.New("content is required")
 	}
@@ -37,6 +39,7 @@ func (s *PostService) CreatePost(content, authorID string) (*models.Post, error)
 	post := &models.Post{
 		ID:       uuid.New().String(),
 		Content:  content,
+		MediaURL: media,
 		AuthorID: authorID,
 	}
 
@@ -65,10 +68,6 @@ func (s *PostService) DeletePost(id string, authorID string) error {
 	}
 	return s.repo.Delete(id)
 }
-
-
-
-
 
 func (s *PostService) ToggleLike(userID, postID string) (bool, *models.Post, error) {
 
@@ -100,12 +99,9 @@ func (s *PostService) ToggleLike(userID, postID string) (bool, *models.Post, err
 	return true, post, nil
 }
 
-
 func (s *PostService) HasLiked(userID, postID string) (bool, error) {
 	return s.repo.HasLiked(userID, postID)
 }
-
-
 
 func (s *PostService) CreateComment(content, authorID, postID string) (*models.Reply, error) {
 	if content == "" {
@@ -114,7 +110,6 @@ func (s *PostService) CreateComment(content, authorID, postID string) (*models.R
 	if len(content) > 280 {
 		return nil, errors.New("content must not exceed 280 characters")
 	}
-
 
 	if _, err := s.repo.GetByID(postID); err != nil {
 		return nil, errors.New("post not found")
@@ -130,8 +125,6 @@ func (s *PostService) CreateComment(content, authorID, postID string) (*models.R
 	if err := s.repo.CreateComment(comment); err != nil {
 		return nil, err
 	}
-	
-	// Reload with Author preloaded
 	return s.repo.GetCommentByID(comment.ID)
 }
 

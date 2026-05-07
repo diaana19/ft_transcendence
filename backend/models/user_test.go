@@ -64,8 +64,6 @@ func TestToResponse_ExcludesPassword(t *testing.T) {
 
 	resp := user.ToResponse()
 
-
-
 	if resp.ID == "" || resp.Username == "" || resp.Email == "" {
 		t.Error("response should contain ID, Username, and Email")
 	}
@@ -86,8 +84,6 @@ func TestToResponse_EmptyFields(t *testing.T) {
 	if resp.Bio != "" {
 		t.Error("empty Bio should remain empty")
 	}
-
-
 
 	if resp.Avatar != nil {
 		t.Error("empty Avatar should remain nil")

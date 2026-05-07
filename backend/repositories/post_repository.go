@@ -9,7 +9,6 @@ import (
 func generateUUID() string { return uuid.New().String() }
 
 type PostRepository interface {
-
 	GetAll(page, limit int) ([]models.Post, int64, error)
 	GetByID(id string) (*models.Post, error)
 	GetByAuthorID(authorID string) ([]models.Post, error)
@@ -17,11 +16,9 @@ type PostRepository interface {
 	Update(id string, input models.UpdatePostInput) (*models.Post, error)
 	Delete(id string) error
 
-
 	LikePost(userID, postID string) error
 	UnlikePost(userID, postID string) error
 	HasLiked(userID, postID string) (bool, error)
-
 
 	CreateComment(comment *models.Reply) error
 	GetCommentsByPostID(postID string) ([]models.Reply, error)
@@ -37,8 +34,6 @@ type postRepository struct {
 func NewPostRepository(db *gorm.DB) PostRepository {
 	return &postRepository{db: db}
 }
-
-
 
 func (r *postRepository) GetAll(page, limit int) ([]models.Post, int64, error) {
 	var posts []models.Post
@@ -90,9 +85,6 @@ func (r *postRepository) Delete(id string) error {
 	return nil
 }
 
-
-
-
 func (r *postRepository) LikePost(userID, postID string) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		like := models.Like{
@@ -108,7 +100,6 @@ func (r *postRepository) LikePost(userID, postID string) error {
 	})
 }
 
-
 func (r *postRepository) UnlikePost(userID, postID string) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		result := tx.Where("user_id = ? AND post_id = ?", userID, postID).Delete(&models.Like{})
@@ -123,7 +114,6 @@ func (r *postRepository) UnlikePost(userID, postID string) error {
 	})
 }
 
-
 func (r *postRepository) HasLiked(userID, postID string) (bool, error) {
 	var count int64
 	err := r.db.Model(&models.Like{}).
@@ -131,8 +121,6 @@ func (r *postRepository) HasLiked(userID, postID string) (bool, error) {
 		Count(&count).Error
 	return count > 0, err
 }
-
-
 
 func (r *postRepository) CreateComment(comment *models.Reply) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {

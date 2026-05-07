@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"log"
+
 	"net/http"
 
 	"github.com/Transcendence/services"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,50 +15,58 @@ type FriendController struct {
 }
 
 func (fc *FriendController) SendFriendRequest(c *gin.Context) {
-	userID := c.MustGet("userID").(string)
-	userUsername := c.MustGet("username").(string)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userUsername, exists := c.Get("username")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
 	targetID := c.Param("id")
-
-	err := fc.Service.SendRequest(userID, targetID)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+	if err := fc.Service.SendRequest(userID.(string), targetID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	log.Printf("[FriendRequest] sender userID=%s username=%q -> target userID=%s", userID, userUsername, targetID)
 	fc.NotificationService.SendNotification(
 		targetID,
-		userUsername,
-		userID,
-		userUsername,
+		userUsername.(string),
+		userID.(string),
+		userUsername.(string),
 		"friend_request",
-		userUsername+" sent you a friend request",
+		userUsername.(string)+" sent you a friend request",
 	)
-	c.JSON(200, gin.H{"message": "request sent"})
+	c.JSON(http.StatusOK, gin.H{"message": "request sent"})
 }
 
 func (fc *FriendController) AcceptFriend(c *gin.Context) {
-	userID := c.MustGet("userID").(string)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
 	requesterID := c.Param("id")
-
-	err := fc.Service.AcceptRequest(userID, requesterID)
-	if err != nil {
+	if err := fc.Service.AcceptRequest(userID.(string), requesterID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{"message": "friend request accepted"})
 }
 
 func (fc *FriendController) FollowUser(c *gin.Context) {
-	userID := c.MustGet("userID").(string)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
 	targetID := c.Param("id")
-
-	err := fc.Service.Follow(userID, targetID)
-	if err != nil {
+	if err := fc.Service.Follow(userID.(string), targetID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{"message": "user followed"})
 }

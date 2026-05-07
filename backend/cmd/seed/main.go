@@ -81,6 +81,9 @@ func ensureSchema(db *gorm.DB) error {
 		&models.Like{},
 		&models.Reply{},
 		&models.Repost{},
+		// &models.Group{},
+		&models.Message{},
+		&models.Notification{},
 	)
 }
 
