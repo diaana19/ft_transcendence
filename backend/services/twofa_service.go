@@ -4,14 +4,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Transcendence/models"
 	"github.com/Transcendence/repositories"
 	"github.com/pquerna/otp/totp"
 )
 
 type SetupResponse struct {
 	Secret string `json:"secret"`
-	QRCodeURL string `json="qr_code_url"`
+	QRCodeURL string `json:"qr_code_url"`
 }
 
 type TwoFAService struct {
@@ -70,7 +69,7 @@ func (s *TwoFAService) EnableTwoFA(userID string, code string) error {
 	}
 
 	if !totp.Validate(code, *user.TwoFASecret) {
-		return errors.New("invalide ")
+		return errors.New("invalid 2FA code")
 	}
 
 	return s.userRepo.SetTwoFAEnabled(userID, true)

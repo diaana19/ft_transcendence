@@ -1,8 +1,9 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -17,6 +18,8 @@ type User struct {
 	Username string  `json:"username" binding:"required" gorm:"unique;not null"`
 	Email    string  `json:"email" binding:"required,email" gorm:"unique;not null"`
 	Password *string `json:"-"`
+
+	DateOfBirth *time.Time `json:"dateOfBirth"`
 
 	TwoFASecret		*string			`gorm:"type:varchar(255)" json:"-"`
 	TwoFAEnabled	bool			`gorm:"default:false" json:"two_fa_enabled"`
@@ -44,7 +47,7 @@ type UserResponse struct {
 	Avatar    *string   `json:"avatar,omitempty"`
 	Wallpaper *string   `json:"wallpaper,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
-	TwoFAEnabled bool `json:"two_fa_enable"`
+	TwoFAEnabled bool `json:"two_fa_enabled"`
 }
 
 func (u *User) ToResponse() UserResponse {

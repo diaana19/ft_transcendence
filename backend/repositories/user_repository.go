@@ -21,7 +21,7 @@ type UserRepository interface {
 	GetByGithubID(githubID string) (*models.User, error)
 	LinkGithub(userID, githubID string) error
 	SetTwoFASecret(userID, secret string) error
-	SetTwoFAEnabled(userID, enabled bool) error
+	SetTwoFAEnabled(userID string, enabled bool) error
 	ClearTwoFA(userID string) error
 }
 
@@ -138,7 +138,17 @@ func (r *userRepository) SetTwoFASecret(userID, secret string) error {
 	return r.db.Model(&models.User{}).Where("id = ?", userID).Update("two_fa_secret", secret).Error
 }
 
-func (r *userRepository) SetTwoFAEnabled(userID, enabled string) error {
-	return r.db.Model(&models.User{}).Where("id = ?", userID).Update("two_fa_enabled", enabled).Error
+func (r *userRepository) SetTwoFAEnabled(userID string, enabled bool) error {
+	return r.db.Model(&models.User{}).
+		Where("id = ?", userID).
+		Update("two_fa_enabled", enabled).Error
 }
 
+func (r *userRepository) ClearTwoFA(userID string) error {
+	return r.db.Model(&models.User{}).
+		Where("id = ?", userID).
+		Updates(map[string]interface{}{
+			"two_fa_secret":  nil,
+			"two_fa_enabled": false,
+		}).Error
+}
