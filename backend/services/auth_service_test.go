@@ -8,8 +8,6 @@ import (
 	"github.com/Transcendence/utils"
 )
 
-
-
 func ptrStr(s string) *string {
 	return &s
 }
@@ -166,7 +164,6 @@ func TestCreateAuthUserService_ResponseExcludesPassword(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-
 
 	if resp.Username == "" || resp.Email == "" {
 		t.Error("response should contain user info")

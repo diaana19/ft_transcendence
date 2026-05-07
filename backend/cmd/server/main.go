@@ -66,6 +66,8 @@ func main() {
 		conf.ApiPort = "8000"
 	}
 
-	router.Run(":" + conf.ApiPort)
+	if err := router.Run(":" + conf.ApiPort); err != nil {
+		log.Fatal("Server failed to start: ", err)
+	}
 
 }

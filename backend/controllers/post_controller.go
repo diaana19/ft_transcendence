@@ -94,7 +94,7 @@ func (pc *PostController) GetPostsByUser(c *gin.Context) {
 
 func (pc *PostController) CreatePost(c *gin.Context) {
 	var req struct {
-		Content string `json:"content" binding:"required"`
+		Content  string  `json:"content" binding:"required"`
 		MediaURL *string `json:"media_url"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -198,9 +198,6 @@ func (pc *PostController) ToggleLike(c *gin.Context) {
 	})
 }
 
-
-
-
 func (pc *PostController) GetComments(c *gin.Context) {
 	postID := c.Param("id")
 
@@ -221,7 +218,6 @@ func (pc *PostController) GetComments(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": responses, "total": len(responses)})
 }
-
 
 func (pc *PostController) CreateComment(c *gin.Context) {
 	postID := c.Param("id")
@@ -250,7 +246,6 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, comment.ToResponse())
 }
-
 
 func (pc *PostController) UpdateComment(c *gin.Context) {
 	commentID := c.Param("commentId")
@@ -282,7 +277,6 @@ func (pc *PostController) UpdateComment(c *gin.Context) {
 
 	c.JSON(http.StatusOK, comment.ToResponse())
 }
-
 
 func (pc *PostController) DeleteComment(c *gin.Context) {
 	commentID := c.Param("commentId")

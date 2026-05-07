@@ -40,12 +40,41 @@ func (r *userRepository) GetByID(id string) (*models.User, error) {
 
 func (r *userRepository) Update(id string, input models.UpdateUserInput) (*models.User, error) {
 	var user models.User
-	result := r.db.First(&user, "id = ?", id)
-	if result.Error != nil {
-		return nil, result.Error
+	if err := r.db.First(&user, "id = ?", id).Error; err != nil {
+		return nil, err
 	}
-	result = r.db.Model(&user).Updates(input)
-	return &user, result.Error
+
+	updates := make(map[string]interface{})
+	if input.Name != "" {
+		updates["name"] = input.Name
+	}
+	if input.Username != "" {
+		updates["username"] = input.Username
+	}
+	if input.Email != "" {
+		updates["email"] = input.Email
+	}
+	if input.Bio != "" {
+		updates["bio"] = input.Bio
+	}
+	if input.Avatar != nil {
+		updates["avatar"] = *input.Avatar
+	}
+	if input.Wallpaper != nil {
+		updates["wallpaper"] = *input.Wallpaper
+	}
+
+	if len(updates) > 0 {
+		if err := r.db.Model(&user).Updates(updates).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	if err := r.db.First(&user, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func (r *userRepository) Delete(id string) error {

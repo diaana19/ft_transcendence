@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"net/http"
 	"errors"
+	"net/http"
 
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/services"

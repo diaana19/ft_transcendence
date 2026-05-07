@@ -1,16 +1,16 @@
 package models
 
 import (
-	"time"
 	"gorm.io/gorm"
+	"time"
 )
 
 type Post struct {
-	ID            string         `gorm:"primaryKey;type:uuid"`
-	AuthorID      string         `gorm:"type:uuid;not null"`
-	Author        User           `gorm:"foreignKey:AuthorID;references:ID"`
-	Content       string         `gorm:"type:text;not null"`
-	MediaURL      *string        `gorm:"type:text" json:"media_url,omitempty"`
+	ID            string  `gorm:"primaryKey;type:uuid"`
+	AuthorID      string  `gorm:"type:uuid;not null"`
+	Author        User    `gorm:"foreignKey:AuthorID;references:ID"`
+	Content       string  `gorm:"type:text;not null"`
+	MediaURL      *string `gorm:"type:text" json:"media_url,omitempty"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	DeletedAt     gorm.DeletedAt `gorm:"index"`
@@ -19,14 +19,14 @@ type Post struct {
 }
 
 type UpdatePostInput struct {
-	Content string `json:"content" binding:"required,min=1,max=280"`
-	MediaURL      *string        `gorm:"type:text" json:"media_url,omitempty"`
+	Content  string  `json:"content" binding:"required,min=1,max=280"`
+	MediaURL *string `gorm:"type:text" json:"media_url,omitempty"`
 }
 
 type PostResponse struct {
 	ID            string       `json:"id"`
 	Content       string       `json:"content"`
-	MediaURL      *string        `gorm:"type:text" json:"media_url,omitempty"`
+	MediaURL      *string      `gorm:"type:text" json:"media_url,omitempty"`
 	AuthorID      string       `json:"author_id"`
 	Author        UserResponse `json:"author"`
 	LikesCount    int          `json:"likes_count"`
@@ -51,11 +51,11 @@ func (p *Post) ToResponse() PostResponse {
 }
 
 type Like struct {
-	ID        string    `gorm:"primaryKey;type:uuid"`
-	UserID    string    `gorm:"type:uuid;not null;uniqueIndex:idx_like_user_post"`
-	User      User      `gorm:"foreignKey:UserID;references:ID"`
-	PostID    string    `gorm:"type:uuid;not null;uniqueIndex:idx_like_user_post"`
-	Post      Post      `gorm:"foreignKey:PostID;references:ID"`
+	ID        string `gorm:"primaryKey;type:uuid"`
+	UserID    string `gorm:"type:uuid;not null;uniqueIndex:idx_like_user_post"`
+	User      User   `gorm:"foreignKey:UserID;references:ID"`
+	PostID    string `gorm:"type:uuid;not null;uniqueIndex:idx_like_user_post"`
+	Post      Post   `gorm:"foreignKey:PostID;references:ID"`
 	CreatedAt time.Time
 }
 
@@ -66,12 +66,12 @@ type LikeResponse struct {
 }
 
 type Reply struct {
-	ID        string         `gorm:"primaryKey;type:uuid"`
-	PostID    string         `gorm:"type:uuid;not null;index"`
-	Post      Post           `gorm:"foreignKey:PostID;references:ID"`
-	AuthorID  string         `gorm:"type:uuid;not null"`
-	Author    User           `gorm:"foreignKey:AuthorID;references:ID"`
-	Content   string         `gorm:"type:text;not null"`
+	ID        string `gorm:"primaryKey;type:uuid"`
+	PostID    string `gorm:"type:uuid;not null;index"`
+	Post      Post   `gorm:"foreignKey:PostID;references:ID"`
+	AuthorID  string `gorm:"type:uuid;not null"`
+	Author    User   `gorm:"foreignKey:AuthorID;references:ID"`
+	Content   string `gorm:"type:text;not null"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
@@ -108,11 +108,11 @@ func (r *Reply) ToResponse() CommentResponse {
 }
 
 type Repost struct {
-	ID        string         `gorm:"primaryKey;type:uuid"`
-	PostID    string         `gorm:"type:uuid;not null;index"`
-	Post      Post           `gorm:"foreignKey:PostID;references:ID"`
-	AuthorID  string         `gorm:"type:uuid;not null"`
-	Author    User           `gorm:"foreignKey:AuthorID;references:ID"`
+	ID        string `gorm:"primaryKey;type:uuid"`
+	PostID    string `gorm:"type:uuid;not null;index"`
+	Post      Post   `gorm:"foreignKey:PostID;references:ID"`
+	AuthorID  string `gorm:"type:uuid;not null"`
+	Author    User   `gorm:"foreignKey:AuthorID;references:ID"`
 	CreatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

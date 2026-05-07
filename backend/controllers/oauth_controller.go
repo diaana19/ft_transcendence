@@ -11,18 +11,18 @@ import (
 )
 
 type OAuthController struct {
-	service		*services.OAuthService
-	frontendURL	string
+	service     *services.OAuthService
+	frontendURL string
 }
 
 func NewOAuthController(service *services.OAuthService, cfg *config.Config) *OAuthController {
 	return &OAuthController{
-		service: service,
+		service:     service,
 		frontendURL: cfg.FrontendURL,
 	}
 }
 
-func (oc *OAuthController) OAuthLogin(c * gin.Context) {
+func (oc *OAuthController) OAuthLogin(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	state, err := oc.service.GenerateState(ctx)

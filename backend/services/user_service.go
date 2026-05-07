@@ -2,9 +2,9 @@ package services
 
 import (
 	"errors"
-	"github.com/Transcendence/utils"
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/repositories"
+	"github.com/Transcendence/utils"
 )
 
 type UserService struct {

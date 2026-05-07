@@ -36,9 +36,6 @@ func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserRes
 		return nil, errors.New("user with this username already exists")
 	}
 
-
-
-
 	if infos.Password == nil || *infos.Password == "" {
 		return nil, errors.New("password is required")
 	}
@@ -49,7 +46,6 @@ func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserRes
 		return nil, err
 	}
 	infos.Password = &hashed
-
 
 	if infos.Provider == "" {
 		infos.Provider = "local"
@@ -77,7 +73,6 @@ func (s *AuthService) LoginAuthUserService(identifier, password string) (*models
 		return nil, errors.New("invalid credential")
 	}
 
-
 	if user.Password == nil || *user.Password == "" {
 		return nil, errors.New("invalid credential")
 	}
@@ -85,7 +80,6 @@ func (s *AuthService) LoginAuthUserService(identifier, password string) (*models
 	if !utils.CheckHashString(password, *user.Password) {
 		return nil, errors.New("invalid credential")
 	}
-
 
 	user.Password = nil
 	return user, nil

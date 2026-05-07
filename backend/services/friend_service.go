@@ -25,9 +25,9 @@ func (s *FriendService) SendRequest(userID, targetID string) error {
 		return errors.New("relationship already exists")
 	}
 	friend := models.Friend{
-		UserID: userID,
+		UserID:   userID,
 		FriendID: targetID,
-		Status: "pending",
+		Status:   "pending",
 	}
 	return s.DB.Create(&friend).Error
 }
