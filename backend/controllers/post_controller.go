@@ -69,9 +69,33 @@ func (pc *PostController) GetPost(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+func (pc *PostController) GetPostsByUser(c *gin.Context) {
+	userID := c.Param("userId")
+
+	posts, err := pc.postService.GetPostsByAuthor(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	currentUserID, _ := c.Get("user_id")
+	responses := make([]models.PostResponse, len(posts))
+	for i, p := range posts {
+		resp := p.ToResponse()
+		if currentUserID != nil {
+			liked, _ := pc.postService.HasLiked(currentUserID.(string), p.ID)
+			resp.Liked = liked
+		}
+		responses[i] = resp
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": responses})
+}
+
 func (pc *PostController) CreatePost(c *gin.Context) {
 	var req struct {
-		Content string `json:"content" binding:"required"`
+		Content  string  `json:"content" binding:"required"`
+		MediaURL *string `json:"media_url"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -84,7 +108,7 @@ func (pc *PostController) CreatePost(c *gin.Context) {
 		return
 	}
 
-	post, err := pc.postService.CreatePost(req.Content, authorID.(string))
+	post, err := pc.postService.CreatePost(req.Content, authorID.(string), req.MediaURL)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -148,11 +172,6 @@ func (pc *PostController) DeletePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Post deleted"})
 }
 
-
-
-
-
-
 func (pc *PostController) ToggleLike(c *gin.Context) {
 	postID := c.Param("id")
 
@@ -179,9 +198,6 @@ func (pc *PostController) ToggleLike(c *gin.Context) {
 	})
 }
 
-
-
-
 func (pc *PostController) GetComments(c *gin.Context) {
 	postID := c.Param("id")
 
@@ -202,7 +218,6 @@ func (pc *PostController) GetComments(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": responses, "total": len(responses)})
 }
-
 
 func (pc *PostController) CreateComment(c *gin.Context) {
 	postID := c.Param("id")
@@ -231,7 +246,6 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, comment.ToResponse())
 }
-
 
 func (pc *PostController) UpdateComment(c *gin.Context) {
 	commentID := c.Param("commentId")
@@ -263,7 +277,6 @@ func (pc *PostController) UpdateComment(c *gin.Context) {
 
 	c.JSON(http.StatusOK, comment.ToResponse())
 }
-
 
 func (pc *PostController) DeleteComment(c *gin.Context) {
 	commentID := c.Param("commentId")

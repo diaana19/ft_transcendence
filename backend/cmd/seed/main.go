@@ -75,10 +75,14 @@ func ensureSchema(db *gorm.DB) error {
 	fmt.Println("🔧 Ensuring schema is up to date...")
 	return db.AutoMigrate(
 		&models.User{},
+		&models.Friend{},
 		&models.Post{},
 		&models.Like{},
 		&models.Reply{},
 		&models.Repost{},
+		// &models.Group{},
+		&models.Message{},
+		&models.Notification{},
 	)
 }
 

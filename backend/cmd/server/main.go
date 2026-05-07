@@ -6,6 +6,7 @@ import (
 	"github.com/Transcendence/config"
 	"github.com/Transcendence/redis"
 	"github.com/Transcendence/routes"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,13 +15,25 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var DB, dberr = config.ConnectDB()
+	DB, dberr := config.ConnectDB()
 	if dberr != nil {
-		log.Fatal(err)
+		log.Fatal(dberr)
 	}
 
 	var router *gin.Engine = gin.Default()
 	router.SetTrustedProxies(nil)
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Cookie"},
+		ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},
+		AllowCredentials: true,
+	}))
+
+	router.OPTIONS("/*path", func(c *gin.Context) {
+		c.Status(204)
+	})
 
 	rdb, err := redis.InitRedis()
 	if err != nil {
@@ -53,6 +66,8 @@ func main() {
 		conf.ApiPort = "8000"
 	}
 
-	router.Run(":" + conf.ApiPort)
+	if err := router.Run(":" + conf.ApiPort); err != nil {
+		log.Fatal("Server failed to start: ", err)
+	}
 
 }

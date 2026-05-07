@@ -6,6 +6,7 @@ import (
 	"github.com/Transcendence/middleware"
 	"github.com/Transcendence/repositories"
 	"github.com/Transcendence/services"
+	"github.com/Transcendence/socket"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -20,6 +21,7 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 	{
 		posts.GET("", middleware.OptionalAuthMiddleware(), postController.GetPosts)
 		posts.GET("/:id", middleware.OptionalAuthMiddleware(), postController.GetPost)
+		posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(), postController.GetPostsByUser)
 		posts.GET("/:id/comments", postController.GetComments)
 
 		protected := posts.Group("")
@@ -55,6 +57,8 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 		Service: uploadService,
 	}
 
+	wsManager := socket.NewWSManager()
+	chatHandler := socket.NewChatHandler(wsManager, rdb)
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
 	oauthController := controllers.NewOAuthController(oauthService, cfg)
 
@@ -62,9 +66,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 	api := router.Group("/api")
 	{
-		api.POST("/auth/register", authController.RegisterUser)
-		api.POST("/auth/login", authController.LoginUser)
-		api.POST("/auth/refresh", authController.RefreshToken)
+		api.POST("/auth/register", middleware.RateLimitMiddleware(rdb), authController.RegisterUser)
+		api.POST("/auth/login", middleware.RateLimitMiddleware(rdb), authController.LoginUser)
+		api.POST("/auth/refresh", middleware.RateLimitMiddleware(rdb), authController.RefreshToken)
+		api.GET("/ws/chat", middleware.WSAuthMiddleware(), chatHandler.HandleWS)
 
 		api.GET("/auth/oauth/github/login", oauthController.OAuthLogin)
 		api.GET("/auth/oauth/github/callback", oauthController.OAuthCallback)

@@ -21,36 +21,36 @@ import (
 )
 
 type GitHubUser struct {
-	ID			int64 `json:"id"`
-	Login		string `json:"login"`
-	Name		string `json:"name"`
-	Email		string `json:"string"`
-	AvatarURL	string `json:"avatar_url"`
+	ID        int64  `json:"id"`
+	Login     string `json:"login"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	AvatarURL string `json:"avatar_url"`
 }
 
 type ghEmail struct {
-	Email		string	`json:"email"`
-	Primary		bool	`json:"primary"`
-	Verified	bool	`json:"verified"`
+	Email    string `json:"email"`
+	Primary  bool   `json:"primary"`
+	Verified bool   `json:"verified"`
 }
 
 type OAuthService struct {
-	userRepo	repositories.UserRepository
-	redisClient	*redis.Client
-	oauthConfig	*oauth2.Config
+	userRepo    repositories.UserRepository
+	redisClient *redis.Client
+	oauthConfig *oauth2.Config
 }
 
 func NewOAuthService(repo repositories.UserRepository, rdb *redis.Client, cfg *config.Config) *OAuthService {
-	oauthConfig := &oauth2.Config {
-		ClientID: cfg.GithubClientID,
+	oauthConfig := &oauth2.Config{
+		ClientID:     cfg.GithubClientID,
 		ClientSecret: cfg.GithubClientSecret,
-		RedirectURL: cfg.GithubRedirectURL,
-		Scopes: []string{"user:email", "read:user"},
-		Endpoint: github.Endpoint,
+		RedirectURL:  cfg.GithubRedirectURL,
+		Scopes:       []string{"user:email", "read:user"},
+		Endpoint:     github.Endpoint,
 	}
 
 	return &OAuthService{
-		userRepo: repo,
+		userRepo:    repo,
 		redisClient: rdb,
 		oauthConfig: oauthConfig,
 	}

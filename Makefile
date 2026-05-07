@@ -86,10 +86,6 @@ all: build up
 	@echo ""
 	@echo "All services started!"
 
-re: down clean dev
-	@echo ""
-	@echo "Full restart complete!"
-
 # ==================== Docker Commands ====================
 
 build:
@@ -123,6 +119,14 @@ stop:
 
 restart: down up
 	@echo "Restart complete!"
+
+re:
+	@echo "Stopping containers..."
+	@make down
+	@echo "Removing backend images..."
+	@docker rmi $$(docker images | grep backend | awk '{print $$3}') || true
+	@echo "Starting again..."
+	@make up
 
 clean:
 	@echo "Cleaning up containers and volumes..."
