@@ -9,7 +9,6 @@ import (
 
 	"github.com/Transcendence/models"
 	redispub "github.com/Transcendence/redis"
-	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -18,9 +17,14 @@ import (
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		// origin := r.Header.Get("Origin")
-		// return origin == "http://localhost:3000"
-		return true
+		origin := r.Header.Get("Origin")
+		allowed := []string{"http://localhost:3000", "http://localhost"}
+		for _, a := range allowed {
+			if origin == a {
+				return true
+			}
+		}
+		return false
 	},
 }
 
@@ -51,26 +55,8 @@ func NewChatHandler(manager *WSManager, rdb *redis.Client) *ChatHandler {
 }
 
 func (h *ChatHandler) HandleWS(c *gin.Context) {
-
-	var userID string
-	var username string
-	if id, exists := c.Get("userID"); exists {
-		userID = id.(string)
-	} else {
-
-		token := c.Query("token")
-		if token == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
-		claims, err := utils.ValidateJWT(token)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
-			return
-		}
-		userID = claims.UserId
-		username = claims.Username
-	}
+	userID := c.GetString("user_id")
+	username := c.GetString("username")
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {

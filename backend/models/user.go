@@ -1,8 +1,8 @@
 package models
 
 import (
-	"time"
 	"gorm.io/gorm"
+	"time"
 )
 
 type User struct {
@@ -13,23 +13,23 @@ type User struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
 
-	Name     string `json:"name"`
-	Username string `json:"username" binding:"required" gorm:"unique;not null"`
-	Email    string `json:"email" binding:"required,email" gorm:"unique;not null"`
-	Password *string `json:"password"`
+	Name     string  `json:"name"`
+	Username string  `json:"username" binding:"required" gorm:"unique;not null"`
+	Email    string  `json:"email" binding:"required,email" gorm:"unique;not null"`
+	Password *string `json:"-"`
 
 	DateOfBirth *time.Time `json:"dateOfBirth"`
 
 	Wallpaper *string `json:"wallpaper"`
 	Avatar    *string `json:"avatar"`
-	Bio       string `json:"bio"`
+	Bio       string  `json:"bio"`
 }
 
 type UpdateUserInput struct {
-	Name      string `json:"name"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	Bio       string `json:"bio"`
+	Name      string  `json:"name"`
+	Username  string  `json:"username"`
+	Email     string  `json:"email"`
+	Bio       string  `json:"bio"`
 	Avatar    *string `json:"avatar"`
 	Wallpaper *string `json:"wallpaper"`
 }
@@ -40,8 +40,8 @@ type UserResponse struct {
 	Email     string    `json:"email"`
 	Name      string    `json:"name,omitempty"`
 	Bio       string    `json:"bio,omitempty"`
-	Avatar    *string    `json:"avatar,omitempty"`
-	Wallpaper *string    `json:"wallpaper,omitempty"`
+	Avatar    *string   `json:"avatar,omitempty"`
+	Wallpaper *string   `json:"wallpaper,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 }
 

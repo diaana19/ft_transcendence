@@ -1,13 +1,13 @@
 package tests
 
 import (
-	"fmt"
-	"time"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func createUserAndGetID(router http.Handler, t *testing.T) string {

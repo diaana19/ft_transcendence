@@ -18,6 +18,11 @@ func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 	os.Setenv("DB_HOST", "localhost")
 	os.Setenv("DB_NAME", "app_db")
 
+	cfg, err := config.Load()
+	if err != nil {
+		panic(err)
+	}
+
 	db, err := config.ConnectDB()
 	if err != nil {
 		panic(err)
@@ -32,7 +37,7 @@ func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 	db.AutoMigrate(&models.User{})
 
 	router := gin.Default()
-	routes.SetupRoutes(router, db, rdb)
+	routes.SetupRoutes(router, db, rdb, cfg)
 
 	return router, db
 }
