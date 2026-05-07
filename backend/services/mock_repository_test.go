@@ -61,7 +61,6 @@ func (m *mockUserRepository) Update(id string, input models.UpdateUserInput) (*m
 		user.Bio = input.Bio
 	}
 
-
 	if input.Avatar != nil {
 		user.Avatar = input.Avatar
 	}
@@ -117,7 +116,6 @@ func (m *mockUserRepository) GetByIdentifier(identifier string) (*models.User, e
 	return nil, errors.New("user not found")
 }
 
-
 func (m *mockUserRepository) GetByGithubID(githubID string) (*models.User, error) {
 	for _, u := range m.users {
 		if u.GithubID != nil && *u.GithubID == githubID {
@@ -135,7 +133,7 @@ func (m *mockUserRepository) LinkGithub(userID, githubID string) error {
 	if !ok {
 		return errors.New("record not found")
 	}
-	gid := githubID  // need pointer
+	gid := githubID // need pointer
 	user.GithubID = &gid
 	user.Provider = "github"
 	return nil
