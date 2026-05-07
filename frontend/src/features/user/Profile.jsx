@@ -142,8 +142,8 @@ return (
 
     {/* Banner */}
     <div className="h-48 w-full overflow-hidden bg-blue-500" >
-    {user.banner && (
-      <img src={user.banner} alt="banner" className="w-full h-full object-cover" />
+    {user.wallpaper && (
+      <img src={user.wallpaper} alt="banner" className="w-full h-full object-cover" />
     )}
     </div>
     {/* Card */}
@@ -215,7 +215,7 @@ return (
               </button>
             </>
           ) : (
-            <FollowButton targetId={userId} isFollowing={isFollowing} />
+            <FollowButton onFollow={fetchUser} targetId={userId} isFollowing={isFollowing} />
           )}
         </div>
 
@@ -289,11 +289,11 @@ return (
 
           {/* Banner clickable */}
           <div className="relative h-32 bg-blue-500 ">
-            {form.banner
-              ? <img src={form.banner} alt="banner" className="w-full h-full object-cover" />
+            {form.wallpaper
+              ? <img src={form.wallpaper} alt="banner" className="w-full h-full object-cover" />
               : null
             }
-            <label className="absolute inset-0 flex items-center justify-center backdrop-blur-sm bg-black/10 cursor-pointer hover:bg-opacity-40 transition-all">
+            <label className="absolute inset-0 flex items-center justify-center  bg-black/10 cursor-pointer hover:bg-opacity-40 transition-all">
               {uploadingBanner
                 ? <span className="text-white text-xs">Uploading...</span>
                 : <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
@@ -317,7 +317,7 @@ return (
                     })
                     const data = await res.json()
                     // Guarda en form para que el Save lo mande con PUT
-                    setForm(prev => ({ ...prev, banner: data.path }))
+                    setForm(prev => ({ ...prev, wallpaper: data.path }))
                   } catch (err) {
                     console.error(err)
                   } finally {
@@ -339,7 +339,7 @@ return (
                   onError={(e) => { e.target.src = '/default-avatar.jpg' }}
                 />
               </div>
-                <label className="absolute inset-0 flex items-center justify-center backdrop-blur-sm bg-black/10 rounded-full cursor-pointer hover:bg-opacity-50 transition-all">
+                <label className="absolute inset-0 flex items-center justify-center  bg-black/10 rounded-full cursor-pointer hover:bg-opacity-50 transition-all">
                   {uploadingAvatar
                     ? <span className="text-white text-xs">...</span>
                     : <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">

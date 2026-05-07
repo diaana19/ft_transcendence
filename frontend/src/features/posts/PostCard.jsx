@@ -10,8 +10,10 @@
 import { useState } from 'react'
 import { deletePost, updatePost } from './postService.js'
 import { Pencil, Trash2, MessageCircle, Heart } from 'lucide-react'
+import { useParams, useNavigate } from "react-router-dom";
 
 function PostCard({ post, onDelete, onUpdate, currentUserId }) {
+    const navigate = useNavigate() 
     const [isEditing, setIsEditing] = useState(false)
     const [editContent, setEditContent] = useState(post.content)
     const [loading, setLoading] = useState(false)
@@ -53,7 +55,7 @@ return (
         <div className="flex-1">
 
           <div className="flex items-center gap-2">
-            <span className="font-bold text-black">{post.author?.name || 'Unknown'}</span>
+            <span onClick={() => navigate('/profile/' + post.author_id)} className="font-bold text-black">{post.author?.name || 'Unknown' }</span>
             <span className="text-gray-500">@{post.author?.username || 'unknown'}</span>
             <span className="text-gray-500">·</span>
             <span className="text-gray-500 text-sm">

@@ -11,7 +11,7 @@ export const getFollowing = async (userId) => {
 }
 
 export const followUser = async (targetId) => {
-  const res = await axiosInstance.post(`/api/friends/${targetId}/follow`)
+  const res = await axiosInstance.post(`/api/friends/follow/${targetId}`)
   return res.data
 }
 

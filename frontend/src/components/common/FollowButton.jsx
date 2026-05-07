@@ -10,6 +10,7 @@ function FollowButton({ targetId, isFollowing: initialIsFollowing }) {
     try {
       await followUser(targetId)
       setIsFollowing(true)
+      onFollow?.()
     } catch (err) {
       console.error('Error following user:', err)
     } finally {
@@ -17,6 +18,7 @@ function FollowButton({ targetId, isFollowing: initialIsFollowing }) {
     }
   }
 
+  
   if (isFollowing) {
     return (
       <button
