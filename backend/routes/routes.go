@@ -20,8 +20,8 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 	posts := api.Group("/posts")
 	{
 		posts.GET("", middleware.OptionalAuthMiddleware(), postController.GetPosts)
-		posts.GET("/:id", middleware.OptionalAuthMiddleware(), postController.GetPost)
 		posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(), postController.GetPostsByUser)
+		posts.GET("/:id", middleware.OptionalAuthMiddleware(), postController.GetPost)
 		posts.GET("/:id/comments", postController.GetComments)
 
 		protected := posts.Group("")

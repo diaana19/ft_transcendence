@@ -14,6 +14,7 @@ import { useAuth } from "../../hooks/useAuth";
 import FriendsList from './FriendsList'
 import FollowButton from "../../components/common/FollowButton";
 import PostCard from '../posts/PostCard';
+import { getPostsByAuthor } from '../posts/postService'
 
 export default function Profile() {
 	const { user: authUser, token, logout } = useAuth();
@@ -78,8 +79,7 @@ export default function Profile() {
   const fetchUserPosts = async () => {
   try {
     setLoadingPosts(true)
-    const res = await fetch(`/api/posts/user/${userId}`)
-    const data = await res.json()
+    const data = await getPostsByAuthor(userId)
     setPosts(data)
   } catch (err) {
     console.error(err)
