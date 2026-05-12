@@ -89,7 +89,18 @@ return (
               </div>
             </div>
           ) : (
-            <p className="text-black mt-1">{post.content}</p>
+            <>
+              <p className="text-black mt-1">{post.content}</p>
+              {post.media_url && (
+                <div className="mt-3 overflow-hidden rounded-2xl">
+                  <img
+                    src={post.media_url}
+                    alt="Post media"
+                    className="w-full max-h-96 object-cover"
+                  />
+                </div>
+              )}
+            </>
           )}
 
           <div className="flex gap-6 mt-3 text-gray-500 text-sm">

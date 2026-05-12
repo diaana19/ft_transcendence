@@ -11,6 +11,7 @@
 import { useState } from 'react'
 import { createPost } from './postService.js'
 import { Image } from 'lucide-react'
+import axiosInstance from '../../services/axiosInstance'
 
 function CreatePost({ onPostCreated }) {
     const [file, setFile] = useState(null)
@@ -26,6 +27,7 @@ const handleFileChange = (e) => {
       return
     }
     setFile(selectedFile)
+    console.log('Selected file:', selectedFile.name, 'size:', selectedFile.size)
     setError(null)
   }
 
@@ -35,9 +37,18 @@ const handleSubmit = async () => {
     setLoading(true)
     setError(null)
     try {
-        const newPost = await createPost(content)
+        let mediaUrl = null
+        if (file) {
+            const formData = new FormData()
+            formData.append('file', file)
+            const res = await axiosInstance.post('/api/upload', formData)
+            console.log('Upload response:', res)
+            mediaUrl = res.data.path
+        }
+        const newPost = await createPost(content, mediaUrl)
         onPostCreated(newPost)
         setContent('')
+        setFile(null)
     } catch (err) {
         setError(err.response?.data?.error || 'Something went wrong')
     } finally {

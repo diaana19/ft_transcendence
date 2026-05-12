@@ -28,10 +28,11 @@ export async function getPostsByAuthor(id) {
     return response.data.data
 }
 
-export async function createPost(content) {
+export async function createPost(content, mediaUrl = null) {
     const response = await axiosInstance.post(
         '/api/posts',
-        { content }
+        {content,
+        media_url: mediaUrl }
     )
     return response.data
 }
