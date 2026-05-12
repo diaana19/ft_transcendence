@@ -68,5 +68,5 @@ type Friend struct {
 	ID       string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	UserID   string `gorm:"type:uuid;not null;index"`
 	FriendID string `gorm:"type:uuid;not null;index"`
-	Status   string
+	Status   string `json:"status"`
 }

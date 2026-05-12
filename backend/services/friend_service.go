@@ -20,7 +20,7 @@ func (s *FriendService) SendRequest(userID, targetID string) error {
 		return errors.New("target user not found")
 	}
 	var existing models.Friend
-	err := s.DB.Where("user_id = ? AND friend_id = ?", userID, targetID).First(&existing).Error
+	err := s.DB.Where("user_id = ? AND friend_id = ? AND status IN (?)", userID, targetID, []string{"pending", "accepted"}).First(&existing).Error
 	if err == nil {
 		return errors.New("relationship already exists")
 	}
@@ -37,7 +37,6 @@ func (s *FriendService) AcceptRequest(userID, requesterID string) error {
 		return errors.New("cannot accept yourself")
 	}
 
-	// Find the pending request from requester → user
 	var friend models.Friend
 	err := s.DB.Where(
 		"user_id = ? AND friend_id = ? AND status = ?",
@@ -63,7 +62,7 @@ func (s *FriendService) Follow(userID, targetID string) error {
 		return errors.New("target user not found")
 	}
 	var existing models.Friend
-	err := s.DB.Where("user_id = ? AND friend_id = ?", userID, targetID).First(&existing).Error
+	err := s.DB.Where("user_id = ? AND friend_id = ? AND status = ?", userID, targetID, "follow").First(&existing).Error
 	if err == nil {
 		return errors.New("relationship already exists")
 	}

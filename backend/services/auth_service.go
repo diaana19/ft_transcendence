@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/Transcendence/models"
@@ -22,8 +21,6 @@ func NewAuthService(repo repositories.UserRepository) *AuthService {
 }
 
 func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserResponse, error) {
-	log.Printf("DEBUG: Starting CreateAuthUserService with: username=%s email=%s\n", infos.Username, infos.Email)
-
 	if infos.ID == "" {
 		infos.ID = uuid.New().String()
 	}
@@ -42,7 +39,6 @@ func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserRes
 
 	hashed, err := utils.HashString(*infos.Password)
 	if err != nil {
-		log.Printf("DEBUG: Error hashing password: %v\n", err)
 		return nil, err
 	}
 	infos.Password = &hashed
@@ -53,7 +49,6 @@ func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserRes
 
 	err = s.repo.CreateUser(infos)
 	if err != nil {
-		log.Printf("DEBUG: Error creating user: %v\n", err)
 		return nil, err
 	}
 
