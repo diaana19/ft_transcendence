@@ -12,11 +12,12 @@ import (
 )
 
 type PostController struct {
-	postService *services.PostService
+	postService         *services.PostService
+	notificationService *services.NotificationService
 }
 
-func NewPostController(postService *services.PostService) *PostController {
-	return &PostController{postService: postService}
+func NewPostController(postService *services.PostService, notifService *services.NotificationService) *PostController {
+	return &PostController{postService: postService, notificationService: notifService}
 }
 
 func (pc *PostController) GetPosts(c *gin.Context) {
@@ -191,6 +192,18 @@ func (pc *PostController) ToggleLike(c *gin.Context) {
 		return
 	}
 
+	if liked && post.AuthorID != userID.(string) {
+		username, _ := c.Get("username")
+		pc.notificationService.SendNotification(
+			post.AuthorID,
+			post.Author.Username,
+			userID.(string),
+			username.(string),
+			"like",
+			username.(string)+" liked your post",
+		)
+	}
+
 	c.JSON(http.StatusOK, models.LikeResponse{
 		PostID:     postID,
 		Liked:      liked,
@@ -234,6 +247,12 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 		return
 	}
 
+	post, err := pc.postService.GetPost(postID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		return
+	}
+
 	comment, err := pc.postService.CreateComment(input.Content, authorID.(string), postID)
 	if err != nil {
 		if err.Error() == "post not found" {
@@ -242,6 +261,17 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	if post.AuthorID != authorID.(string) {
+		username, _ := c.Get("username")
+		pc.notificationService.SendCommentNotification(
+			post.AuthorID,
+			authorID.(string),
+			username.(string),
+			postID,
+			comment.Content,
+		)
 	}
 
 	c.JSON(http.StatusCreated, comment.ToResponse())

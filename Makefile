@@ -120,7 +120,7 @@ stop:
 restart: down up
 	@echo "Restart complete!"
 
-re:
+reall:
 	@echo "Stopping containers..."
 	@make down
 	@echo "Removing backend images..."

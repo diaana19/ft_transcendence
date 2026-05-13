@@ -1,6 +1,7 @@
 package socket
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/Transcendence/models"
 	redispub "github.com/Transcendence/redis"
+	"github.com/Transcendence/services"
+	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -17,6 +20,9 @@ import (
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
+		// origin := r.Header.Get("Origin")
+		// return origin == "http://localhost:3000"
+		// return true
 		origin := r.Header.Get("Origin")
 		allowed := []string{"http://localhost:3000", "http://localhost"}
 		for _, a := range allowed {
@@ -29,10 +35,11 @@ var upgrader = websocket.Upgrader{
 }
 
 type ChatHandler struct {
-	manager         *WSManager
-	rdb             *redis.Client
-	subscribedRooms map[string]bool
-	subscribedMu    sync.Mutex
+	manager             *WSManager
+	rdb                 *redis.Client
+	notificationService *services.NotificationService
+	subscribedRooms     map[string]bool
+	subscribedMu        sync.Mutex
 }
 
 type IncomingMessage struct {
@@ -50,13 +57,55 @@ type OutgoingMessage struct {
 	RoomID   string          `json:"room_id,omitempty"`
 }
 
-func NewChatHandler(manager *WSManager, rdb *redis.Client) *ChatHandler {
-	return &ChatHandler{manager: manager, rdb: rdb, subscribedRooms: make(map[string]bool)}
+func NewChatHandler(manager *WSManager, rdb *redis.Client, notifService *services.NotificationService) *ChatHandler {
+	return &ChatHandler{
+		manager:             manager,
+		rdb:                 rdb,
+		notificationService: notifService,
+		subscribedRooms:     make(map[string]bool),
+	}
+}
+
+func (h *ChatHandler) sendPendingNotifications(client *Client) {
+	notifs, err := h.notificationService.GetUnread(client.ID)
+	if err != nil || len(notifs) == 0 {
+		return
+	}
+	for _, n := range notifs {
+		payload, err := json.Marshal(map[string]interface{}{
+			"type":         "notification",
+			"notification": n,
+		})
+		if err != nil {
+			continue
+		}
+		safeSend(client.Send, payload)
+	}
+	h.notificationService.MarkAllRead(client.ID)
 }
 
 func (h *ChatHandler) HandleWS(c *gin.Context) {
-	userID := c.GetString("user_id")
-	username := c.GetString("username")
+
+	var userID string
+	var username string
+	if id, exists := c.Get("userID"); exists {
+		userID = id.(string)
+
+	} else {
+
+		token := c.Query("token")
+		if token == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		claims, err := utils.ValidateJWT(token)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			return
+		}
+		userID = claims.UserId
+		username = claims.Username
+	}
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -72,7 +121,17 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 	}
 
 	h.manager.RegisterClient(client)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	defer h.manager.UnregisterClient(client)
+
+	log.Printf("[WS] Client connected username=%q userID=%s , subscribing to notifications:%s", client.Username, client.ID, client.ID)
+	redispub.Subscribe(ctx, h.rdb, "notifications:"+client.ID, func(payload string) {
+		log.Printf("[WS] Forwarding notification to client username=%q userID=%s ", client.Username, client.ID)
+		safeSend(client.Send, []byte(payload))
+	})
+	h.sendPendingNotifications(client)
 
 	go client.WritePump()
 
@@ -122,7 +181,7 @@ func (h *ChatHandler) handleJoin(client *Client, roomID string) {
 	h.subscribedMu.Lock()
 	if !h.subscribedRooms[roomID] {
 		h.subscribedRooms[roomID] = true
-		redispub.Subscribe(h.rdb, "chat:"+roomID, func(payload string) {
+		redispub.Subscribe(context.Background(), h.rdb, "chat:"+roomID, func(payload string) {
 			h.manager.BroadcastToRoom(roomID, []byte(payload), "")
 		})
 	}
