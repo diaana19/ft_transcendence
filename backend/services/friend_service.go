@@ -74,3 +74,15 @@ func (s *FriendService) Follow(userID, targetID string) error {
 
 	return s.DB.Create(&follow).Error
 }
+
+func (s *FriendService) CountFollowers(userID string) (int64, error) {
+	var count int64
+	err := s.DB.Model(&models.Friend{}).Where("friend_id = ? AND status = ?", userID, "follow").Count(&count).Error
+	return count, err
+}
+
+func (s *FriendService) CountFollowing(userID string) (int64, error) {
+	var count int64
+	err := s.DB.Model(&models.Friend{}).Where("user_id = ? AND status = ?", userID, "follow").Count(&count).Error
+	return count, err
+}

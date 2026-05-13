@@ -47,10 +47,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	authController := controllers.NewAuthController(authService, rdb)
 
 	userService := services.NewUserService(userRepo)
-	userController := controllers.NewUserController(userService)
-
 	friendService := &services.FriendService{DB: DB}
 	friendController := &controllers.FriendController{Service: friendService}
+	userController := controllers.NewUserController(userService, friendService)
+
 
 	uploadService := &services.UploadService{}
 	uploadController := &controllers.UploadController{

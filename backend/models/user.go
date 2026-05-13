@@ -48,6 +48,8 @@ type UserResponse struct {
 	Wallpaper *string   `json:"wallpaper,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	TwoFAEnabled bool `json:"two_fa_enabled"`
+	FollowersCount int64 `json:"followers_count"`
+	FollowingCount int64 `json:"following_count"`
 }
 
 func (u *User) ToResponse() UserResponse {

@@ -12,14 +12,15 @@ import (
 
 type UserController struct {
 	userService *services.UserService
+	friendService *services.FriendService
 }
 
 type DeleteAccountInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func NewUserController(userService *services.UserService) *UserController {
-	return &UserController{userService: userService}
+func NewUserController(userService *services.UserService, friendService *services.FriendService) *UserController {
+	return &UserController{userService: userService, friendService: friendService}
 }
 
 func (uc *UserController) GetUsers(c *gin.Context) {
@@ -37,18 +38,22 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 }
 
 func (uc *UserController) GetUser(c *gin.Context) {
-	id := c.Param("id")
-	user, err := uc.userService.GetUser(id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+    id := c.Param("id")
+    user, err := uc.userService.GetUser(id)
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+            return
+        }
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
 
-	c.JSON(http.StatusOK, user.ToResponse())
+    response := user.ToResponse()
+    response.FollowersCount, _ = uc.friendService.CountFollowers(user.ID)
+    response.FollowingCount, _ = uc.friendService.CountFollowing(user.ID)
+
+    c.JSON(http.StatusOK, response)
 }
 
 func (uc *UserController) UpdateUser(c *gin.Context) {
