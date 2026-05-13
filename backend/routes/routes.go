@@ -93,7 +93,15 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 			protected.POST("friends/request/:id", friendController.SendFriendRequest)
 			protected.POST("friends/accept/:id", friendController.AcceptFriend)
+			protected.POST("friends/reject/:id", friendController.RejectFriendRequest)
+			protected.DELETE("friends/:id", friendController.RemoveFriend)
+
 			protected.POST("friends/follow/:id", friendController.FollowUser)
+			protected.DELETE("friends/follow/:id", friendController.UnfollowUser)
+
+			protected.GET("users/:id/followers", friendController.GetFollowers)
+			protected.GET("users/:id/following", friendController.GetFollowing)
+			protected.GET("users/:id/friends", friendController.GetFriends)
 
 			protected.POST("notification", notifController.GetUnread)
 			protected.POST("notification/read", notifController.MarkAllRead)
