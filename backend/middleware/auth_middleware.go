@@ -54,7 +54,7 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 			return
 		}
 
-		c.Set("userID", claims.UserId)
+		c.Set("user_id", claims.UserId)
 		c.Set("username", claims.Username)
 		c.Next()
 	}

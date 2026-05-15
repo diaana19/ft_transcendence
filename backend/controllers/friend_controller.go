@@ -5,6 +5,7 @@ import (
 
 	"net/http"
 
+	"github.com/Transcendence/models"
 	"github.com/Transcendence/services"
 	"github.com/gin-gonic/gin"
 )
@@ -69,4 +70,91 @@ func (fc *FriendController) FollowUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "user followed"})
+}
+
+func (fc *FriendController) UnfollowUser(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	targetID := c.Param("id")
+	if err := fc.Service.Unfollow(userID.(string), targetID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "user unfollowed"})
+}
+
+func (fc *FriendController) RemoveFriend(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	targetID := c.Param("id")
+	if err := fc.Service.RemoveFriend(userID.(string), targetID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "friend removed"})
+}
+
+func (fc *FriendController) RejectFriendRequest(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	requesterID := c.Param("id")
+	if err := fc.Service.RejectRequest(userID.(string), requesterID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "request rejected"})
+}
+
+func (fc *FriendController) GetFollowers(c *gin.Context) {
+	userID := c.Param("id")
+	followers, err := fc.Service.GetFollowers(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	responses := make([]models.UserResponse, len(followers))
+	for i, u := range followers {
+		responses[i] = u.ToResponse()
+	}
+	c.JSON(http.StatusOK, gin.H{"data": responses})
+}
+
+func (fc *FriendController) GetFollowing(c *gin.Context) {
+	userID := c.Param("id")
+	following, err := fc.Service.GetFollowing(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	responses := make([]models.UserResponse, len(following))
+	for i, u := range following {
+		responses[i] = u.ToResponse()
+	}
+	c.JSON(http.StatusOK, gin.H{"data": responses})
+}
+
+func (fc *FriendController) GetFriends(c *gin.Context) {
+	userID := c.Param("id")
+	friends, err := fc.Service.GetFriends(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	responses := make([]models.UserResponse, len(friends))
+	for i, u := range friends {
+		responses[i] = u.ToResponse()
+	}
+	c.JSON(http.StatusOK, gin.H{"data": responses})
 }

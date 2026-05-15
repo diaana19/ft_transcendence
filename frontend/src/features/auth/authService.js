@@ -16,3 +16,27 @@ export async function login(email, password) {
     })
     return response.data
 }
+
+export async function setupTwoFA() {
+    const response = await api.post('/api/2fa/setup')
+    return response.data
+}
+
+export async function enableTwoFA(code) {
+    const response = await api.post('/api/2fa/enable', {
+        code
+    })
+    return response.data
+}
+
+export async function disableTwoFA() {
+    const response = await api.post('/api/2fa/disable')
+    return response.data
+}
+
+export async function verifyTwoFA(code) {
+    const response = await api.post('/api/2fa/verify', {
+        code
+    })
+    return response.data
+}
