@@ -3,7 +3,9 @@ import {
   HomeIcon,
   UserIcon,
   SparklesIcon,
-  QuestionMarkCircleIcon
+  QuestionMarkCircleIcon,
+  EnvelopeIcon,
+  BellIcon
 } from "@heroicons/react/24/outline"
 
 export default function Sidebar() {
@@ -56,6 +58,16 @@ export default function Sidebar() {
         <NavLink to="/comunities" className={linkClass}>
           <SparklesIcon className="w-5 h-5" />
           <span>Comunities</span>
+        </NavLink>
+
+        <NavLink to="/notifications" className={linkClass}>
+          <BellIcon className="w-5 h-5" />
+          <span>Notifications</span>
+        </NavLink>
+
+        <NavLink to="/messages" className={linkClass}>
+          <EnvelopeIcon className="w-5 h-5" />
+          <span>Messages</span>
         </NavLink>
 
         <NavLink to="/help" className={linkClass}>

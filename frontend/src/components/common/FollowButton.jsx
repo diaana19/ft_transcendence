@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { followUser } from '../../features/user/userService'
 
-function FollowButton({ targetId, isFollowing: initialIsFollowing }) {
+function FollowButton({ targetId, isFollowing: initialIsFollowing, onFollow }) {
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
   const [loading, setLoading]         = useState(false)
 

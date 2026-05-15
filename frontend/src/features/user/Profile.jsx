@@ -239,7 +239,7 @@ return (
         </div>
       </div>
 
-      {/* Posts tab — como Twitter */}
+      {/* Posts tab */}
       <div className="flex border-b border-gray-200">
         <div className="flex-1 text-center py-4 text-sm font-bold border-b-2 border-blue-400 text-black cursor-pointer">
           Posts
