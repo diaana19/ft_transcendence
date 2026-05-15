@@ -9,19 +9,19 @@ import (
 )
 
 type SetupResponse struct {
-	Secret string `json:"secret"`
+	Secret    string `json:"secret"`
 	QRCodeURL string `json:"qr_code_url"`
 }
 
 type TwoFAService struct {
 	userRepo repositories.UserRepository
-	issuer string
+	issuer   string
 }
 
 func NewTwoFAService(repo repositories.UserRepository) *TwoFAService {
 	return &TwoFAService{
 		userRepo: repo,
-		issuer: "Transcendence",
+		issuer:   "Transcendence",
 	}
 }
 
@@ -36,7 +36,7 @@ func (s *TwoFAService) GenerateSecret(userID string) (*SetupResponse, error) {
 	}
 
 	key, err := totp.Generate(totp.GenerateOpts{
-		Issuer: s.issuer,
+		Issuer:      s.issuer,
 		AccountName: user.Email,
 	})
 	if err != nil {
@@ -49,7 +49,7 @@ func (s *TwoFAService) GenerateSecret(userID string) (*SetupResponse, error) {
 	}
 
 	return &SetupResponse{
-		Secret: secret,
+		Secret:    secret,
 		QRCodeURL: key.URL(),
 	}, nil
 }

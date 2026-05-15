@@ -109,8 +109,11 @@ func (s *FriendService) RemoveFriend(userID, targetID string) error {
 	return nil
 }
 
-func (s *FriendService) RejectRequest(userID, targetID string) error {
-	result := s.DB.Where("user_id = ? AND friend_id = ? AND status = ?", userID, targetID, "pending").Delete(&models.Friend{})
+func (s *FriendService) RejectRequest(userID, requesterID string) error {
+	result := s.DB.Where(
+		"user_id = ? AND friend_id = ? AND status = ?",
+		requesterID, userID, "pending",
+	).Delete(&models.Friend{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -122,7 +125,10 @@ func (s *FriendService) RejectRequest(userID, targetID string) error {
 
 func (s *FriendService) GetFollowers(userID string) ([]models.User, error) {
 	var followers []models.User
-	err := s.DB.Joins("JOIN friends ON friends.friend_id = user.id").Where("friends.friend_id = ? AND friends.status = ?", userID, "follow").Find(&followers).Error
+	err := s.DB.
+		Joins("JOIN friends ON friends.user_id = users.id").
+		Where("friends.friend_id = ? AND friends.status = ?", userID, "follow").
+		Find(&followers).Error
 	return followers, err
 }
 

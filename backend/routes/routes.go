@@ -14,7 +14,7 @@ import (
 
 func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 	notifRepo := repositories.NewNotificationRepositories(DB)
-	notifPubSub := repositories.NewNotiticationPubSub(rdb)
+	notifPubSub := repositories.NewNotificationPubSub(rdb)
 	notifService := services.NewNotificationService(notifRepo, notifPubSub)
 
 	postRepo := repositories.NewPostRepository(DB)
@@ -47,7 +47,7 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config.Config) {
 
 	notifRepo := repositories.NewNotificationRepositories(DB)
-	notifPubSub := repositories.NewNotiticationPubSub(rdb)
+	notifPubSub := repositories.NewNotificationPubSub(rdb)
 	notifService := services.NewNotificationService(notifRepo, notifPubSub)
 	notifController := controllers.NewNotificationController(notifService)
 
@@ -57,9 +57,11 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 	userService := services.NewUserService(userRepo)
 	friendService := &services.FriendService{DB: DB}
-	friendController := &controllers.FriendController{Service: friendService}
+	friendController := &controllers.FriendController{
+		Service:             friendService,
+		NotificationService: notifService,
+	}
 	userController := controllers.NewUserController(userService, friendService)
-
 
 	uploadService := &services.UploadService{}
 	uploadController := &controllers.UploadController{
@@ -103,7 +105,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.GET("users/:id/following", friendController.GetFollowing)
 			protected.GET("users/:id/friends", friendController.GetFriends)
 
-			protected.POST("notification", notifController.GetUnread)
+			protected.GET("notification", notifController.GetUnread)
 			protected.POST("notification/read", notifController.MarkAllRead)
 
 			protected.POST("upload", uploadController.UploadFile)
