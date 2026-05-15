@@ -52,6 +52,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	notifController := controllers.NewNotificationController(notifService)
 
 	userRepo := repositories.NewUserRepository(DB)
+
+	twoFAService := services.NewTwoFAService(userRepo)
+	twoFAController := controllers.NewTwoFAController(twoFAService)
+
 	authService := services.NewAuthService(userRepo)
 	authController := controllers.NewAuthController(authService, rdb)
 
@@ -109,6 +113,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.POST("notification/read", notifController.MarkAllRead)
 
 			protected.POST("upload", uploadController.UploadFile)
+
+			protected.POST("/2fa/setup", twoFAController.Setup)
+			protected.POST("/2fa/enable", twoFAController.Enable)
+			protected.POST("/2fa/disable", twoFAController.Disable)
 		}
 
 		create_post_routes(api, DB, rdb)
