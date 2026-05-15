@@ -10,6 +10,10 @@ import (
 	"github.com/Transcendence/utils"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+
+	"crypto/rand"
+	"encoding/base64"
+	"fmt"
 )
 
 type AuthService struct {
@@ -87,4 +91,42 @@ func (s *AuthService) LogoutAuthUserService(token string, expire time.Duration, 
 		return errors.New("could not logout")
 	}
 	return nil
+}
+
+func (s *AuthService) GetUserByID(id string) (*models.User, error) {
+	return s.repo.GetByID(id)
+}
+
+func (s *AuthService) CreatePendingLogin(userID string, rdb *redis.Client) (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate pending token: %w", err)
+	}
+
+	pendingToken := base64.URLEncoding.EncodeToString(bytes)
+
+	ctx := context.Background()
+	key := "pending_login:" + pendingToken
+	if err := rdb.Set(ctx, key, userID, 5*time.Minute).Err(); err != nil {
+		return "", fmt.Errorf("failed to store pending login: %w", err)
+	}
+
+	return pendingToken, nil
+}
+
+func (s *AuthService) ConsumePendingLogin(pendingToken string, rdb *redis.Client) (string, error) {
+	ctx := context.Background()
+	key := "pending_login:" + pendingToken
+
+	userID, err := rdb.Get(ctx, key).Result()
+	if errors.Is(err, redis.Nil) {
+		return "", errors.New("pending login expired or invalid")
+	}
+
+	if err != nil {
+		return "", fmt.Errorf("redis error: %w", err)
+	}
+
+	rdb.Del(ctx, key)
+	return userID, nil
 }

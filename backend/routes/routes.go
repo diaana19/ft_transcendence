@@ -52,12 +52,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	notifController := controllers.NewNotificationController(notifService)
 
 	userRepo := repositories.NewUserRepository(DB)
-
-	twoFAService := services.NewTwoFAService(userRepo)
-	twoFAController := controllers.NewTwoFAController(twoFAService)
-
 	authService := services.NewAuthService(userRepo)
-	authController := controllers.NewAuthController(authService, rdb)
+	twoFAService := services.NewTwoFAService(userRepo)
+	authController := controllers.NewAuthController(authService, twoFAService, rdb)
+	twoFAController := controllers.NewTwoFAController(twoFAService)
 
 	userService := services.NewUserService(userRepo)
 	friendService := &services.FriendService{DB: DB}
@@ -81,6 +79,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 	api := router.Group("/api")
 	{
+		api.POST("/auth/2fa/verify", middleware.RateLimitMiddleware(rdb), authController.Verify2FA)
 		api.POST("/auth/register", middleware.RateLimitMiddleware(rdb), authController.RegisterUser)
 		api.POST("/auth/login", middleware.RateLimitMiddleware(rdb), authController.LoginUser)
 		api.POST("/auth/refresh", middleware.RateLimitMiddleware(rdb), authController.RefreshToken)
