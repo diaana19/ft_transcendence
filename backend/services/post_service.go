@@ -125,7 +125,6 @@ func (s *PostService) CreateComment(content, authorID, postID string) (*models.R
 	if err := s.repo.CreateComment(comment); err != nil {
 		return nil, err
 	}
-
 	return s.repo.GetCommentByID(comment.ID)
 }
 

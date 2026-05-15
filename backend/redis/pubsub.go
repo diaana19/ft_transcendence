@@ -18,8 +18,7 @@ func Publish(rdb *redis.Client, channel, message string) error {
 	return nil
 }
 
-func Subscribe(rdb *redis.Client, channel string, handler func(message string)) {
-	ctx := context.Background()
+func Subscribe(ctx context.Context, rdb *redis.Client, channel string, handler func(message string)) {
 	sub := rdb.Subscribe(ctx, channel)
 
 	go func() {

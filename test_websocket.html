@@ -53,6 +53,18 @@
 
   <hr/>
 
+  <!-- NOTIFICATIONS -->
+  <h3>Notifications</h3>
+  <div>
+    <button onclick="getNotifications()">Get Unread Notifications</button>
+    <button onclick="markAllRead()">Mark All Read</button>
+  </div>
+
+  <div>
+    <input id="friend_target_id" type="text" placeholder="target user ID" />
+    <button onclick="sendFriendRequest()">Send Friend Request</button>
+  </div>
+
   <!-- SEND MESSAGE -->
   <h3>Send Message</h3>
   <div>
@@ -174,6 +186,40 @@
 
     function disconnect() {
       if (ws) ws.close()
+    }
+    async function getNotifications() {
+    if (!token) { log('Login first!', 'error'); return }
+
+    const res = await fetch('http://localhost:8000/api/notifications', {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    const data = await res.json()
+    log(`Notifications: ${JSON.stringify(data)}`, 'system')
+    }
+
+    async function markAllRead() {
+      if (!token) { log('Login first!', 'error'); return }
+
+      const res = await fetch('http://localhost:8000/api/notifications/read', {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await res.json()
+      log(`Mark read: ${JSON.stringify(data)}`, 'system')
+    }
+
+    async function sendFriendRequest() {
+      if (!token) { log('Login first!', 'error'); return }
+
+      const targetID = document.getElementById('friend_target_id').value
+      if (!targetID) { log('Enter a target user ID!', 'error'); return }
+
+      const res = await fetch(`http://localhost:8000/api/friends/request/${targetID}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await res.json()
+      log(`Friend request: ${JSON.stringify(data)}`, 'system')
     }
 
     document.addEventListener('keydown', (e) => {

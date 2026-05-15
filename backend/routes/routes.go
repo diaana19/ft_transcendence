@@ -13,9 +13,13 @@ import (
 )
 
 func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
+	notifRepo := repositories.NewNotificationRepositories(DB)
+	notifPubSub := repositories.NewNotiticationPubSub(rdb)
+	notifService := services.NewNotificationService(notifRepo, notifPubSub)
+
 	postRepo := repositories.NewPostRepository(DB)
 	postService := services.NewPostService(postRepo)
-	postController := controllers.NewPostController(postService)
+	postController := controllers.NewPostController(postService, notifService)
 
 	posts := api.Group("/posts")
 	{
@@ -42,6 +46,11 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 
 func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config.Config) {
 
+	notifRepo := repositories.NewNotificationRepositories(DB)
+	notifPubSub := repositories.NewNotiticationPubSub(rdb)
+	notifService := services.NewNotificationService(notifRepo, notifPubSub)
+	notifController := controllers.NewNotificationController(notifService)
+
 	userRepo := repositories.NewUserRepository(DB)
 	authService := services.NewAuthService(userRepo)
 	authController := controllers.NewAuthController(authService, rdb)
@@ -50,7 +59,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	userController := controllers.NewUserController(userService)
 
 	friendService := &services.FriendService{DB: DB}
-	friendController := &controllers.FriendController{Service: friendService}
+	friendController := &controllers.FriendController{Service: friendService, NotificationService: notifService}
 
 	uploadService := &services.UploadService{}
 	uploadController := &controllers.UploadController{
@@ -58,7 +67,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	}
 
 	wsManager := socket.NewWSManager()
-	chatHandler := socket.NewChatHandler(wsManager, rdb)
+	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService)
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
 	oauthController := controllers.NewOAuthController(oauthService, cfg)
 
@@ -73,7 +82,6 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 		api.GET("/auth/oauth/github/login", oauthController.OAuthLogin)
 		api.GET("/auth/oauth/github/callback", oauthController.OAuthCallback)
-
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware(rdb))
 		{
@@ -86,6 +94,9 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.POST("friends/request/:id", friendController.SendFriendRequest)
 			protected.POST("friends/accept/:id", friendController.AcceptFriend)
 			protected.POST("friends/follow/:id", friendController.FollowUser)
+
+			protected.POST("notification", notifController.GetUnread)
+			protected.POST("notification/read", notifController.MarkAllRead)
 
 			protected.POST("upload", uploadController.UploadFile)
 		}
