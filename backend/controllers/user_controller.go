@@ -11,15 +11,16 @@ import (
 )
 
 type UserController struct {
-	userService *services.UserService
+	userService   *services.UserService
+	friendService *services.FriendService
 }
 
 type DeleteAccountInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func NewUserController(userService *services.UserService) *UserController {
-	return &UserController{userService: userService}
+func NewUserController(userService *services.UserService, friendService *services.FriendService) *UserController {
+	return &UserController{userService: userService, friendService: friendService}
 }
 
 func (uc *UserController) GetUsers(c *gin.Context) {
@@ -48,7 +49,11 @@ func (uc *UserController) GetUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user.ToResponse())
+	response := user.ToResponse()
+	response.FollowersCount, _ = uc.friendService.CountFollowers(user.ID)
+	response.FollowingCount, _ = uc.friendService.CountFollowing(user.ID)
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (uc *UserController) UpdateUser(c *gin.Context) {

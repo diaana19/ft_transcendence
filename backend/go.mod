@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.12.2
+	github.com/pquerna/otp v1.5.0
 	github.com/redis/go-redis/v9 v9.18.0
 	golang.org/x/crypto v0.49.0
 	golang.org/x/oauth2 v0.36.0
@@ -23,6 +24,7 @@ require (
 )
 
 require (
+	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect

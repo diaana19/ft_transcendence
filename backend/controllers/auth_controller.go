@@ -21,12 +21,17 @@ type LoginInput struct {
 }
 
 type AuthController struct {
-	authService *services.AuthService
-	rdb         *redis.Client
+	authService  *services.AuthService
+	twoFAService *services.TwoFAService
+	rdb          *redis.Client
 }
 
-func NewAuthController(authService *services.AuthService, rdb *redis.Client) *AuthController {
-	return &AuthController{authService: authService, rdb: rdb}
+func NewAuthController(authService *services.AuthService, twoFAService *services.TwoFAService, rdb *redis.Client) *AuthController {
+	return &AuthController{
+		authService:  authService,
+		twoFAService: twoFAService,
+		rdb:          rdb,
+	}
 }
 
 type RegisterInput struct {
@@ -114,6 +119,24 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 	}
 
 	log.Printf("✅ Login success: userID=%s, ip=%s, username=%s", user.ID, c.ClientIP(), user.Username)
+
+	if user.TwoFAEnabled {
+		pendingToken, err := ac.authService.CreatePendingLogin(user.ID, ac.rdb)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "could not initiate 2FA flow",
+			})
+			return
+		}
+
+		log.Printf("🔐 2FA required for userID=%s, pending_token issued", user.ID)
+		c.JSON(http.StatusOK, gin.H{
+			"needs_2fa":     true,
+			"pending_token": pendingToken,
+		})
+		return
+	}
+
 	token, err := utils.GenerateJWT(user.ID, user.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
@@ -167,4 +190,51 @@ func (ac *AuthController) LogoutUser(c *gin.Context) {
 	c.SetCookie("auth_token", "", -1, "/", "", false, true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
+}
+
+type Verify2FAInput struct {
+	PendingToken string `json:"pending_token" binding:"required"`
+	Code string `json:"code" binding:"required,len=6,numeric"`
+}
+
+func (ac *AuthController) Verify2FA(c *gin.Context) {
+	var input Verify2FAInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})
+		return
+	}
+
+	userID, err := ac.authService.ConsumePendingLogin(input.PendingToken, ac.rdb)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	valid, err := ac.twoFAService.ValidateCode(userID, input.Code)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid 2FA code"})
+		return
+	}
+	if !valid {
+		log.Printf("2FA verify failed: userID=%s, ip=%s", userID, c.ClientIP())
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid 2FA code"})
+		return
+	}
+
+	user, err := ac.authService.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch user"})
+		return
+	}
+
+	token, err := utils.GenerateJWT(user.ID, user.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+		"user":  user.ToResponse(),
+	})
 }
