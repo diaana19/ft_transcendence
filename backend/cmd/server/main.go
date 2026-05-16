@@ -25,7 +25,12 @@ func main() {
 	router.SetTrustedProxies(nil)
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost"},
+		AllowOriginFunc: func(origin string) bool {
+			return origin == "http://localhost:3000" ||
+				origin == "http://localhost" ||
+				origin == "null" ||
+				origin == ""
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Cookie"},
 		ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},

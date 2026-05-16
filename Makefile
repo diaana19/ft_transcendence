@@ -128,6 +128,19 @@ reall:
 	@echo "Starting again..."
 	@make up
 
+
+redev:
+	@echo "Recreating containers (keeping cache)..."
+	@docker compose -f infra/docker-compose.yml up -d --build backend
+	@make logs
+
+redevclean: down clean prune
+	@echo "Removing backend image..."
+	@docker rmi $$(docker images -q infra-backend) 2>/dev/null || true
+	@echo "Rebuilding from scratch..."
+	@make dev-backend
+	@make logs
+
 clean:
 	@echo "Cleaning up containers and volumes..."
 	@$(DOCKER_COMPOSE) down -v

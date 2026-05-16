@@ -51,6 +51,9 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	notifService := services.NewNotificationService(notifRepo, notifPubSub)
 	notifController := controllers.NewNotificationController(notifService)
 
+	msgRepo := repositories.NewMessageRepository(DB)
+	msgController := controllers.NewMsgController(msgRepo)
+
 	userRepo := repositories.NewUserRepository(DB)
 	authService := services.NewAuthService(userRepo)
 	authController := controllers.NewAuthController(authService, rdb)
@@ -67,7 +70,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	}
 
 	wsManager := socket.NewWSManager()
-	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService)
+	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo)
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
 	oauthController := controllers.NewOAuthController(oauthService, cfg)
 
@@ -75,7 +78,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 	api := router.Group("/api")
 	{
-		api.POST("/auth/register", middleware.RateLimitMiddleware(rdb), authController.RegisterUser)
+		api.POST("/auth/register", authController.RegisterUser)
 		api.POST("/auth/login", middleware.RateLimitMiddleware(rdb), authController.LoginUser)
 		api.POST("/auth/refresh", middleware.RateLimitMiddleware(rdb), authController.RefreshToken)
 		api.GET("/ws/chat", middleware.WSAuthMiddleware(), chatHandler.HandleWS)
@@ -96,7 +99,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.POST("friends/follow/:id", friendController.FollowUser)
 
 			protected.POST("notification", notifController.GetUnread)
-			protected.POST("notification/read", notifController.MarkAllRead)
+			protected.PUT("notification/read", notifController.MarkAllRead)
+
+			api.GET("/rooms/:roomId/messages", msgController.GetRoomMsg)
+			api.GET("/messages/:messageId/replies", msgController.GetReplies)
 
 			protected.POST("upload", uploadController.UploadFile)
 		}

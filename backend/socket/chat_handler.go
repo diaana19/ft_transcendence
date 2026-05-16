@@ -10,6 +10,7 @@ import (
 
 	"github.com/Transcendence/models"
 	redispub "github.com/Transcendence/redis"
+	"github.com/Transcendence/repositories"
 	"github.com/Transcendence/services"
 	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
@@ -24,7 +25,7 @@ var upgrader = websocket.Upgrader{
 		// return origin == "http://localhost:3000"
 		// return true
 		origin := r.Header.Get("Origin")
-		allowed := []string{"http://localhost:3000", "http://localhost"}
+		allowed := []string{"http://localhost:3000", "http://localhost", "null", ""}
 		for _, a := range allowed {
 			if origin == a {
 				return true
@@ -38,6 +39,7 @@ type ChatHandler struct {
 	manager             *WSManager
 	rdb                 *redis.Client
 	notificationService *services.NotificationService
+	msgRepo             *repositories.MessageRepository
 	subscribedRooms     map[string]bool
 	subscribedMu        sync.Mutex
 }
@@ -57,11 +59,12 @@ type OutgoingMessage struct {
 	RoomID   string          `json:"room_id,omitempty"`
 }
 
-func NewChatHandler(manager *WSManager, rdb *redis.Client, notifService *services.NotificationService) *ChatHandler {
+func NewChatHandler(manager *WSManager, rdb *redis.Client, notifService *services.NotificationService, msgRepo *repositories.MessageRepository) *ChatHandler {
 	return &ChatHandler{
 		manager:             manager,
 		rdb:                 rdb,
 		notificationService: notifService,
+		msgRepo:             msgRepo,
 		subscribedRooms:     make(map[string]bool),
 	}
 }
@@ -224,6 +227,11 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		RoomID:    incoming.RoomID,
 		Content:   incoming.Content,
 		ParentID:  incoming.ParentID,
+	}
+
+	if err := h.msgRepo.Save(&msg); err != nil {
+		log.Printf("Failed to save message: %v", err)
+		return
 	}
 
 	out := OutgoingMessage{
