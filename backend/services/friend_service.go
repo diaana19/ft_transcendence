@@ -143,3 +143,9 @@ func (s *FriendService) GetFriends(userID string) ([]models.User, error) {
 	err := s.DB.Joins("JOIN friends ON (friends.user_id = users.id AND friends.friend_id = ?) OR (friends.friend_id = users.id AND friends.user_id = ?)", userID, userID).Where("friends.status = ?", "accepted").Find(&friends).Error
 	return friends, err
 }
+
+func (s *FriendService) AreFriends(userID1, userID2 string) (bool, error) {
+	var count int64
+	err := s.DB.Model(&models.Friend{}).Where("((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)) AND status = ?", userID1, userID2, userID2, userID1, "accepted").Count(&count).Error
+	return count > 0, err
+}

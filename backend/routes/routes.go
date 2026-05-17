@@ -65,17 +65,17 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	}
 	userController := controllers.NewUserController(userService, friendService)
 
-	uploadService := &services.UploadService{}
+	fileRepo := repositories.NewFileRepository(DB)
+	uploadService := services.NewUploadService(fileRepo)
 	uploadController := &controllers.UploadController{
-		Service: uploadService,
+		Service:       uploadService,
+		FriendService: friendService,
 	}
 
 	wsManager := socket.NewWSManager()
 	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService)
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
 	oauthController := controllers.NewOAuthController(oauthService, cfg)
-
-	router.Static("/uploads", "./uploads")
 
 	api := router.Group("/api")
 	{
@@ -112,6 +112,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.POST("notification/read", notifController.MarkAllRead)
 
 			protected.POST("upload", uploadController.UploadFile)
+			protected.GET("/files/:id", uploadController.ServeFile)
 
 			protected.POST("/2fa/setup", twoFAController.Setup)
 			protected.POST("/2fa/enable", twoFAController.Enable)
