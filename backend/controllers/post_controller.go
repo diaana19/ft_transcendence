@@ -71,7 +71,7 @@ func (pc *PostController) GetPost(c *gin.Context) {
 }
 
 func (pc *PostController) GetPostsByUser(c *gin.Context) {
-	userID := c.Param("user_id")
+	userID := c.Param("userId")
 
 	posts, err := pc.postService.GetPostsByAuthor(userID)
 	if err != nil {

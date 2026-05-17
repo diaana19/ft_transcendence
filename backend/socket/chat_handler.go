@@ -90,7 +90,9 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 	var username string
 	if id, exists := c.Get("user_id"); exists {
 		userID = id.(string)
-
+		if u, ok := c.Get("username"); ok {
+			username = u.(string)
+		}
 	} else {
 
 		token := c.Query("token")
