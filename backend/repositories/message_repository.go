@@ -7,7 +7,7 @@ import (
 
 type MessageRepository interface {
 	Create(message *models.Message) error
-	GetByRoomID(roomID string, limit int) ([]models.Message, error)
+	GetByRoomID(roomID string, since string, limit int) ([]models.Message, error)
 	GetReplies(parentID string) ([]models.Message, error)
 	PollSince(userID, since string, limit int) ([]models.Message, error)
 	ListConversation(userID, peerID, since string, limit int) ([]models.Message, error)
@@ -25,14 +25,19 @@ func (r *messageRepository) Create(message *models.Message) error {
 	return r.db.Create(message).Error
 }
 
-func (r *messageRepository) GetByRoomID(roomID string, limit int) ([]models.Message, error) {
-	var messages []models.Message
-	err := r.db.Where("room_id = ? AND parent_id IS NULL", roomID).
-		Order("created_at desc").
-		Limit(limit).
-		Find(&messages).Error
-	return messages, err
+func (r *messageRepository) GetByRoomID(roomID, since string, limit int) ([]models.Message, error) {
+	q := r.db.Where("room_id = ? AND parent_id IS NULL", roomID)
+	return runCursorQuery(q, since, limit) // reuses the existing cursor logic
 }
+
+// func (r *messageRepository) GetByRoomID(roomID string, limit int) ([]models.Message, error) {
+// 	var messages []models.Message
+// 	err := r.db.Where("room_id = ? AND parent_id IS NULL", roomID).
+// 		Order("created_at desc").
+// 		Limit(limit).
+// 		Find(&messages).Error
+// 	return messages, err
+// }
 
 func (r *messageRepository) GetReplies(parentID string) ([]models.Message, error) {
 	var replies []models.Message

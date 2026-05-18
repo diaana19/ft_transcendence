@@ -19,8 +19,9 @@ func NewMsgController(repo repositories.MessageRepository) *MsgController {
 func (mc *MsgController) GetRoomMsg(c *gin.Context) {
 	roomID := c.Param("roomId")
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
+	since := c.Query("since")
 
-	message, err := mc.repo.GetByRoomID(roomID, limit)
+	message, err := mc.repo.GetByRoomID(roomID, since, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
