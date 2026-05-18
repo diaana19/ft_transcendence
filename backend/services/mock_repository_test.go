@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/Transcendence/models"
+	"gorm.io/gorm"
 )
 
 type mockUserRepository struct {
@@ -35,7 +36,7 @@ func (m *mockUserRepository) GetByID(id string) (*models.User, error) {
 	}
 	user, ok := m.users[id]
 	if !ok {
-		return nil, errors.New("record not found")
+		return nil, gorm.ErrRecordNotFound
 	}
 	return user, nil
 }

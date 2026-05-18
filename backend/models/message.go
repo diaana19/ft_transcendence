@@ -4,17 +4,43 @@ import (
 	"time"
 )
 
-// Type is either "dm" or "tweet"
-// it can have parentID if it "replie" to an another "tweet"
-// replies is all "tweet" under the main "tweet"
 type Message struct {
-	ID        string    `gorm:"primaryKey;type:varchar(36)" json:"id"`
-	Username  string `json:"username" gorm:"not null"`
-	Content   string `json:"content" gorm:"not null"`
-	Type      string
-	CreatedAt time.Time `json:"created_at"`
-	RoomID    string    `json:"room_id" gorm:"not null"`
-	Replies   []Message `json:"replies,omitempty" gorm:"foreignKey:ParentID"`
-	ParentID  *string   `json:"parent_id" gorm:"default:null"`
-	SenderID  string    `json:"sender_id" gorm:"not null"`
+	ID          string    `gorm:"primaryKey;type:varchar(36);index:idx_msg_sender,priority:2;index:idx_msg_recipient,priority:2" json:"id"`
+	Username    string    `json:"username" gorm:"default:''"`
+	Content     string    `gorm:"type:text;not null" json:"content"`
+	Type        string    `json:"type,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	RoomID      string    `json:"room_id,omitempty" gorm:"default:null"`
+	Replies     []Message `json:"replies,omitempty" gorm:"foreignKey:ParentID"`
+	ParentID    *string   `json:"parent_id,omitempty" gorm:"default:null"`
+	SenderID    string    `gorm:"type:varchar(36);not null;index:idx_msg_sender,priority:1" json:"sender_id"`
+	RecipientID string    `gorm:"type:varchar(36);default:null;index:idx_msg_recipient,priority:1" json:"recipient_id,omitempty"`
+}
+
+type CreateMessageInput struct {
+	RecipientID string `json:"recipient_id" binding:"required"`
+	Content     string `json:"content" binding:"required,min=1,max=4000"`
+}
+
+type MessageResponse struct {
+	ID          string    `json:"id"`
+	SenderID    string    `json:"sender_id"`
+	RecipientID string    `json:"recipient_id,omitempty"`
+	Content     string    `json:"content"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type PollResponse struct {
+	Messages   []MessageResponse `json:"messages"`
+	NextCursor string            `json:"next_cursor"`
+}
+
+func (m *Message) ToResponse() MessageResponse {
+	return MessageResponse{
+		ID:          m.ID,
+		SenderID:    m.SenderID,
+		RecipientID: m.RecipientID,
+		Content:     m.Content,
+		CreatedAt:   m.CreatedAt,
+	}
 }

@@ -39,7 +39,7 @@ type ChatHandler struct {
 	manager             *WSManager
 	rdb                 *redis.Client
 	notificationService *services.NotificationService
-	msgRepo             *repositories.MessageRepository
+	msgRepo             repositories.MessageRepository
 	subscribedRooms     map[string]bool
 	subscribedMu        sync.Mutex
 }
@@ -59,7 +59,7 @@ type OutgoingMessage struct {
 	RoomID   string          `json:"room_id,omitempty"`
 }
 
-func NewChatHandler(manager *WSManager, rdb *redis.Client, notifService *services.NotificationService, msgRepo *repositories.MessageRepository) *ChatHandler {
+func NewChatHandler(manager *WSManager, rdb *redis.Client, notifService *services.NotificationService, msgRepo repositories.MessageRepository) *ChatHandler {
 	return &ChatHandler{
 		manager:             manager,
 		rdb:                 rdb,
@@ -219,8 +219,14 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		return
 	}
 
+	id, err := uuid.NewV7()
+	if err != nil {
+		log.Printf("uuid error: %v", err)
+		return
+	}
+
 	msg := models.Message{
-		ID:        uuid.New().String(),
+		ID:        id.String(),
 		CreatedAt: time.Now(),
 		SenderID:  client.ID,
 		Username:  client.Username,
@@ -229,7 +235,7 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		ParentID:  incoming.ParentID,
 	}
 
-	if err := h.msgRepo.Save(&msg); err != nil {
+	if err := h.msgRepo.Create(&msg); err != nil {
 		log.Printf("Failed to save message: %v", err)
 		return
 	}

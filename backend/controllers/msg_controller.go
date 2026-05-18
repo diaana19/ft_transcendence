@@ -9,10 +9,10 @@ import (
 )
 
 type MsgController struct {
-	repo *repositories.MessageRepository
+	repo repositories.MessageRepository
 }
 
-func NewMsgController(repo *repositories.MessageRepository) *MsgController {
+func NewMsgController(repo repositories.MessageRepository) *MsgController {
 	return &MsgController{repo: repo}
 }
 
