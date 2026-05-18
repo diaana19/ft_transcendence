@@ -16,7 +16,7 @@ func NewNotificationController(notifService *services.NotificationService) *Noti
 }
 
 func (nc *NotificationController) GetUnread(c *gin.Context) {
-	userID := c.MustGet("userID").(string)
+	userID := c.MustGet("user_id").(string)
 	notifs, err := nc.notifService.GetUnread(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -26,7 +26,7 @@ func (nc *NotificationController) GetUnread(c *gin.Context) {
 }
 
 func (nc *NotificationController) MarkAllRead(c *gin.Context) {
-	userID := c.MustGet("userID").(string)
+	userID := c.MustGet("user_id").(string)
 	if err := nc.notifService.MarkAllRead(userID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -139,3 +139,41 @@ func (m *mockUserRepository) LinkGithub(userID, githubID string) error {
 	user.Provider = "github"
 	return nil
 }
+
+func (m *mockUserRepository) SetTwoFASecret(userID, secret string) error {
+	if m.err != nil {
+		return m.err
+	}
+	user, ok := m.users[userID]
+	if !ok {
+		return errors.New("record not found")
+	}
+	s := secret
+	user.TwoFASecret = &s
+	return nil
+}
+
+func (m *mockUserRepository) SetTwoFAEnabled(userID string, enabled bool) error {
+	if m.err != nil {
+		return m.err
+	}
+	user, ok := m.users[userID]
+	if !ok {
+		return errors.New("record not found")
+	}
+	user.TwoFAEnabled = enabled
+	return nil
+}
+
+func (m *mockUserRepository) ClearTwoFA(userID string) error {
+	if m.err != nil {
+		return m.err
+	}
+	user, ok := m.users[userID]
+	if !ok {
+		return errors.New("record not found")
+	}
+	user.TwoFASecret = nil
+	user.TwoFAEnabled = false
+	return nil
+}

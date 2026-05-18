@@ -14,7 +14,7 @@ import (
 
 func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 	notifRepo := repositories.NewNotificationRepositories(DB)
-	notifPubSub := repositories.NewNotiticationPubSub(rdb)
+	notifPubSub := repositories.NewNotificationPubSub(rdb)
 	notifService := services.NewNotificationService(notifRepo, notifPubSub)
 
 	postRepo := repositories.NewPostRepository(DB)
@@ -46,7 +46,7 @@ func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
 
 func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config.Config) {
 	notifRepo := repositories.NewNotificationRepositories(DB)
-	notifPubSub := repositories.NewNotiticationPubSub(rdb)
+	notifPubSub := repositories.NewNotificationPubSub(rdb)
 	notifService := services.NewNotificationService(notifRepo, notifPubSub)
 	notifController := controllers.NewNotificationController(notifService)
 
@@ -55,13 +55,17 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 	userRepo := repositories.NewUserRepository(DB)
 	authService := services.NewAuthService(userRepo)
-	authController := controllers.NewAuthController(authService, rdb)
+	twoFAService := services.NewTwoFAService(userRepo)
+	authController := controllers.NewAuthController(authService, twoFAService, rdb)
+	twoFAController := controllers.NewTwoFAController(twoFAService)
 
 	userService := services.NewUserService(userRepo)
-	userController := controllers.NewUserController(userService)
-
 	friendService := &services.FriendService{DB: DB}
-	friendController := &controllers.FriendController{Service: friendService, NotificationService: notifService}
+	friendController := &controllers.FriendController{
+		Service:             friendService,
+		NotificationService: notifService,
+	}
+	userController := controllers.NewUserController(userService, friendService)
 
 	uploadService := &services.UploadService{}
 	uploadController := &controllers.UploadController{Service: uploadService}
@@ -78,7 +82,8 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 	api := router.Group("/api")
 	{
-		api.POST("/auth/register", authController.RegisterUser)
+		api.POST("/auth/2fa/verify", middleware.RateLimitMiddleware(rdb), authController.Verify2FA)
+		api.POST("/auth/register", middleware.RateLimitMiddleware(rdb), authController.RegisterUser)
 		api.POST("/auth/login", middleware.RateLimitMiddleware(rdb), authController.LoginUser)
 		api.POST("/auth/refresh", middleware.RateLimitMiddleware(rdb), authController.RefreshToken)
 		api.GET("/ws/chat", middleware.WSAuthMiddleware(), chatHandler.HandleWS)
@@ -97,10 +102,8 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 			protected.POST("friends/request/:id", friendController.SendFriendRequest)
 			protected.POST("friends/accept/:id", friendController.AcceptFriend)
-			protected.POST("friends/follow/:id", friendController.FollowUser)
-
-			protected.POST("notification", notifController.GetUnread)
-			protected.PUT("notification/read", notifController.MarkAllRead)
+			protected.POST("friends/reject/:id", friendController.RejectFriendRequest)
+			protected.DELETE("friends/:id", friendController.RemoveFriend)
 
 			// Room message history — served by the WebSocket primary path
 			protected.GET("rooms/:roomId/messages", msgController.GetRoomMsg)
@@ -110,8 +113,21 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.POST("chat/messages", chatController.SendMessage)
 			protected.GET("chat/messages", chatController.ListConversation)
 			protected.GET("chat/poll", chatController.Poll)
+			protected.POST("friends/follow/:id", friendController.FollowUser)
+			protected.DELETE("friends/follow/:id", friendController.UnfollowUser)
+
+			protected.GET("users/:id/followers", friendController.GetFollowers)
+			protected.GET("users/:id/following", friendController.GetFollowing)
+			protected.GET("users/:id/friends", friendController.GetFriends)
+
+			protected.GET("notification", notifController.GetUnread)
+			protected.POST("notification/read", notifController.MarkAllRead)
 
 			protected.POST("upload", uploadController.UploadFile)
+
+			protected.POST("/2fa/setup", twoFAController.Setup)
+			protected.POST("/2fa/enable", twoFAController.Enable)
+			protected.POST("/2fa/disable", twoFAController.Disable)
 		}
 
 		create_post_routes(api, DB, rdb)

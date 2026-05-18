@@ -1,8 +1,9 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -20,6 +21,9 @@ type User struct {
 
 	DateOfBirth *time.Time `json:"dateOfBirth"`
 
+	TwoFASecret  *string `gorm:"type:varchar(255)" json:"-"`
+	TwoFAEnabled bool    `gorm:"default:false" json:"two_fa_enabled"`
+
 	Wallpaper *string `json:"wallpaper"`
 	Avatar    *string `json:"avatar"`
 	Bio       string  `json:"bio"`
@@ -35,32 +39,36 @@ type UpdateUserInput struct {
 }
 
 type UserResponse struct {
-	ID        string    `json:"id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Name      string    `json:"name,omitempty"`
-	Bio       string    `json:"bio,omitempty"`
-	Avatar    *string   `json:"avatar,omitempty"`
-	Wallpaper *string   `json:"wallpaper,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
+	ID             string    `json:"id"`
+	Username       string    `json:"username"`
+	Email          string    `json:"email"`
+	Name           string    `json:"name,omitempty"`
+	Bio            string    `json:"bio,omitempty"`
+	Avatar         *string   `json:"avatar,omitempty"`
+	Wallpaper      *string   `json:"wallpaper,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+	TwoFAEnabled   bool      `json:"two_fa_enabled"`
+	FollowersCount int64     `json:"followers_count"`
+	FollowingCount int64     `json:"following_count"`
 }
 
 func (u *User) ToResponse() UserResponse {
 	return UserResponse{
-		ID:        u.ID,
-		Username:  u.Username,
-		Email:     u.Email,
-		Name:      u.Name,
-		Bio:       u.Bio,
-		Avatar:    u.Avatar,
-		Wallpaper: u.Wallpaper,
-		CreatedAt: u.CreatedAt,
+		ID:           u.ID,
+		Username:     u.Username,
+		Email:        u.Email,
+		Name:         u.Name,
+		Bio:          u.Bio,
+		Avatar:       u.Avatar,
+		Wallpaper:    u.Wallpaper,
+		CreatedAt:    u.CreatedAt,
+		TwoFAEnabled: u.TwoFAEnabled,
 	}
 }
 
 type Friend struct {
-	ID       string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
-	UserID   string `gorm:"type:uuid;not null;index"`
-	FriendID string `gorm:"type:uuid;not null;index"`
-	Status   string
+	ID       string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	UserID   string `gorm:"type:uuid;not null;index" json:"user_id"`
+	FriendID string `gorm:"type:uuid;not null;index" json:"friend_id"`
+	Status   string `json:"status"`
 }

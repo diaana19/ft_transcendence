@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/Transcendence/config"
 	"github.com/Transcendence/redis"
@@ -45,12 +46,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	redis.Subscribe(context.Background(), rdb, "test-channel", func(message string) {
-		log.Printf("Handler received: %s", message)
-	})
-
-	if err := redis.Publish(rdb, "test-channel", "Redis pub/sub is working"); err != nil {
-		log.Printf("Publish error: %v\n", err)
+	if os.Getenv("DEBUG_REDIS") == "true" {
+		ctx := context.Background()
+		redis.Subscribe(ctx, rdb, "test-channel", func(message string) {
+			log.Printf("Handler received: %s", message)
+		})
+		if err := redis.Publish(rdb, "test-channel", "Redis pub/sub is working"); err != nil {
+			log.Printf("Publish error: %v\n", err)
+		}
 	}
 
 	router.GET("/", func(ctx *gin.Context) {

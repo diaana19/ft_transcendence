@@ -13,7 +13,7 @@ type NotificationPubSub struct {
 	rdb *redis.Client
 }
 
-func NewNotiticationPubSub(rdb *redis.Client) *NotificationPubSub {
+func NewNotificationPubSub(rdb *redis.Client) *NotificationPubSub {
 	return &NotificationPubSub{rdb: rdb}
 }
 
