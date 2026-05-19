@@ -51,6 +51,8 @@ func ConnectDB() (*gorm.DB, error) {
 		// &models.Group{},
 		&models.Message{},
 		&models.Notification{},
+		&models.File{},
+		&models.FileAccess{},
 	)
 	if err != nil {
 		log.Printf("AutoMigrate error: %v\n", err)
