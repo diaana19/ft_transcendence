@@ -12,15 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
-	notifRepo := repositories.NewNotificationRepositories(DB)
-	notifPubSub := repositories.NewNotificationPubSub(rdb)
-	notifService := services.NewNotificationService(notifRepo, notifPubSub)
-
-	postRepo := repositories.NewPostRepository(DB)
-	postService := services.NewPostService(postRepo)
-	postController := controllers.NewPostController(postService, notifService)
-
+func createPostRoutes(api *gin.RouterGroup, rdb *redis.Client, postController *controllers.PostController) {
 	posts := api.Group("/posts")
 	{
 		posts.GET("", middleware.OptionalAuthMiddleware(), postController.GetPosts)
@@ -57,6 +49,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	authController := controllers.NewAuthController(authService, twoFAService, rdb)
 	twoFAController := controllers.NewTwoFAController(twoFAService)
 
+	postRepo := repositories.NewPostRepository(DB)
+	postService := services.NewPostService(postRepo)
+	postController := controllers.NewPostController(postService, notifService)
+
 	userService := services.NewUserService(userRepo)
 	friendService := &services.FriendService{DB: DB}
 	friendController := &controllers.FriendController{
@@ -73,7 +69,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	}
 
 	wsManager := socket.NewWSManager()
-	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService)
+	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService, fileRepo)
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
 	oauthController := controllers.NewOAuthController(oauthService, cfg)
 
@@ -109,7 +105,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.GET("users/:id/friends", friendController.GetFriends)
 
 			protected.GET("notification", notifController.GetUnread)
-			protected.POST("notification/read", notifController.MarkAllRead)
+			protected.PATCH("notification/read", notifController.MarkAllRead)
 
 			protected.POST("upload", uploadController.UploadFile)
 			protected.GET("/files/:id", uploadController.ServeFile)
@@ -119,6 +115,6 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.POST("/2fa/disable", twoFAController.Disable)
 		}
 
-		create_post_routes(api, DB, rdb)
+		createPostRoutes(api, rdb, postController)
 	}
 }

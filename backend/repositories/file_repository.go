@@ -6,20 +6,20 @@ import (
 )
 
 type FileRepository interface {
-    Create(file *models.File) error
-    GetByID(id string) (*models.File, error)
-    DeleteByOwner(fileID, ownerID string) error
+	Create(file *models.File) error
+	GetByID(id string) (*models.File, error)
+	DeleteByOwner(fileID, ownerID string) error
 
-    GrantAccess(fileID, userID string) error
-    HasAccess(fileID, userID string) (bool, error)
+	GrantAccess(fileID, userID string) error
+	HasAccess(fileID, userID string) (bool, error)
 }
 
 type fileRepository struct {
-    db *gorm.DB
+	db *gorm.DB
 }
 
 func NewFileRepository(db *gorm.DB) FileRepository {
-    return &fileRepository{db: db}
+	return &fileRepository{db: db}
 }
 
 func (r *fileRepository) Create(file *models.File) error {
@@ -51,7 +51,7 @@ func (r *fileRepository) GrantAccess(fileID, userID string) error {
 		FileID: fileID,
 		UserID: userID,
 	}
-	return r.db.Where("file_id = ? AND owner_id = ?", fileID, userID).FirstOrCreate(&access).Error
+	return r.db.Where("file_id = ? AND user_id = ?", fileID, userID).FirstOrCreate(&access).Error
 }
 
 func (r *fileRepository) HasAccess(fileID, userID string) (bool, error) {
