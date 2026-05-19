@@ -1,67 +1,111 @@
 package controllers
 
 import (
+	"errors"
+	"mime/multipart"
 	"net/http"
-	"path/filepath"
-	"strings"
+	"os"
 
+	"github.com/Transcendence/models"
 	"github.com/Transcendence/services"
-	"github.com/google/uuid"
-
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type UploadController struct {
 	Service *services.UploadService
+	FriendService *services.FriendService
 }
 
 func (uc *UploadController) UploadFile(c *gin.Context) {
-	file, err := c.FormFile("file")
+	userIDRaw, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	ownerID := userIDRaw.(string)
+
+	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "file required"})
 		return
 	}
 
-	if err := uc.Service.ValidateFile(file); err != nil {
+	visibility := c.DefaultQuery("visibility", models.FileVisibilityPublic)
+
+	saveFn := func(fh *multipart.FileHeader, dst string) error {
+		return c.SaveUploadedFile(fh, dst)
+	}
+
+	file, err := uc.Service.SaveFile(fileHeader, ownerID, visibility, saveFn)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	ext := strings.ToLower(filepath.Ext(file.Filename))
-	if !isAllowedExtension(ext) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file type not allowed"})
-		return
-	}
-
-	safeName := uuid.New().String() + ext
-	path := filepath.Join("./uploads", safeName)
-
-	absUploads, _ := filepath.Abs("./uploads")
-	absPath, _ := filepath.Abs(path)
-
-	if !strings.HasPrefix(absPath, absUploads) {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid path"})
-		return
-	}
-
-	if err := c.SaveUploadedFile(file, path); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "upload failed"})
-		return
-	}
-
 	c.JSON(http.StatusOK, gin.H{
-		"message": "file uploaded",
-		"path":    "/uploads/" + safeName,
+		"id":        file.ID,
+		"url":       "/api/files/" + file.ID,
+		"mime_type": file.MimeType,
+		"size":      file.Size,
 	})
 }
 
-func isAllowedExtension(ext string) bool {
-	allowed := map[string]bool{
-		".jpg":  true,
-		".jpeg": true,
-		".png":  true,
-		".gif":  true,
-		".webp": true,
+func (uc *UploadController) ServeFile(c *gin.Context) {
+	userIDRaw, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
 	}
-	return allowed[ext]
+	userID := userIDRaw.(string)
+
+	fileID := c.Param("id")
+	file, err := uc.Service.FileRepo.GetByID(fileID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if !uc.canAccess(file, userID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
+
+	if _, err := os.Stat(file.Path); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "file missing on disk"})
+		return
+	}
+
+	c.Header("Content-Type", file.MimeType)
+	c.Header("Content-Disposition", `inline; filename="`+file.Filename+`"`)
+	c.File(file.Path)
+}
+
+func (uc *UploadController) canAccess(file *models.File, userID string) bool {
+	if file.OwnerID == userID {
+		return true
+	}
+
+	switch file.Visibility {
+	case models.FileVisibilityPublic:
+		return true
+
+	case models.FileVisibilityFriends:
+		if uc.FriendService == nil {
+			return false
+		}
+		isFriend, err := uc.FriendService.AreFriends(userID, file.OwnerID)
+		return err == nil && isFriend
+
+	case models.FileVisibilityPrivate:
+		hasAccess, err := uc.Service.FileRepo.HasAccess(file.ID, userID)
+		return err == nil && hasAccess
+
+	default:
+		return false
+	}
 }
