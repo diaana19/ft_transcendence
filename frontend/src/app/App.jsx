@@ -5,6 +5,7 @@ import RegisterForm from '../features/auth/RegisterForm.jsx'
 import LoginForm from '../features/auth/LoginForm.jsx'
 import Profile from '../features/user/Profile.jsx'
 import Feed from '../features/posts/Feed'
+import NotificationsPage from '../components/notifications/Notification.jsx'
 
 function App() {
     return (
@@ -16,6 +17,7 @@ function App() {
                 <Route path="/" element={<Feed />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/profile/:id" element={<Profile />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
                 </Route>
             </Routes>
     )

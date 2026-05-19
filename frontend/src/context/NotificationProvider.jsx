@@ -1,9 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState
-} from 'react'
+import {createContext, useContext, useEffect, useState } from 'react'
+import {getUnreadNotifications, markAllNotificationsRead } from '../components/notifications/notificationService'
 
 export const NotificationContext = createContext()
 
