@@ -23,9 +23,6 @@ import (
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		// origin := r.Header.Get("Origin")
-		// return origin == "http://localhost:3000"
-		// return true
 		origin := r.Header.Get("Origin")
 		allowed := []string{"http://localhost:3000", "http://localhost"}
 		for _, a := range allowed {
@@ -51,7 +48,7 @@ type IncomingMessage struct {
 	RoomID   string  `json:"room_id"`
 	Content  string  `json:"content"`
 	ParentID *string `json:"parent_id"`
-	FileID   *string `json:"file_id,omitempty"` // ← AJOUTER
+	FileID   *string `json:"file_id,omitempty"`
 }
 
 type OutgoingMessage struct {

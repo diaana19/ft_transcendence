@@ -83,7 +83,6 @@ func ensureSchema(db *gorm.DB) error {
 		&models.Repost{},
 		// &models.Group{},
 		&models.Message{},
-		&models.Notification{},
 	)
 }
 
