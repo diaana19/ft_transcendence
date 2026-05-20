@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
 
     const decodeToken = (token) => {
         const payload = JSON.parse(atob(token.split('.')[1]))
-        return { userId: payload.userId, exp: payload.exp }
+        return { userId: payload.user_id, exp: payload.exp }
     }
 
     const isExpired = (exp) => exp * 1000 < Date.now()
@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
                     logout()
                 } else {
                     setToken(storedToken)
-                    setUser({ userId: payload.userId })
+                    setUser({ userId: payload.user_id })
                 }
             } catch {
                 logout()
@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
             const payload = decodeToken(jwt)
             localStorage.setItem('token', jwt)
             setToken(jwt)
-            setUser({ userId: payload.userId })
+            setUser({ userId: payload.user_id })
         } catch (err) {
             console.error('Login failed:', err.message)
             logout()

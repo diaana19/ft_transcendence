@@ -73,7 +73,7 @@ export default function Profile() {
 	setUser(data);
 	setForm(data);
 	} catch (err) {
-  console.error('JSON PARSE ERROR:', e)
+  console.error('JSON PARSE ERROR:', err)
 	console.error(err);
 	} finally {
 	setLoading(false);
@@ -293,7 +293,7 @@ return (
                     })
                     const data = await res.json()
                     // Guarda en form para que el Save lo mande con PUT
-                    setForm(prev => ({ ...prev, wallpaper: data.path }))
+                    setForm(prev => ({ ...prev, wallpaper: data.url }))
                   } catch (err) {
                     console.error(err)
                   } finally {
@@ -339,7 +339,7 @@ return (
                         })
                         const data = await res.json()
                         // Guarda en form — el Save manda todo con PUT
-                        setForm(prev => ({ ...prev, avatar: data.path }))
+                        setForm(prev => ({ ...prev, avatar: data.url }))
                       } catch (err) {
                         console.error(err)
                       } finally {
