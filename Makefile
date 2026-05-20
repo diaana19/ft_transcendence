@@ -86,6 +86,7 @@ all: build up
 	@echo ""
 	@echo "All services started!"
 
+re: clean prune dev
 # ==================== Docker Commands ====================
 
 build:

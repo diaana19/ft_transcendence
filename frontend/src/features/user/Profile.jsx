@@ -56,14 +56,24 @@ export default function Profile() {
 	try {
 	setLoading(true);
 
+    console.log('FETCH USER START')
+    console.log('userId:', userId)
+    console.log('token:', token)
+
 	const res = await fetch(`/api/users/${userId}`, {
     headers: { Authorization: `Bearer ${token}` },
     });
+    console.log('RESPONSE:', res)
+    console.log('STATUS:', res.status)
+    console.log('OK:', res.ok)
+
 	const data = await res.json();
+  console.log('USUARIO:', data)
 
 	setUser(data);
 	setForm(data);
 	} catch (err) {
+  console.error('JSON PARSE ERROR:', e)
 	console.error(err);
 	} finally {
 	setLoading(false);
@@ -160,40 +170,6 @@ return (
                 : <div className="w-full h-full bg-gray-300" />
               }
             </div>
-            {authUser?.userId === userId && (
-              <label className="absolute bottom-0 right-0 bg-black bg-opacity-60 rounded-full p-2 cursor-pointer hover:bg-opacity-80">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
-                  <path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/>
-                  <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
-                </svg>
-                <input type="file" accept="image/*" className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files[0]
-                    if (!file) return
-                    {/* Upload Image */}
-                    const formData = new FormData()
-                    formData.append('file', file)
-                    const res = await fetch('/api/upload', {
-                      method: 'POST',
-                      headers: { Authorization: `Bearer ${token}` },
-                      body: formData
-                    })
-                    const data = await res.json()
-                     const updateRes = await fetch(`/api/users/${userId}`, {
-                      method: 'PUT',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                      },
-                      body: JSON.stringify({ ...user, avatar: data.path })
-                    })
-                    const updatedUser = await updateRes.json()
-
-                    setUser({ ...user, ...updatedUser , avatar: data.path })
-                  }}
-                />
-              </label>
-            )}
           </div>
         </div>
 
