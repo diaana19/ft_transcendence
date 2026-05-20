@@ -12,15 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func create_post_routes(api *gin.RouterGroup, DB *gorm.DB, rdb *redis.Client) {
-	notifRepo := repositories.NewNotificationRepositories(DB)
-	notifPubSub := repositories.NewNotificationPubSub(rdb)
-	notifService := services.NewNotificationService(notifRepo, notifPubSub)
-
-	postRepo := repositories.NewPostRepository(DB)
-	postService := services.NewPostService(postRepo)
-	postController := controllers.NewPostController(postService, notifService)
-
+func createPostRoutes(api *gin.RouterGroup, rdb *redis.Client, postController *controllers.PostController) {
 	posts := api.Group("/posts")
 	{
 		posts.GET("", middleware.OptionalAuthMiddleware(), postController.GetPosts)
@@ -59,6 +51,10 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	authController := controllers.NewAuthController(authService, twoFAService, rdb)
 	twoFAController := controllers.NewTwoFAController(twoFAService)
 
+	postRepo := repositories.NewPostRepository(DB)
+	postService := services.NewPostService(postRepo)
+	postController := controllers.NewPostController(postService, notifService)
+
 	userService := services.NewUserService(userRepo)
 	friendService := &services.FriendService{DB: DB}
 	friendController := &controllers.FriendController{
@@ -67,18 +63,21 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	}
 	userController := controllers.NewUserController(userService, friendService)
 
-	uploadService := &services.UploadService{}
-	uploadController := &controllers.UploadController{Service: uploadService}
+	fileRepo := repositories.NewFileRepository(DB)
+	uploadService := services.NewUploadService(fileRepo)
+	uploadController := &controllers.UploadController{
+		Service:       uploadService,
+		FriendService: friendService,
+	}
 
 	wsManager := socket.NewWSManager()
-	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo)
-	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
-	oauthController := controllers.NewOAuthController(oauthService, cfg)
+	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo, fileRepo)
 
 	chatService := services.NewChatService(msgRepo, userRepo)
 	chatController := controllers.NewChatController(chatService)
 
-	router.Static("/uploads", "./uploads")
+	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
+	oauthController := controllers.NewOAuthController(oauthService, cfg)
 
 	api := router.Group("/api")
 	{
@@ -121,15 +120,16 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.GET("users/:id/friends", friendController.GetFriends)
 
 			protected.GET("notification", notifController.GetUnread)
-			protected.POST("notification/read", notifController.MarkAllRead)
+			protected.PATCH("notification/read", notifController.MarkAllRead)
 
 			protected.POST("upload", uploadController.UploadFile)
+			protected.GET("/files/:id", uploadController.ServeFile)
 
 			protected.POST("/2fa/setup", twoFAController.Setup)
 			protected.POST("/2fa/enable", twoFAController.Enable)
 			protected.POST("/2fa/disable", twoFAController.Disable)
 		}
 
-		create_post_routes(api, DB, rdb)
+		createPostRoutes(api, rdb, postController)
 	}
 }

@@ -22,15 +22,20 @@ func NewNotificationService(repo *repositories.NotificationRepositories, pubsub 
 }
 
 func (s *NotificationService) SendNotification(userID, userUsername, actorID, actorUsername, notifType, content string) error {
-	username, err := s.repo.GetUsernameByID(userID)
-	if err != nil {
-		log.Printf("Warning could not fetch receiver username: %v", err)
+	// Use the provided username if available, otherwise fetch from DB.
+	if userUsername == "" {
+		u, err := s.repo.GetUsernameByID(userID)
+		if err != nil {
+			log.Printf("Warning could not fetch receiver username: %v", err)
+		}
+		userUsername = u
 	}
+
 	notif := models.Notification{
 		ID:            uuid.New().String(),
 		CreatedAt:     time.Now(),
 		UserID:        userID,
-		UserUsername:  username,
+		UserUsername:  userUsername,
 		ActorID:       actorID,
 		ActorUsername: actorUsername,
 		Type:          notifType,
@@ -44,7 +49,7 @@ func (s *NotificationService) SendNotification(userID, userUsername, actorID, ac
 	}
 
 	log.Printf("[NotifService] Sending type=%q from actor=%q(%s) to user=%q(%s)",
-		notifType, actorUsername, actorID, username, userID)
+		notifType, actorUsername, actorID, userUsername, userID)
 	if err := s.pubsub.PublishToUser(context.Background(), userID, &notif); err != nil {
 		log.Printf("[NotifService] Error publishing notification to %s: %v", userID, err)
 	}

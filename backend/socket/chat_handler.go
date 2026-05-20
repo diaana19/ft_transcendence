@@ -3,8 +3,10 @@ package socket
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -40,6 +42,7 @@ type ChatHandler struct {
 	rdb                 *redis.Client
 	notificationService *services.NotificationService
 	msgRepo             repositories.MessageRepository
+	fileRepo            repositories.FileRepository
 	subscribedRooms     map[string]bool
 	subscribedMu        sync.Mutex
 }
@@ -49,6 +52,7 @@ type IncomingMessage struct {
 	RoomID   string  `json:"room_id"`
 	Content  string  `json:"content"`
 	ParentID *string `json:"parent_id"`
+	FileID   *string `json:"file_id,omitempty"` // ← AJOUTER
 }
 
 type OutgoingMessage struct {
@@ -59,12 +63,19 @@ type OutgoingMessage struct {
 	RoomID   string          `json:"room_id,omitempty"`
 }
 
-func NewChatHandler(manager *WSManager, rdb *redis.Client, notifService *services.NotificationService, msgRepo repositories.MessageRepository) *ChatHandler {
+func NewChatHandler(
+	manager *WSManager,
+	rdb *redis.Client,
+	notifService *services.NotificationService,
+	msgRepo repositories.MessageRepository,
+	fileRepo repositories.FileRepository,
+) *ChatHandler {
 	return &ChatHandler{
 		manager:             manager,
 		rdb:                 rdb,
 		notificationService: notifService,
 		msgRepo:             msgRepo,
+		fileRepo:            fileRepo,
 		subscribedRooms:     make(map[string]bool),
 	}
 }
@@ -93,7 +104,9 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 	var username string
 	if id, exists := c.Get("user_id"); exists {
 		userID = id.(string)
-
+		if u, ok := c.Get("username"); ok {
+			username = u.(string)
+		}
 	} else {
 
 		token := c.Query("token")
@@ -196,7 +209,7 @@ func (h *ChatHandler) handleJoin(client *Client, roomID string) {
 		Username: client.Username,
 		RoomID:   roomID,
 	}
-	h.publishToRoom(roomID, out, "")
+	h.publishToRoom(roomID, out)
 }
 
 func (h *ChatHandler) handleLeave(client *Client, roomID string) {
@@ -211,12 +224,22 @@ func (h *ChatHandler) handleLeave(client *Client, roomID string) {
 		Username: client.Username,
 		RoomID:   roomID,
 	}
-	h.publishToRoom(roomID, out, client.ID)
+	h.publishToRoom(roomID, out)
 }
 
 func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
-	if incoming.Content == "" || incoming.RoomID == "" {
+	if incoming.Content == "" && incoming.FileID == nil {
 		return
+	}
+	if incoming.RoomID == "" {
+		return
+	}
+
+	if incoming.FileID != nil {
+		if err := h.handleAttachment(client.ID, incoming.RoomID, *incoming.FileID); err != nil {
+			log.Printf("[Chat] attachment rejected: %v", err)
+			return
+		}
 	}
 
 	id, err := uuid.NewV7()
@@ -233,6 +256,8 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		RoomID:    incoming.RoomID,
 		Content:   incoming.Content,
 		ParentID:  incoming.ParentID,
+		FileID:    incoming.FileID,
+		Type:      "dm",
 	}
 
 	if err := h.msgRepo.Create(&msg); err != nil {
@@ -245,10 +270,10 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		Message: &msg,
 	}
 
-	h.publishToRoom(incoming.RoomID, out, client.ID)
+	h.publishToRoom(incoming.RoomID, out)
 }
 
-func (h *ChatHandler) publishToRoom(roomID string, out OutgoingMessage, senderID string) {
+func (h *ChatHandler) publishToRoom(roomID string, out OutgoingMessage) {
 	payload, err := json.Marshal(out)
 	if err != nil {
 		log.Printf("Marshal error: %v\n", err)
@@ -258,4 +283,39 @@ func (h *ChatHandler) publishToRoom(roomID string, out OutgoingMessage, senderID
 	if err := redispub.Publish(h.rdb, "chat:"+roomID, string(payload)); err != nil {
 		log.Printf("Publish error: %v\n", err)
 	}
+}
+
+func (h *ChatHandler) handleAttachment(senderID, roomID, fileID string) error {
+	file, err := h.fileRepo.GetByID(fileID)
+	if err != nil {
+		return fmt.Errorf("file not found: %w", err)
+	}
+	if file.OwnerID != senderID {
+		return fmt.Errorf("file not owned by sender")
+	}
+	if file.Visibility != models.FileVisibilityPrivate {
+		return fmt.Errorf("file must be uploaded with visibility=private for DM attachments")
+	}
+
+	parts := strings.Split(roomID, ":")
+	if len(parts) != 3 || parts[0] != "dm" {
+		return fmt.Errorf("invalid room id format for DM attachment (expected dm:userA:userB)")
+	}
+
+	var recipientID string
+	if parts[1] == senderID {
+		recipientID = parts[2]
+	} else if parts[2] == senderID {
+		recipientID = parts[1]
+	} else {
+		return fmt.Errorf("sender not part of this room")
+	}
+
+	if err := h.fileRepo.GrantAccess(fileID, recipientID); err != nil {
+		return fmt.Errorf("failed to grant access: %w", err)
+	}
+
+	log.Printf("[Chat] attachment granted: fileID=%s, sender=%s → recipient=%s",
+		fileID, senderID, recipientID)
+	return nil
 }

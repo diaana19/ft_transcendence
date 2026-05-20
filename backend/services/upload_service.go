@@ -4,43 +4,117 @@ import (
 	"errors"
 	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/Transcendence/models"
+	"github.com/Transcendence/repositories"
+	"github.com/google/uuid"
 )
 
-type UploadService struct{}
+const (
+	MaxFileSize = 25 * 1024 * 1024
+)
 
-func (s *UploadService) ValidateFile(file *multipart.FileHeader) error {
-	// Size check
-	if file.Size > 5*1024*1024 {
-		return errors.New("file too large (max 5MB)")
+var allowedMimeTypes = map[string]bool{
+	"image/jpeg": true,
+	"image/png":  true,
+	"image/gif":  true,
+	"image/webp": true,
+	"video/mp4":  true,
+}
+
+var allowedExtensions = map[string]bool{
+	".jpg":  true,
+	".jpeg": true,
+	".png":  true,
+	".gif":  true,
+	".webp": true,
+	".mp4":  true,
+}
+
+type UploadService struct {
+	FileRepo repositories.FileRepository
+}
+
+func NewUploadService(fileRepo repositories.FileRepository) *UploadService {
+	return &UploadService{FileRepo: fileRepo}
+}
+
+func (s *UploadService) ValidateFile(file *multipart.FileHeader) (string, error) {
+	if file.Size > MaxFileSize {
+		return "", errors.New("file too large (max 25MB)")
+	}
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if !allowedExtensions[ext] {
+		return "", errors.New("file extension not allowed")
 	}
 
-	// Real MIME check (not just extension)
 	src, err := file.Open()
 	if err != nil {
-		return errors.New("could not open file")
+		return "", errors.New("could not open file")
 	}
 	defer src.Close()
 
-	// Read the first 512 bytes — http.DetectContentType only needs that
 	buffer := make([]byte, 512)
-	_, err = src.Read(buffer)
-	if err != nil {
-		return errors.New("could not read file")
+	if _, err := src.Read(buffer); err != nil {
+		return "", errors.New("could not read file")
 	}
 
 	mime := http.DetectContentType(buffer)
-	allowed := []string{
-		"image/jpeg",
-		"image/png",
-		"image/gif",
-		"image/webp",
+	if !allowedMimeTypes[mime] {
+		return "", errors.New("file type not allowed: " + mime)
 	}
 
-	for _, m := range allowed {
-		if mime == m {
-			return nil
-		}
+	return mime, nil
+}
+
+func (s *UploadService) SaveFile(
+	fileHeader *multipart.FileHeader,
+	ownerID string,
+	visibility string,
+	saveFn func(*multipart.FileHeader, string) error,
+) (*models.File, error) {
+	if visibility != models.FileVisibilityPublic &&
+		visibility != models.FileVisibilityFriends &&
+		visibility != models.FileVisibilityPrivate {
+		return nil, errors.New("invalid visibility")
 	}
 
-	return errors.New("file type not allowed: " + mime)
+	mime, err := s.ValidateFile(fileHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+	fileID := uuid.New().String()
+	safeName := fileID + ext
+	diskPath := filepath.Join("./uploads", safeName)
+
+	absUploads, _ := filepath.Abs("./uploads")
+	absPath, _ := filepath.Abs(diskPath)
+	if !strings.HasPrefix(absPath, absUploads) {
+		return nil, errors.New("invalid path")
+	}
+
+	if err := saveFn(fileHeader, diskPath); err != nil {
+		return nil, errors.New("failed to save file")
+	}
+
+	file := &models.File{
+		ID:         fileID,
+		OwnerID:    ownerID,
+		Path:       diskPath,
+		Filename:   fileHeader.Filename,
+		MimeType:   mime,
+		Size:       fileHeader.Size,
+		Visibility: visibility,
+	}
+	if err := s.FileRepo.Create(file); err != nil {
+		_ = os.Remove(diskPath)
+		return nil, errors.New("failed to track file in database")
+	}
+
+	return file, nil
 }
