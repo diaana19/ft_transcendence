@@ -241,6 +241,16 @@ func (ac *AuthController) Verify2FA(c *gin.Context) {
 		return
 	}
 
+	c.SetCookie(
+		"auth_token",
+		token,
+		int((24 * time.Hour).Seconds()),
+		"/",
+		"",
+		false,
+		true,
+	)
+
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
 		"user":  user.ToResponse(),
