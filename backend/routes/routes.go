@@ -51,7 +51,6 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 	postRepo := repositories.NewPostRepository(DB)
 	postService := services.NewPostService(postRepo)
-	postController := controllers.NewPostController(postService, notifService)
 
 	userService := services.NewUserService(userRepo)
 	friendService := &services.FriendService{DB: DB}
@@ -67,6 +66,8 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 		Service:       uploadService,
 		FriendService: friendService,
 	}
+
+	postController := controllers.NewPostController(postService, notifService, uploadService)
 
 	wsManager := socket.NewWSManager()
 	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService, fileRepo)
