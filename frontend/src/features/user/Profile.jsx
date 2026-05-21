@@ -17,28 +17,48 @@ import PostCard from '../posts/PostCard';
 import { getPostsByAuthor } from '../posts/postService'
 
 export default function Profile() {
+  console.log('PROFILE START')
 	const { user: authUser, token, logout } = useAuth();
+  console.log('====================')
+  console.log('AFTER USER AURTH , PROFILE RENDER')
+  console.log('authUser:', authUser)
+  console.log('token:', token)
+ 
 	const { id } = useParams();
+   console.log('params id:', id)
+  console.log('AFTER useParams')
   const userId = id || authUser?.userId;
+  console.log('AFTER userId', userId)
+  console.log('computed userId:', userId)
 	const navigate = useNavigate();
+  console.log('AFTER useNavigate')
 
 	const [user, setUser] = useState({
 	name: "",
 	email: "",
 	bio: "",
 	});
-
+  console.log('AFTER user state')
 	const [loading, setLoading] = useState(false);
+  console.log('AFTER loading state')
 	const [showEdit, setShowEdit] = useState(false);
+  console.log('AFTER show edit state')
 	const [showDelete, setShowDelete] = useState(false);
+  console.log('AFTER show delete state')
 	const [form, setForm] = useState(user);
+  console.log('AFTER setForm state')
   const [posts, setPosts] = useState([]);
+  console.log('AFTER setPost state')
   const [loadingPosts, setLoadingPosts] = useState(false);
+  console.log('AFTER setlloading state')
   const [isFollowing, setIsFollowing] = useState(false);
+  console.log('AFTER setfollow state')
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
 
 	useEffect(() => {
+  console.log('USE EFFECT RUN')
+  console.log('userId inside effect:', userId)
 	if (userId) {
 	fetchUser();
   fetchUserPosts();
@@ -145,10 +165,11 @@ export default function Profile() {
 	};
 
 	if (loading) return <p>Cargando perfil...</p>;
-
+console.log('BEFORE RETURN')
 return (
+  
   <div className="min-h-screen bg-white">
-
+    {console.log('RENDER MAIN DIV')}
     {/* Banner */}
     <div className="h-48 w-full overflow-hidden bg-blue-500" >
     {user.wallpaper && (

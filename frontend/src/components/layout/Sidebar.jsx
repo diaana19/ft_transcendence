@@ -1,14 +1,18 @@
 import { NavLink } from "react-router-dom"
+import { useAuth } from "../../hooks/useAuth"
 import {
   HomeIcon,
   UserIcon,
   SparklesIcon,
   QuestionMarkCircleIcon,
   EnvelopeIcon,
-  BellIcon
+  BellIcon,
+  EllipsisVerticalIcon
 } from "@heroicons/react/24/outline"
 
 export default function Sidebar() {
+
+  const { user } = useAuth()
 
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-2 rounded-xl transition font-medium
@@ -78,14 +82,16 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom user card */}
+      {user?.userId && (
       <div className="absolute bottom-6 left-0 w-full px-4">
         <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
-          <p className="text-xs text-gray-400">Logged in as</p>
+          <p className="text-xs text-gray-400">Logged in as @{user.username} </p>
           <p className="text-sm text-gray-900 font-medium truncate">
-            user@email.com
+            {user.email}
           </p>
+          <EllipsisVerticalIcon className="w-5 h-5 text-gray-400" />
         </div>
-      </div>
+      </div> )}
 
     </aside>
   )

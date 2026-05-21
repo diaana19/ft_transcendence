@@ -32,7 +32,9 @@ export function AuthProvider({ children }) {
                     logout()
                 } else {
                     setToken(storedToken)
-                    setUser({ userId: payload.user_id })
+                    setUser({ userId: payload.userId,
+                        username: payload.username
+                     })
                 }
             } catch {
                 logout()
@@ -42,15 +44,23 @@ export function AuthProvider({ children }) {
         setLoading(false)
     }, [])
 
-    const loginUser = (jwt) => {
+    const loginUser = (data) => {
         try {
-            if (!jwt) {
+            if (!data?.token) {
             throw new Error('No token provided')
             }
-            const payload = decodeToken(jwt)
-            localStorage.setItem('token', jwt)
-            setToken(jwt)
-            setUser({ userId: payload.user_id })
+
+            localStorage.setItem('token', data.token)
+            const payload = decodeToken(data.token)
+            const fullUser = ({ userId: payload.userId, 
+                username: data.user?.username, 
+                email: data.user?.email, 
+                avatar: data.user?.avatar })
+            
+            setToken(data.token)
+            setUser(fullUser)
+            console.log("FULL USER:", fullUser)
+
         } catch (err) {
             console.error('Login failed:', err.message)
             logout()
@@ -58,7 +68,8 @@ export function AuthProvider({ children }) {
     }
 
     return (
-        <AuthContext.Provider value={{ token, user, loginUser, logout, loading }}>
+        <AuthContext.Provider value={{ token, 
+        user, loginUser, logout, loading }}>
             {children}
         </AuthContext.Provider>
     )

@@ -102,9 +102,9 @@ return (
               )}
             </>
           )}
-
+          {console.log("IMG SRC:", post.media_url)}
           <div className="flex gap-6 mt-3 text-gray-500 text-sm">
-           <span className="flex items-center gap-1"><MessageCircle size={16} />{post.comments_count}</span>
+           <span onClick={() => navigate(`/post/${post.id}`)} className="flex items-center gap-1"><MessageCircle size={16} />{post.comments_count}</span>
            <span className="flex items-center gap-1"><Heart size={16} />{post.likes_count}</span>
             {post.author_id === currentUserId && (
               <div className="flex gap-3 ml-auto">

@@ -42,7 +42,7 @@ const handleSubmit = async (e) => {
           return
         }
 
-        loginUser(data.token)
+        loginUser(data)
         navigate('/')
     } catch (err) {
         console.log("ERROR:", err)

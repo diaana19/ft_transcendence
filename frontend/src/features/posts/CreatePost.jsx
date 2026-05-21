@@ -21,8 +21,8 @@ function CreatePost({ onPostCreated }) {
 
 const handleFileChange = (e) => {
   const selectedFile = e.target.files[0]
-  if (selectedFile && selectedFile.size > 5 * 1024 * 1024) {
-      setError('File too large. Maximum size is 5MB')
+  if (selectedFile && selectedFile.size > 20 * 1024 * 1024) {
+      setError('File too large. Maximum size is 20MB')
       setFile(null)
       return
     }
@@ -74,11 +74,19 @@ return (
 
           {file && (
             <div className="relative mb-2">
+              {file.type.startsWith('video/') ? (
+              <video
+                src={URL.createObjectURL(file)}
+                controls
+                className="rounded-2xl max-h-64 w-full object-cover"
+              />
+              ) : (
               <img
                 src={URL.createObjectURL(file)}
                 alt="preview"
                 className="rounded-2xl max-h-64 w-full object-cover"
               />
+              )}
               <button
                 onClick={() => setFile(null)}
                 className="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-opacity-70"
@@ -98,7 +106,7 @@ return (
                 <Image size={18} /> <span className="text-sm">Image / Video</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   onChange={handleFileChange}
                   className="hidden"
                 /> 
