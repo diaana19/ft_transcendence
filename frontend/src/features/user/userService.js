@@ -1,13 +1,13 @@
 import axiosInstance from '../../services/axiosInstance'
 
 export const getFollowers = async (userId) => {
-  const res = await axiosInstance.get(`/api/friends/${userId}/followers`)
-  return res.data
+  const res = await axiosInstance.get(`/api/users/${userId}/followers`)
+  return res.data?.data || res.data
 }
 
 export const getFollowing = async (userId) => {
-  const res = await axiosInstance.get(`/api/friends/${userId}/following`)
-  return res.data
+  const res = await axiosInstance.get(`/api/users/${userId}/following`)
+  return res.data?.data || res.data
 }
 
 export const followUser = async (targetId) => {
@@ -15,12 +15,18 @@ export const followUser = async (targetId) => {
   return res.data
 }
 
+export const unfollowUser = async (targetId) => {
+  const res = await axiosInstance.delete(`/api/friends/follow/${targetId}`)
+  return res.data
+}
+
 export const sendFriendRequest = async (targetId) => {
-  const res = await axiosInstance.post(`/api/friends/${targetId}`)
+  const res = await axiosInstance.post(`/api/friends/request/${targetId}`)
   return res.data
 }
 
 export const acceptFriendRequest = async (requesterId) => {
-  const res = await axiosInstance.put(`/api/friends/${requesterId}/accept`)
+  const res = await axiosInstance.put(`/api/friends/accept/${requesterId}`)
   return res.data
 }
+

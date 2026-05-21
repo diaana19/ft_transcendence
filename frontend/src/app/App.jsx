@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
+import RequireAuth from '../components/common/RequireAuth'
 
 import RegisterForm from '../features/auth/RegisterForm.jsx'
 import LoginForm from '../features/auth/LoginForm.jsx'
@@ -13,7 +14,7 @@ function App() {
                 <Route path="/register" element={<RegisterForm />} />
                 <Route path="/login" element={<LoginForm />} />
                 
-                <Route element={<Layout />}>
+                <Route element={<RequireAuth><Layout /></RequireAuth>}>
                 <Route path="/" element={<Feed />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/profile/:id" element={<Profile />} />

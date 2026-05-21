@@ -36,6 +36,11 @@ const handleSubmit = async (e) => {
         const data = await login(formData.email, formData.password)
 
         console.log("RESPONSE:", data)
+        
+        if (data.needs_2fa) {
+          navigate('/login/2fa', { state: { pendingToken: data.pending_token } })
+          return
+        }
 
         loginUser(data.token)
         navigate('/')

@@ -30,12 +30,13 @@ export async function enableTwoFA(code) {
 }
 
 export async function disableTwoFA() {
-    const response = await api.post('/api/2fa/disable')
+    const response = await api.post('/api/2fa/disable', { code })
     return response.data
 }
 
-export async function verifyTwoFA(code) {
+export async function verifyTwoFA(pendingToken, code) {
     const response = await api.post('/api/2fa/verify', {
+        pending_token: pendingToken,
         code
     })
     return response.data

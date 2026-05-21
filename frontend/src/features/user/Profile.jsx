@@ -73,7 +73,6 @@ export default function Profile() {
 	setUser(data);
 	setForm(data);
 	} catch (err) {
-  console.error('JSON PARSE ERROR:', err)
 	console.error(err);
 	} finally {
 	setLoading(false);
