@@ -43,7 +43,7 @@ const handleSubmit = async () => {
             formData.append('file', file)
             const res = await axiosInstance.post('/api/upload', formData)
             console.log('Upload response:', res)
-            mediaUrl = res.data.path
+            mediaUrl = res.data.url
         }
         const newPost = await createPost(content, mediaUrl)
         onPostCreated(newPost)
