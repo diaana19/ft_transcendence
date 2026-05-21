@@ -51,3 +51,19 @@ export async function deletePost(id) {
     )
     return response.data
 }
+
+export async function createComment(postId, content) {
+    const response = await axiosInstance.post(
+        `/api/posts/${postId}/comments`,
+        { content }
+    )
+
+    return response.data
+}
+
+export async function getComments(postId) {
+    const response = await axiosInstance.get(
+        `/api/posts/${postId}/comments`
+    )
+    return response.data
+}

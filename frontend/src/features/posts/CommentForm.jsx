@@ -26,7 +26,20 @@ function CommentForm({ postId, onCommentAdded }) {
   return (
     <div className="flex gap-3 px-4 py-3 border-b border-gray-200">
       {/* Avatar */}
-      <div className="w-9 h-9 rounded-full bg-gray-300 flex-shrink-0" />
+      
+      <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center text-white font-bold flex-shrink-0">
+        {user?.avatar ? (
+          <img
+            src={user.avatar}
+            alt={user.username}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <span>
+            {user?.username?.charAt(0).toUpperCase() || 'U'}
+          </span>
+        )}
+      </div>
 
       <div className="flex-1">
         <textarea
