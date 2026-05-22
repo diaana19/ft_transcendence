@@ -3,12 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"math/rand"
-	"mime"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/Transcendence/config"
@@ -17,8 +13,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
-
-// --- Data ---
 
 var postContents = []string{
 	"Just finished an amazing project! Feeling proud 🎉",
@@ -46,203 +40,152 @@ var commentContents = []string{
 	"Interesting take!",
 }
 
-// --- Helpers ---
+// Mapping exact des utilisateurs aux fichiers réels
+var avatarMap = map[string]string{
+	"alice01":  "av1.jpg",
+	"carlos02": "av2.jpg",
+	"sophie03": "av3.jpg",
+	"john04":   "av4.avif",
+	"emma05":   "av5.jpg",
+	"lucas06":  "av6.jpeg",
+	"mia07":    "av7.jpg",
+	"ahmed08":  "av1.jpg",
+	"olivia09": "av2.jpg",
+	"noah10":   "av3.jpg",
+}
 
 func hashPassword(password string) string {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		panic(err)
-	}
+	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(bytes)
 }
 
-type seedUserInput struct {
-	Name        string    `json:"name"`
-	Username    string    `json:"username"`
-	Email       string    `json:"email"`
-	Password    string    `json:"password"`
-	DateOfBirth time.Time `json:"dateOfBirth"`
-	Bio         string    `json:"bio"`
-	Wallpaper   string    `json:"wallpaper"`
-	Avatar      string    `json:"avatar"`
-}
-
-// toUser builds a User without avatar/wallpaper.
-// Those are set later by seedFiles (which uploads the actual files into the storage system).
-func (s seedUserInput) toUser() models.User {
-	hashed := hashPassword(s.Password)
-	dob := s.DateOfBirth
-	now := time.Now()
-
-	return models.User{
-		ID:          uuid.NewString(),
-		Name:        s.Name,
-		Username:    s.Username,
-		Email:       s.Email,
-		Password:    &hashed,
-		DateOfBirth: &dob,
-		Bio:         s.Bio,
-		Provider:    "local",
-		CreatedAt:   now,
-		UpdatedAt:   now,
+func getMimeType(filename string) string {
+	ext := filepath.Ext(filename)
+	switch ext {
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	case ".gif":
+		return "image/gif"
+	case ".avif":
+		return "image/avif"
+	case ".webp":
+		return "image/webp"
+	default:
+		return "application/octet-stream"
 	}
 }
 
-// --- File seeding ---
-
-func seedFileForUser(db *gorm.DB, userID, sourcePath string) (string, error) {
-	if sourcePath == "" {
+// createFileRecord : crée un File record qui pointe vers un fichier existant
+// N'utilise PAS l'UUID comme nom de fichier - garde le nom original
+func createFileRecord(db *gorm.DB, userID, sourceFileName, subDir string) (string, error) {
+	if sourceFileName == "" {
 		return "", nil
-	}
-
-	relativeSourcePath := strings.TrimPrefix(sourcePath, "/")
-	if relativeSourcePath == "" {
-		return "", nil
-	}
-
-	srcInfo, err := os.Stat(relativeSourcePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			fmt.Printf("    Source file not found: %s (skipping)\n", relativeSourcePath)
-			return "", nil
-		}
-		return "", err
 	}
 
 	fileID := uuid.NewString()
-	ext := strings.ToLower(filepath.Ext(relativeSourcePath))
-	destName := fileID + ext
-	destPath := filepath.Join("uploads", destName)
 
-	mimeType := mime.TypeByExtension(ext)
-	if mimeType == "" {
-		mimeType = "application/octet-stream"
-	}
+	// Le chemin en BDD pointe vers le fichier EXISTANT
+	dbPath := filepath.Join("uploads", subDir, sourceFileName)
 
-	if err := copyFile(relativeSourcePath, destPath); err != nil {
-		return "", fmt.Errorf("copy file: %w", err)
-	}
-
-	file := models.File{
+	fileRecord := models.File{
 		ID:         fileID,
+		Filename:   sourceFileName,
+		Path:       dbPath,
+		MimeType:   getMimeType(sourceFileName),
+		Size:       0,
 		OwnerID:    userID,
-		Path:       destPath,
-		Filename:   filepath.Base(relativeSourcePath),
-		MimeType:   mimeType,
-		Size:       srcInfo.Size(),
 		Visibility: models.FileVisibilityPublic,
-		CreatedAt:  time.Now(),
-	}
-	if err := db.Create(&file).Error; err != nil {
-		return "", fmt.Errorf("create file row: %w", err)
 	}
 
-	url := "/api/files/" + fileID
-	return url, nil
+	if err := db.Create(&fileRecord).Error; err != nil {
+		return "", err
+	}
+
+	fmt.Printf("    ✅ Registered %s (%s) -> /api/files/%s\n", subDir, sourceFileName, fileID)
+	return "/api/files/" + fileID, nil
 }
 
-func copyFile(src, dst string) error {
-	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-		return err
-	}
-
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	if _, err := io.Copy(out, in); err != nil {
-		return err
-	}
-	return nil
-}
-
-func seedUserMedia(db *gorm.DB, user *models.User, sourceAvatar, sourceWallpaper string) {
-	if user.Avatar == nil && sourceAvatar != "" {
-		url, err := seedFileForUser(db, user.ID, sourceAvatar)
-		if err != nil {
-			fmt.Printf("    Error seeding avatar for %s: %v\n", user.Username, err)
-		} else if url != "" {
-			db.Model(user).Update("avatar", url)
-			fmt.Printf("    + Avatar: %s -> %s\n", sourceAvatar, url)
-		}
-	}
-
-	if user.Wallpaper == nil && sourceWallpaper != "" {
-		url, err := seedFileForUser(db, user.ID, sourceWallpaper)
-		if err != nil {
-			fmt.Printf("    Error seeding wallpaper for %s: %v\n", user.Username, err)
-		} else if url != "" {
-			db.Model(user).Update("wallpaper", url)
-			fmt.Printf("    + Wallpaper: %s -> %s\n", sourceWallpaper, url)
-		}
-	}
-}
-
-// --- Seeders ---
-
-func ensureSchema(db *gorm.DB) error {
-	fmt.Println("Ensuring schema is up to date...")
-	return db.AutoMigrate(
-		&models.User{},
-		&models.Friend{},
-		&models.Post{},
-		&models.Like{},
-		&models.Reply{},
-		&models.Repost{},
-		&models.Message{},
-		&models.Notification{},
-		&models.File{},
-		&models.FileAccess{},
-	)
+type seedUserInput struct {
+	Name        string `json:"name"`
+	Username    string `json:"username"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	DateOfBirth string `json:"dateOfBirth"`
+	Bio         string `json:"bio"`
 }
 
 func seedUsers(db *gorm.DB) []models.User {
-	fmt.Println("\nSeeding users...")
+	fmt.Println("Seeding users...")
+	var users []models.User
 
-	file, err := os.ReadFile("users.json")
+	data, err := os.ReadFile("users.json")
 	if err != nil {
 		panic(err)
 	}
 
 	var inputs []seedUserInput
-	if err := json.Unmarshal(file, &inputs); err != nil {
+	if err := json.Unmarshal(data, &inputs); err != nil {
 		panic(err)
 	}
 
-	for _, in := range inputs {
+	for _, input := range inputs {
+		user := models.User{
+			ID:        uuid.NewString(),
+			Name:      input.Name,
+			Username:  input.Username,
+			Email:     input.Email,
+			Bio:       input.Bio,
+			Provider:  "local",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		if input.Password != "" {
+			hashed := hashPassword(input.Password)
+			user.Password = &hashed
+		}
+
 		var existing models.User
-		if err := db.Where("email = ? OR username = ?", in.Email, in.Username).First(&existing).Error; err == nil {
-			fmt.Println("  - User already exists:", in.Email)
-			seedUserMedia(db, &existing, in.Avatar, in.Wallpaper)
+		if err := db.Where("email = ? OR username = ?", user.Email, user.Username).First(&existing).Error; err == nil {
+			fmt.Printf("  - User already exists: %s\n", user.Email)
+			users = append(users, existing)
 			continue
 		}
 
-		user := in.toUser()
 		if err := db.Create(&user).Error; err != nil {
-			fmt.Println("  - Error inserting user:", err)
+			fmt.Printf("❌ Failed to create user %s: %v\n", user.Username, err)
 			continue
 		}
 		fmt.Printf("  + Inserted user: %s\n", user.Username)
 
-		seedUserMedia(db, &user, in.Avatar, in.Wallpaper)
+		// Assigner l'avatar depuis la map
+		if avatarFile, ok := avatarMap[user.Username]; ok {
+			avatarURL, _ := createFileRecord(db, user.ID, avatarFile, "avatars")
+			if avatarURL != "" {
+				db.Model(&user).Update("avatar", avatarURL)
+			}
+		}
+
+		// Assigner le wallpaper (toujours default.jpg)
+		wallpaperURL, _ := createFileRecord(db, user.ID, "default.jpg", "wallpapers")
+		if wallpaperURL != "" {
+			db.Model(&user).Update("wallpaper", wallpaperURL)
+		}
+
+		users = append(users, user)
 	}
 
-	var users []models.User
-	db.Find(&users)
 	return users
 }
 
-func seedFriendships(db *gorm.DB, users []models.User) {
-	fmt.Println("\nSeeding friendships...")
+func ensureSchema(db *gorm.DB) error {
+	return db.AutoMigrate(&models.User{}, &models.File{}, &models.Post{}, &models.Like{}, &models.Reply{}, &models.Friend{}, &models.Notification{})
+}
 
+func seedFriendships(db *gorm.DB, users []models.User) {
+	fmt.Println("Seeding friendships...")
 	n := len(users)
 	if n < 3 {
 		fmt.Println("  - Need at least 3 users, skipping")
@@ -253,7 +196,11 @@ func seedFriendships(db *gorm.DB, users []models.User) {
 	pending := 0
 	for i := 0; i < n; i++ {
 		acceptedTarget := users[(i+1)%n]
-		if !friendExists(db, users[i].ID, acceptedTarget.ID) {
+		var count int64
+		db.Model(&models.Friend{}).
+			Where("user_id = ? AND friend_id = ?", users[i].ID, acceptedTarget.ID).
+			Count(&count)
+		if count == 0 {
 			db.Create(&models.Friend{
 				ID:       uuid.NewString(),
 				UserID:   users[i].ID,
@@ -264,7 +211,10 @@ func seedFriendships(db *gorm.DB, users []models.User) {
 		}
 
 		pendingTarget := users[(i+2)%n]
-		if !friendExists(db, users[i].ID, pendingTarget.ID) {
+		db.Model(&models.Friend{}).
+			Where("user_id = ? AND friend_id = ?", users[i].ID, pendingTarget.ID).
+			Count(&count)
+		if count == 0 {
 			db.Create(&models.Friend{
 				ID:       uuid.NewString(),
 				UserID:   users[i].ID,
@@ -279,8 +229,7 @@ func seedFriendships(db *gorm.DB, users []models.User) {
 }
 
 func seedFollows(db *gorm.DB, users []models.User) {
-	fmt.Println("\nSeeding follows...")
-
+	fmt.Println("Seeding follows...")
 	n := len(users)
 	if n < 2 {
 		fmt.Println("  - Need at least 2 users, skipping")
@@ -291,16 +240,19 @@ func seedFollows(db *gorm.DB, users []models.User) {
 	for i := 0; i < n; i++ {
 		for offset := 1; offset <= 2 && offset < n; offset++ {
 			target := users[(i+offset)%n]
-			if friendExistsWithStatus(db, users[i].ID, target.ID, "follow") {
-				continue
+			var count int64
+			db.Model(&models.Friend{}).
+				Where("user_id = ? AND friend_id = ? AND status = ?", users[i].ID, target.ID, "follow").
+				Count(&count)
+			if count == 0 {
+				db.Create(&models.Friend{
+					ID:       uuid.NewString(),
+					UserID:   users[i].ID,
+					FriendID: target.ID,
+					Status:   "follow",
+				})
+				created++
 			}
-			db.Create(&models.Friend{
-				ID:       uuid.NewString(),
-				UserID:   users[i].ID,
-				FriendID: target.ID,
-				Status:   "follow",
-			})
-			created++
 		}
 	}
 
@@ -308,21 +260,19 @@ func seedFollows(db *gorm.DB, users []models.User) {
 }
 
 func seedPosts(db *gorm.DB, users []models.User) []models.Post {
-	fmt.Println("\nSeeding posts...")
-
+	fmt.Println("Seeding posts...")
 	if len(users) == 0 {
 		fmt.Println("  - No users, skipping")
 		return nil
 	}
 
+	var posts []models.Post
 	for contentIdx, content := range postContents {
 		user := users[contentIdx%len(users)]
 		post := models.Post{
-			ID:        uuid.NewString(),
-			Content:   content,
-			AuthorID:  user.ID,
-			CreatedAt: time.Now().Add(-time.Duration((len(postContents)-contentIdx)*24) * time.Hour),
-			UpdatedAt: time.Now().Add(-time.Duration((len(postContents)-contentIdx)*24) * time.Hour),
+			ID:       uuid.NewString(),
+			Content:  content,
+			AuthorID: user.ID,
 		}
 
 		var existing models.Post
@@ -331,32 +281,30 @@ func seedPosts(db *gorm.DB, users []models.User) []models.Post {
 		}
 
 		if err := db.Create(&post).Error; err != nil {
-			fmt.Println("  - Error inserting post:", err)
+			fmt.Printf("  - Error creating post: %v\n", err)
+			continue
 		}
+		posts = append(posts, post)
 	}
 
-	var posts []models.Post
-	db.Find(&posts)
-	fmt.Printf("  + Total posts: %d\n", len(posts))
+	fmt.Printf("  + Created %d posts\n", len(posts))
 	return posts
 }
 
 func seedLikes(db *gorm.DB, users []models.User, posts []models.Post) {
-	fmt.Println("\nSeeding likes...")
-
+	fmt.Println("Seeding likes...")
 	if len(users) == 0 || len(posts) == 0 {
 		fmt.Println("  - Need users and posts, skipping")
 		return
 	}
 
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	created := 0
 	for _, post := range posts {
 		for _, user := range users {
 			if user.ID == post.AuthorID {
 				continue
 			}
-			if rng.Float64() > 0.5 {
+			if (len(post.ID) + len(user.ID)) % 2 == 0 {
 				continue
 			}
 
@@ -382,17 +330,15 @@ func seedLikes(db *gorm.DB, users []models.User, posts []models.Post) {
 }
 
 func seedReplies(db *gorm.DB, users []models.User, posts []models.Post) {
-	fmt.Println("\nSeeding replies (comments)...")
-
+	fmt.Println("Seeding replies (comments)...")
 	if len(users) < 2 || len(posts) == 0 {
 		fmt.Println("  - Need users and posts, skipping")
 		return
 	}
 
-	rng := rand.New(rand.NewSource(time.Now().UnixNano() + 1))
 	created := 0
 	for i, post := range posts {
-		count := 1 + rng.Intn(3)
+		count := 1 + (i % 2)
 		for j := 0; j < count; j++ {
 			authorIdx := (i + j + 1) % len(users)
 			author := users[authorIdx]
@@ -427,8 +373,7 @@ func seedReplies(db *gorm.DB, users []models.User, posts []models.Post) {
 }
 
 func seedNotifications(db *gorm.DB, users []models.User) {
-	fmt.Println("\nSeeding notifications...")
-
+	fmt.Println("Seeding notifications...")
 	if len(users) < 2 {
 		fmt.Println("  - Need at least 2 users, skipping")
 		return
@@ -446,7 +391,6 @@ func seedNotifications(db *gorm.DB, users []models.User) {
 
 		db.Create(&models.Notification{
 			ID:            uuid.NewString(),
-			CreatedAt:     time.Now().Add(-time.Hour),
 			UserID:        user.ID,
 			UserUsername:  user.Username,
 			ActorID:       actor.ID,
@@ -461,26 +405,6 @@ func seedNotifications(db *gorm.DB, users []models.User) {
 	fmt.Printf("  + Created %d notifications\n", created)
 }
 
-// --- Existence checks ---
-
-func friendExists(db *gorm.DB, userID, friendID string) bool {
-	var count int64
-	db.Model(&models.Friend{}).
-		Where("user_id = ? AND friend_id = ?", userID, friendID).
-		Count(&count)
-	return count > 0
-}
-
-func friendExistsWithStatus(db *gorm.DB, userID, friendID, status string) bool {
-	var count int64
-	db.Model(&models.Friend{}).
-		Where("user_id = ? AND friend_id = ? AND status = ?", userID, friendID, status).
-		Count(&count)
-	return count > 0
-}
-
-// --- Main ---
-
 func main() {
 	db, err := config.ConnectDB()
 	if err != nil {
@@ -488,7 +412,7 @@ func main() {
 	}
 
 	if err := ensureSchema(db); err != nil {
-		panic(fmt.Errorf("schema migration failed: %w", err))
+		panic(err)
 	}
 
 	users := seedUsers(db)
@@ -499,5 +423,5 @@ func main() {
 	seedReplies(db, users, posts)
 	seedNotifications(db, users)
 
-	fmt.Println("\nSeeding finished!")
+	fmt.Println("\n✅ Seeding finished successfully!")
 }
