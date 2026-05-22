@@ -40,7 +40,7 @@ func (m *mockMessageRepository) PollSince(userID, since string, limit int) ([]mo
 	return cursorSlice(matched, since, limit), nil
 }
 
-func (m *mockMessageRepository) GetByRoomID(roomID string, limit int) ([]models.Message, error) {
+func (m *mockMessageRepository) GetByRoomID(roomID, since string, limit int) ([]models.Message, error) {
 	return nil, nil
 }
 

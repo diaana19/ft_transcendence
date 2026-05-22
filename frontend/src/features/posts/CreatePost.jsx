@@ -11,6 +11,7 @@
 import { useState } from 'react'
 import { createPost } from './postService.js'
 import { Image } from 'lucide-react'
+import axiosInstance from '../../services/axiosInstance'
 
 function CreatePost({ onPostCreated }) {
     const [file, setFile] = useState(null)
@@ -20,12 +21,13 @@ function CreatePost({ onPostCreated }) {
 
 const handleFileChange = (e) => {
   const selectedFile = e.target.files[0]
-  if (selectedFile && selectedFile.size > 5 * 1024 * 1024) {
-      setError('File too large. Maximum size is 5MB')
+  if (selectedFile && selectedFile.size > 20 * 1024 * 1024) {
+      setError('File too large. Maximum size is 20MB')
       setFile(null)
       return
     }
     setFile(selectedFile)
+    console.log('Selected file:', selectedFile.name, 'size:', selectedFile.size)
     setError(null)
   }
 
@@ -35,9 +37,18 @@ const handleSubmit = async () => {
     setLoading(true)
     setError(null)
     try {
-        const newPost = await createPost(content)
+        let mediaUrl = null
+        if (file) {
+            const formData = new FormData()
+            formData.append('file', file)
+            const res = await axiosInstance.post('/api/upload', formData)
+            console.log('Upload response:', res)
+            mediaUrl = res.data.url
+        }
+        const newPost = await createPost(content, mediaUrl)
         onPostCreated(newPost)
         setContent('')
+        setFile(null)
     } catch (err) {
         setError(err.response?.data?.error || 'Something went wrong')
     } finally {
@@ -63,11 +74,19 @@ return (
 
           {file && (
             <div className="relative mb-2">
+              {file.type.startsWith('video/') ? (
+              <video
+                src={URL.createObjectURL(file)}
+                controls
+                className="rounded-2xl max-h-64 w-full object-cover"
+              />
+              ) : (
               <img
                 src={URL.createObjectURL(file)}
                 alt="preview"
                 className="rounded-2xl max-h-64 w-full object-cover"
               />
+              )}
               <button
                 onClick={() => setFile(null)}
                 className="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-opacity-70"
@@ -87,7 +106,7 @@ return (
                 <Image size={18} /> <span className="text-sm">Image / Video</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   onChange={handleFileChange}
                   className="hidden"
                 /> 

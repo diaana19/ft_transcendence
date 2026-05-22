@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/Transcendence/models"
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -20,8 +19,6 @@ type DBConfig struct {
 }
 
 func ConnectDB() (*gorm.DB, error) {
-	godotenv.Load(".env")
-
 	conf := &DBConfig{
 		DatabaseName:     os.Getenv("DB_NAME"),
 		DatabaseHost:     os.Getenv("DB_HOST"),

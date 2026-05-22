@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { login } from './authService.js'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import OAuthButton from './OAuthButton'
 
 function LoginForm() {
     const navigate = useNavigate()
@@ -35,8 +36,13 @@ const handleSubmit = async (e) => {
         const data = await login(formData.email, formData.password)
 
         console.log("RESPONSE:", data)
+        
+        if (data.needs_2fa) {
+          navigate('/login/2fa', { state: { pendingToken: data.pending_token } })
+          return
+        }
 
-        loginUser(data.token)
+        loginUser(data)
         navigate('/')
     } catch (err) {
         console.log("ERROR:", err)
@@ -92,6 +98,14 @@ return (
           >
             {loading ? 'Loading...' : 'Log in'}
           </button>
+
+          <div className="flex items-center gap-3 my-2">
+            <div className="h-px bg-gray-300 flex-1"></div>
+            <span className="text-gray-500 text-sm">or</span>
+            <div className="h-px bg-gray-300 flex-1"></div>
+          </div>
+
+          <OAuthButton />
 
           <div className="flex justify-between mt-2">
             <span

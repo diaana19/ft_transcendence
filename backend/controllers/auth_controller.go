@@ -142,7 +142,15 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
 		return
 	}
-
+	c.SetCookie(
+		"auth_token",
+		token,
+		int((24 * time.Hour).Seconds()),
+		"/",
+		"",
+		false,
+		true,
+	)
 	c.JSON(http.StatusOK, gin.H{"token": token, "user": user.ToResponse()})
 }
 
@@ -232,6 +240,16 @@ func (ac *AuthController) Verify2FA(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
 		return
 	}
+
+	c.SetCookie(
+		"auth_token",
+		token,
+		int((24 * time.Hour).Seconds()),
+		"/",
+		"",
+		false,
+		true,
+	)
 
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,

@@ -6,7 +6,6 @@ COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
 COPY backend/ .
-COPY infra/.env .env
 
 RUN go build -o server ./cmd/server/main.go
 
@@ -15,7 +14,6 @@ FROM alpine:latest
 WORKDIR /root/
 
 COPY --from=builder /app/server .
-COPY --from=builder /app/.env .env
 COPY --from=builder /app/uploads ./uploads
 
 EXPOSE 8000

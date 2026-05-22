@@ -1,0 +1,118 @@
+---
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Ratchet threshold — local baseline is ~37.6% (with integration tests
+  # failing under podman). Bump this whenever real coverage climbs.
+  COVERAGE_THRESHOLD: "35.0"
+
+jobs:
+  backend:
+    name: Backend tests & coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Download modules
+        run: go mod download
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: gofmt
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then
+            echo "::error::gofmt found unformatted files:"
+            echo "$out"
+            exit 1
+          fi
+
+      - name: Run tests with coverage
+        # -race catches data races (rate limiter uses sync.Map + atomics).
+        # -coverpkg=./... attributes integration-test coverage to source
+        # packages, not just the test package itself.
+        run: |
+          go test ./... \
+            -race \
+            -count=1 \
+            -covermode=atomic \
+            -coverpkg=./... \
+            -coverprofile=coverage.out \
+            -timeout=10m
+
+      - name: Compute total coverage
+        id: cov
+        run: |
+          go tool cover -func=coverage.out | tee coverage.txt
+          total=$(awk '/^total:/ {gsub("%","",$3); print $3}' coverage.txt)
+          echo "total=${total}" >> "$GITHUB_OUTPUT"
+
+      - name: Write PR summary
+        if: always() && steps.cov.outputs.total != ''
+        run: |
+          total="${{ steps.cov.outputs.total }}"
+          threshold="${{ env.COVERAGE_THRESHOLD }}"
+          if awk -v t="$total" -v th="$threshold" 'BEGIN { exit !(t+0 >= th+0) }'; then
+            badge="\`\`\`✅ ${total}% (>= ${threshold}%)\`\`\`"
+          else
+            badge="\`\`\`❌ ${total}% (< ${threshold}%)\`\`\`"
+          fi
+          {
+            echo "## Backend coverage"
+            echo ""
+            echo "${badge}"
+            echo ""
+            echo "<details><summary>Per-function coverage</summary>"
+            echo ""
+            echo '```'
+            cat coverage.txt
+            echo '```'
+            echo ""
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: backend-coverage
+          path: |
+            backend/coverage.out
+            backend/coverage.txt
+
+      - name: Enforce coverage threshold
+        run: |
+          total="${{ steps.cov.outputs.total }}"
+          threshold="${{ env.COVERAGE_THRESHOLD }}"
+          if [ -z "$total" ]; then
+            echo "::error::no coverage value produced"
+            exit 1
+          fi
+          if awk -v t="$total" -v th="$threshold" 'BEGIN { exit !(t+0 >= th+0) }'; then
+            echo "::notice::backend coverage ${total}% meets ${threshold}% threshold"
+          else
+            echo "::error::backend coverage ${total}% is below ${threshold}% threshold"
+            exit 1
+          fi

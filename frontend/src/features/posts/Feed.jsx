@@ -20,6 +20,7 @@ function Feed() {
       setFetching(true)
       const data = await getPosts()
       console.log('DATA:', data)
+      console.table(data)
       setPosts(data)
     } catch (err) {
       console.error('Error fetching posts:', err)
@@ -51,11 +52,20 @@ function Feed() {
     setPosts(posts.map((p) => (p.id === updatedPost.id ? updatedPost : p)))
   }
 
+
+
+
+
+
+
   return (
     <div className="max-w-2xl mx-auto space-y-4">
 
       {/* Composer */}
-        <CreatePost onPostCreated={() => fetchPosts()} />
+        {user?.userId && (
+          <CreatePost onPostCreated={fetchPosts} user={user} />
+        
+      )}
       {/* Posts */}
       {fetching ? (
         <p className="text-center text-gray-400 py-8">Loading...</p>

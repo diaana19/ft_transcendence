@@ -10,8 +10,10 @@
 import { useState } from 'react'
 import { deletePost, updatePost } from './postService.js'
 import { Pencil, Trash2, MessageCircle, Heart } from 'lucide-react'
+import { useParams, useNavigate } from "react-router-dom";
 
 function PostCard({ post, onDelete, onUpdate, currentUserId }) {
+    const navigate = useNavigate() 
     const [isEditing, setIsEditing] = useState(false)
     const [editContent, setEditContent] = useState(post.content)
     const [loading, setLoading] = useState(false)
@@ -53,7 +55,7 @@ return (
         <div className="flex-1">
 
           <div className="flex items-center gap-2">
-            <span className="font-bold text-black">{post.author?.name || 'Unknown'}</span>
+            <span onClick={() => navigate('/profile/' + post.author_id)} className="font-bold text-black">{post.author?.name || 'Unknown' }</span>
             <span className="text-gray-500">@{post.author?.username || 'unknown'}</span>
             <span className="text-gray-500">·</span>
             <span className="text-gray-500 text-sm">
@@ -87,11 +89,22 @@ return (
               </div>
             </div>
           ) : (
-            <p className="text-black mt-1">{post.content}</p>
+            <>
+              <p className="text-black mt-1">{post.content}</p>
+              {post.media_url && (
+                <div className="mt-3 overflow-hidden rounded-2xl">
+                  <img
+                    src={post.media_url}
+                    alt="Post media"
+                    className="w-full max-h-96 object-cover"
+                  />
+                </div>
+              )}
+            </>
           )}
-
+          {console.log("IMG SRC:", post.media_url)}
           <div className="flex gap-6 mt-3 text-gray-500 text-sm">
-           <span className="flex items-center gap-1"><MessageCircle size={16} />{post.comments_count}</span>
+           <span onClick={() => navigate(`/post/${post.id}`)} className="flex items-center gap-1"><MessageCircle size={16} />{post.comments_count}</span>
            <span className="flex items-center gap-1"><Heart size={16} />{post.likes_count}</span>
             {post.author_id === currentUserId && (
               <div className="flex gap-3 ml-auto">
