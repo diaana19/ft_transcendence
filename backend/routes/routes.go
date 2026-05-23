@@ -70,6 +70,8 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	}
 
 	postController := controllers.NewPostController(postService, notifService, uploadService)
+	gdprService := services.NewGDPRService(DB)
+	gdprController := controllers.NewGDPRController(gdprService)
 
 	wsManager := socket.NewWSManager()
 	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo, fileRepo)
@@ -125,6 +127,8 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 			protected.POST("upload", uploadController.UploadFile)
 			protected.GET("/files/:id", uploadController.ServeFile)
+			protected.GET("gdpr/export", gdprController.ExportUserData)
+			protected.DELETE("gdpr/delete", gdprController.DeleteUserData)
 
 			protected.POST("/2fa/setup", twoFAController.Setup)
 			protected.POST("/2fa/enable", twoFAController.Enable)
