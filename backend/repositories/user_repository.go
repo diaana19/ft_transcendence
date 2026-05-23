@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	"errors"
-
 	"github.com/Transcendence/models"
 	"gorm.io/gorm"
 )
@@ -20,6 +18,11 @@ type UserRepository interface {
 	GetByEmail(email string) (*models.User, error)
 	GetByUsername(username string) (*models.User, error)
 	GetByIdentifier(identifier string) (*models.User, error)
+	GetByGithubID(githubID string) (*models.User, error)
+	LinkGithub(userID, githubID string) error
+	SetTwoFASecret(userID, secret string) error
+	SetTwoFAEnabled(userID string, enabled bool) error
+	ClearTwoFA(userID string) error
 }
 
 func NewUserRepository(db *gorm.DB) UserRepository {
@@ -40,12 +43,41 @@ func (r *userRepository) GetByID(id string) (*models.User, error) {
 
 func (r *userRepository) Update(id string, input models.UpdateUserInput) (*models.User, error) {
 	var user models.User
-	result := r.db.First(&user, "id = ?", id)
-	if result.Error != nil {
-		return nil, result.Error
+	if err := r.db.First(&user, "id = ?", id).Error; err != nil {
+		return nil, err
 	}
-	result = r.db.Model(&user).Updates(input)
-	return &user, result.Error
+
+	updates := make(map[string]interface{})
+	if input.Name != "" {
+		updates["name"] = input.Name
+	}
+	if input.Username != "" {
+		updates["username"] = input.Username
+	}
+	if input.Email != "" {
+		updates["email"] = input.Email
+	}
+	if input.Bio != "" {
+		updates["bio"] = input.Bio
+	}
+	if input.Avatar != nil {
+		updates["avatar"] = *input.Avatar
+	}
+	if input.Wallpaper != nil {
+		updates["wallpaper"] = *input.Wallpaper
+	}
+
+	if len(updates) > 0 {
+		if err := r.db.Model(&user).Updates(updates).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	if err := r.db.First(&user, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func (r *userRepository) Delete(id string) error {
@@ -81,7 +113,42 @@ func (r *userRepository) GetByIdentifier(identifier string) (*models.User, error
 	var user models.User
 	err := r.db.Where("email = ? OR username = ?", identifier, identifier).First(&user).Error
 	if err != nil {
-		return nil, errors.New("user not found")
+		return nil, err
 	}
-	return &user, nil 
+	return &user, nil
+}
+
+func (r *userRepository) GetByGithubID(githubID string) (*models.User, error) {
+	var user models.User
+	result := r.db.First(&user, "github_id = ?", githubID)
+	return &user, result.Error
+}
+
+func (r *userRepository) LinkGithub(userID, githubID string) error {
+	result := r.db.Model(&models.User{}).
+		Where("id = ?", userID).
+		Updates(map[string]interface{}{
+			"github_id": githubID,
+			"provider":  "github",
+		})
+	return result.Error
+}
+
+func (r *userRepository) SetTwoFASecret(userID, secret string) error {
+	return r.db.Model(&models.User{}).Where("id = ?", userID).Update("two_fa_secret", secret).Error
+}
+
+func (r *userRepository) SetTwoFAEnabled(userID string, enabled bool) error {
+	return r.db.Model(&models.User{}).
+		Where("id = ?", userID).
+		Update("two_fa_enabled", enabled).Error
+}
+
+func (r *userRepository) ClearTwoFA(userID string) error {
+	return r.db.Model(&models.User{}).
+		Where("id = ?", userID).
+		Updates(map[string]interface{}{
+			"two_fa_secret":  nil,
+			"two_fa_enabled": false,
+		}).Error
 }

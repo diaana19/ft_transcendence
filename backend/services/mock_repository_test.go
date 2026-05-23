@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/Transcendence/models"
+	"gorm.io/gorm"
 )
 
 type mockUserRepository struct {
@@ -35,7 +36,7 @@ func (m *mockUserRepository) GetByID(id string) (*models.User, error) {
 	}
 	user, ok := m.users[id]
 	if !ok {
-		return nil, errors.New("record not found")
+		return nil, gorm.ErrRecordNotFound
 	}
 	return user, nil
 }
@@ -60,10 +61,11 @@ func (m *mockUserRepository) Update(id string, input models.UpdateUserInput) (*m
 	if input.Bio != "" {
 		user.Bio = input.Bio
 	}
-	if input.Avatar != "" {
+
+	if input.Avatar != nil {
 		user.Avatar = input.Avatar
 	}
-	if input.Wallpaper != "" {
+	if input.Wallpaper != nil {
 		user.Wallpaper = input.Wallpaper
 	}
 	return user, nil
@@ -113,4 +115,65 @@ func (m *mockUserRepository) GetByIdentifier(identifier string) (*models.User, e
 		}
 	}
 	return nil, errors.New("user not found")
+}
+
+func (m *mockUserRepository) GetByGithubID(githubID string) (*models.User, error) {
+	for _, u := range m.users {
+		if u.GithubID != nil && *u.GithubID == githubID {
+			return u, nil
+		}
+	}
+	return nil, errors.New("record not found")
+}
+
+func (m *mockUserRepository) LinkGithub(userID, githubID string) error {
+	if m.err != nil {
+		return m.err
+	}
+	user, ok := m.users[userID]
+	if !ok {
+		return errors.New("record not found")
+	}
+	gid := githubID // need pointer
+	user.GithubID = &gid
+	user.Provider = "github"
+	return nil
+}
+
+func (m *mockUserRepository) SetTwoFASecret(userID, secret string) error {
+	if m.err != nil {
+		return m.err
+	}
+	user, ok := m.users[userID]
+	if !ok {
+		return errors.New("record not found")
+	}
+	s := secret
+	user.TwoFASecret = &s
+	return nil
+}
+
+func (m *mockUserRepository) SetTwoFAEnabled(userID string, enabled bool) error {
+	if m.err != nil {
+		return m.err
+	}
+	user, ok := m.users[userID]
+	if !ok {
+		return errors.New("record not found")
+	}
+	user.TwoFAEnabled = enabled
+	return nil
+}
+
+func (m *mockUserRepository) ClearTwoFA(userID string) error {
+	if m.err != nil {
+		return m.err
+	}
+	user, ok := m.users[userID]
+	if !ok {
+		return errors.New("record not found")
+	}
+	user.TwoFASecret = nil
+	user.TwoFAEnabled = false
+	return nil
 }

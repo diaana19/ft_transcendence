@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
+	"os"
 
 	"github.com/Transcendence/config"
+	"github.com/Transcendence/redis"
 	"github.com/Transcendence/routes"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,18 +17,49 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var DB, dberr = config.ConnectDB()
+	DB, dberr := config.ConnectDB()
 	if dberr != nil {
-		log.Fatal(err)
+		log.Fatal(dberr)
 	}
 
 	var router *gin.Engine = gin.Default()
 	router.SetTrustedProxies(nil)
 
+	router.Use(cors.New(cors.Config{
+		AllowOriginFunc: func(origin string) bool {
+			return origin == "http://localhost:3000" ||
+				origin == "http://localhost" ||
+				origin == "null" ||
+				origin == ""
+		},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Cookie"},
+		ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},
+		AllowCredentials: true,
+	}))
+
+	router.OPTIONS("/*path", func(c *gin.Context) {
+		c.Status(204)
+	})
+
+	rdb, err := redis.InitRedis()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if os.Getenv("DEBUG_REDIS") == "true" {
+		ctx := context.Background()
+		redis.Subscribe(ctx, rdb, "test-channel", func(message string) {
+			log.Printf("Handler received: %s", message)
+		})
+		if err := redis.Publish(rdb, "test-channel", "Redis pub/sub is working"); err != nil {
+			log.Printf("Publish error: %v\n", err)
+		}
+	}
+
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
 			"message": "Backend API is running",
-			"status": "success",
+			"status":  "success",
 		})
 	})
 
@@ -34,11 +69,14 @@ func main() {
 		})
 	})
 
-	routes.SetupRoutes(router, DB)
+	routes.SetupRoutes(router, DB, rdb, conf)
 
-	if (conf.ApiPort == "") {
+	if conf.ApiPort == "" {
 		conf.ApiPort = "8000"
 	}
 
-	router.Run(":" + conf.ApiPort)
+	if err := router.Run(":" + conf.ApiPort); err != nil {
+		log.Fatal("Server failed to start: ", err)
+	}
+
 }

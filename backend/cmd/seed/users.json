@@ -1,112 +1,102 @@
 [
   {
-    "id": "6f1a7c52-9c1b-4b1a-8d2e-1a3f9c0e1a01",
     "name": "Alice Dupont",
     "username": "alice01",
     "email": "alice01@example.com",
     "password": "passwor!@NH@!_d123",
     "dateOfBirth": "1995-03-15T00:00:00Z",
     "bio": "Loves photography and travel",
-    "wallpaper": "wallpaper1.jpg",
-    "avatar": "avatar1.jpg"
+    "wallpaper": "/uploads/wallpapers/default.jpg",
+    "avatar": "/uploads/avatars/av1.jpg"
   },
   {
-    "id": "7c2b8d63-a2f4-4cbb-9e11-2b4e8f1d2b02",
     "name": "Carlos Méndez",
     "username": "carlos02",
     "email": "carlos02@example.com",
     "password": "passwor!@NH@!_d123",
     "dateOfBirth": "1990-07-21T00:00:00Z",
     "bio": "Backend developer",
-    "wallpaper": "wallpaper2.jpg",
-    "avatar": "avatar2.jpg"
+    "wallpaper": "/uploads/wallpapers/default.jpg",
+    "avatar": "/uploads/avatars/av2.jpg"
   },
   {
-    "id": "8d3c9e74-b3a5-4d22-a912-3c5f9a2e3c03",
     "name": "Sophie Martin",
     "username": "sophie03",
     "email": "sophie03@example.com",
     "password": "passwor!@NH@!_d123",
     "dateOfBirth": "1998-11-05T00:00:00Z",
     "bio": "UI/UX Designer",
-    "wallpaper": "wallpaper3.jpg",
-    "avatar": "avatar3.jpg"
+    "wallpaper": "/uploads/wallpapers/default.jpg",
+    "avatar": "/uploads/avatars/av3.jpg"
   },
   {
-    "id": "9e4daf85-c4b6-4e33-b823-4d6a0b3f4d04",
     "name": "John Smith",
     "username": "john04",
     "email": "john04@example.com",
     "password": "passwor!@NH@!_d123",
     "dateOfBirth": "1985-01-10T00:00:00Z",
     "bio": "Tech enthusiast",
-    "wallpaper": "wallpaper4.jpg",
-    "avatar": "avatar4.jpg"
+    "wallpaper": "/uploads/wallpapers/default.jpg",
+    "avatar": "/uploads/avatars/av4.avif"
   },
   {
-    "id": "af5eb096-d5c7-4f44-c934-5e7b1c4a5e05",
     "name": "Emma Garcia",
     "username": "emma05",
     "email": "emma05@example.com",
     "password": "passwor!@NH@!_d123",
     "dateOfBirth": "1992-09-30T00:00:00Z",
     "bio": "Digital artist",
-    "wallpaper": "wallpaper5.jpg",
-    "avatar": "avatar5.jpg"
+    "wallpaper": "/uploads/wallpapers/default.jpg",
+    "avatar": "/uploads/avatars/av5.jpg"
   },
   {
-    "id": "b06fc1a7-e6d8-4055-d045-6f8c2d5b6f06",
     "name": "Lucas Silva",
     "username": "lucas06",
     "email": "lucas06@example.com",
     "password": "passwor!@NH@!_d123",
     "dateOfBirth": "1997-04-18T00:00:00Z",
     "bio": "Music lover",
-    "wallpaper": "wallpaper6.jpg",
-    "avatar": "avatar6.jpg"
+    "wallpaper": "/uploads/wallpapers/default.jpg",
+    "avatar": "/uploads/avatars/av6.jpeg"
   },
   {
-    "id": "c17ad2b8-f7e9-4166-e156-7g9d3e6c7g07",
     "name": "Mia Chen",
     "username": "mia07",
     "email": "mia07@example.com",
     "password": "passwor!@NH@!_d123",
     "dateOfBirth": "1993-06-25T00:00:00Z",
     "bio": "Food blogger",
-    "wallpaper": "wallpaper7.jpg",
-    "avatar": "avatar7.jpg"
+    "wallpaper": "/uploads/wallpapers/default.jpg",
+    "avatar": "/uploads/avatars/av7.jpg"
   },
   {
-    "id": "d28be3c9-08fa-4277-f267-8h0e4f7d8h08",
     "name": "Ahmed Ali",
     "username": "ahmed08",
     "email": "ahmed08@example.com",
     "password": "passwor!@NH@!_d123",
     "dateOfBirth": "1988-12-12T00:00:00Z",
     "bio": "Entrepreneur",
-    "wallpaper": "wallpaper8.jpg",
-    "avatar": "avatar8.jpg"
+    "wallpaper": "/uploads/wallpapers/default.jpg",
+    "avatar": "/uploads/avatars/av1.jpg"
   },
   {
-    "id": "e39cf4da-19ab-4388-0378-9i1f5g8e9i09",
     "name": "Olivia Brown",
     "username": "olivia09",
     "email": "olivia09@example.com",
     "password": "passwor!@NH@!_d123",
     "dateOfBirth": "1996-02-14T00:00:00Z",
     "bio": "Marketing specialist",
-    "wallpaper": "wallpaper9.jpg",
-    "avatar": "avatar9.jpg"
+    "wallpaper": "/uploads/wallpapers/default.jpg",
+    "avatar": "/uploads/avatars/av2.jpg"
   },
   {
-    "id": "f40dg5eb-2abc-4499-1489-0j2g6h9f0j10",
     "name": "Noah Wilson",
     "username": "noah10",
     "email": "noah10@example.com",
     "password": "passwor!@NH@!_d123",
     "dateOfBirth": "1991-08-08T00:00:00Z",
     "bio": "Fitness coach",
-    "wallpaper": "wallpaper10.jpg",
-    "avatar": "avatar10.jpg"
+    "wallpaper": "/uploads/wallpapers/default.jpg",
+    "avatar": "/uploads/avatars/av3.jpg"
   }
 ]

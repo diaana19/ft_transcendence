@@ -10,19 +10,28 @@ import (
 	"github.com/Transcendence/services"
 	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
+// Identifier can be either email or username
 type LoginInput struct {
-	Email    string `json:"email" binding:"required,email"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 	Password string `json:"password" binding:"required"`
 }
 
 type AuthController struct {
-	authService *services.AuthService
+	authService  *services.AuthService
+	twoFAService *services.TwoFAService
+	rdb          *redis.Client
 }
 
-func NewAuthController(authService *services.AuthService) *AuthController {
-	return &AuthController{authService: authService}
+func NewAuthController(authService *services.AuthService, twoFAService *services.TwoFAService, rdb *redis.Client) *AuthController {
+	return &AuthController{
+		authService:  authService,
+		twoFAService: twoFAService,
+		rdb:          rdb,
+	}
 }
 
 type RegisterInput struct {
@@ -40,9 +49,7 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	log.Printf("DEBUG: Received input: %+v\n", input)
-	log.Printf("DEBUG: Password length: %d\n", len(input.Password))
-	log.Printf("DEBUG: Password: %s\n", input.Password)
+	log.Printf("Register attempt: username=%s, ip=%s", input.Username, c.ClientIP())
 
 	parsedDate, err := time.Parse("2006-01-02", input.DateOfBirth)
 	if err != nil {
@@ -57,27 +64,29 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 
 	if ok, errCode := utils.CheckPasswordFormat(input.Password, input.Username); !ok {
 		passwordMessages := []string{
-			"Password contains the username",
-			"Password too short",
-			"Password don't contains lowercase",
-			"Passowrd don't contains uppercase",
-			"Password don't contains digit",
-			"Password don't contains specials",
+			"Password must not contain the username",
+			"Password too short (minimum 8 characters)",
+			"Password must contain a lowercase letter",
+			"Password must contain an uppercase letter",
+			"Password must contain a digit",
+			"Password must contain a special character",
 		}
 		c.JSON(400, gin.H{"error": passwordMessages[errCode]})
 		return
 	}
 
+	password := input.Password
 	user := models.User{
 		Username:    input.Username,
 		Email:       input.Email,
-		Password:    input.Password,
-		DateOfBirth: parsedDate,
+		Password:    &password,
+		DateOfBirth: &parsedDate,
+		Provider:    "local",
 	}
 
 	response, err := ac.authService.CreateAuthUserService(&user)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "creation didn't worked"})
+		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -91,22 +100,50 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 		return
 	}
 
-	user, err := ac.authService.LoginAuthUserService(input.Email, input.Password)
+	// determine identifier
+	identifier := input.Email
+	if identifier == "" {
+		identifier = input.Username
+	}
+	if identifier == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email or username required"})
+		return
+	}
+
+	log.Printf("🔐 Login attempt: identifier=%s, ip=%s", identifier, c.ClientIP())
+
+	user, err := ac.authService.LoginAuthUserService(identifier, input.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	token, err := utils.GenerateJWT(user.ID)
+	log.Printf("✅ Login success: userID=%s, ip=%s, username=%s", user.ID, c.ClientIP(), user.Username)
+
+	if user.TwoFAEnabled {
+		pendingToken, err := ac.authService.CreatePendingLogin(user.ID, ac.rdb)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "could not initiate 2FA flow",
+			})
+			return
+		}
+
+		log.Printf("🔐 2FA required for userID=%s, pending_token issued", user.ID)
+		c.JSON(http.StatusOK, gin.H{
+			"needs_2fa":     true,
+			"pending_token": pendingToken,
+		})
+		return
+	}
+
+	token, err := utils.GenerateJWT(user.ID, user.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-		"user":  user,
-	})
+	c.JSON(http.StatusOK, gin.H{"token": token, "user": user.ToResponse()})
 }
 
 func (ac *AuthController) RefreshToken(c *gin.Context) {
@@ -123,4 +160,81 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": newToken})
+}
+
+func (ac *AuthController) LogoutUser(c *gin.Context) {
+	tokenStr := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
+
+	if tokenStr == "" {
+		if cookieToken, err := c.Cookie("auth_token"); err == nil {
+			tokenStr = cookieToken
+		}
+	}
+
+	if tokenStr == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
+		return
+	}
+
+	claims, err := utils.ValidateJWT(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		return
+	}
+
+	expiry := time.Until(claims.ExpiresAt.Time)
+	if err := ac.authService.LogoutAuthUserService(tokenStr, expiry, ac.rdb); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.SetCookie("auth_token", "", -1, "/", "", false, true)
+
+	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
+}
+
+type Verify2FAInput struct {
+	PendingToken string `json:"pending_token" binding:"required"`
+	Code string `json:"code" binding:"required,len=6,numeric"`
+}
+
+func (ac *AuthController) Verify2FA(c *gin.Context) {
+	var input Verify2FAInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})
+		return
+	}
+
+	userID, err := ac.authService.ConsumePendingLogin(input.PendingToken, ac.rdb)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	valid, err := ac.twoFAService.ValidateCode(userID, input.Code)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid 2FA code"})
+		return
+	}
+	if !valid {
+		log.Printf("2FA verify failed: userID=%s, ip=%s", userID, c.ClientIP())
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid 2FA code"})
+		return
+	}
+
+	user, err := ac.authService.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch user"})
+		return
+	}
+
+	token, err := utils.GenerateJWT(user.ID, user.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+		"user":  user.ToResponse(),
+	})
 }

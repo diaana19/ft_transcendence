@@ -86,10 +86,6 @@ all: build up
 	@echo ""
 	@echo "All services started!"
 
-re: down clean dev
-	@echo ""
-	@echo "Full restart complete!"
-
 # ==================== Docker Commands ====================
 
 build:
@@ -123,6 +119,27 @@ stop:
 
 restart: down up
 	@echo "Restart complete!"
+
+reall:
+	@echo "Stopping containers..."
+	@make down
+	@echo "Removing backend images..."
+	@docker rmi $$(docker images | grep backend | awk '{print $$3}') || true
+	@echo "Starting again..."
+	@make up
+
+
+redev:
+	@echo "Recreating containers (keeping cache)..."
+	@docker compose -f infra/docker-compose.yml up -d --build backend
+	@make logs
+
+redevclean: down clean prune
+	@echo "Removing backend image..."
+	@docker rmi $$(docker images -q infra-backend) 2>/dev/null || true
+	@echo "Rebuilding from scratch..."
+	@make dev-backend
+	@make logs
 
 clean:
 	@echo "Cleaning up containers and volumes..."
@@ -185,12 +202,15 @@ test-frontend:
 # ==================== Database ====================
 
 seed:
-	@echo "Seeding database with users..."
-	@cd backend/cmd/seed && DB_HOST=localhost go run main.go
+	@echo "Seeding database via Docker..."
+	@$(DOCKER_COMPOSE) --profile seed run --rm seed
+	@echo "Seed complete!"
 
-seed-clean:
-	@echo "Cleaning and seeding database..."
-	@cd backend/cmd/seed && DB_HOST=localhost go run main.go -clean
+seed-clean: clean up
+	@echo "Fresh DB, now seeding..."
+	@sleep 3
+	@$(DOCKER_COMPOSE) --profile seed run --rm seed
+	@echo "Clean seed complete!"
 
 # ==================== Shell Access ====================
 

@@ -16,6 +16,7 @@ import (
 
 	"github.com/Transcendence/config"
 	"github.com/Transcendence/models"
+	"github.com/Transcendence/redis"
 	"github.com/Transcendence/routes"
 )
 
@@ -70,16 +71,30 @@ func TestMain(m *testing.M) {
 func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 	gin.SetMode(gin.TestMode)
 
+	os.Setenv("DB_HOST", "localhost")
+	os.Setenv("DB_NAME", "app_db")
+
+	cfg, err := config.Load()
+	if err != nil {
+		panic(err)
+	}
+
 	db, err := config.ConnectDB()
 	if err != nil {
 		panic(fmt.Errorf("connect test db: %w", err))
 	}
 
+	rdb, err := redis.InitRedis()
+	if err != nil {
+		panic(err)
+	}
+
+	db.Exec("DROP TABLE IF EXISTS messages CASCADE")
 	db.Exec("DROP TABLE IF EXISTS users CASCADE")
-	db.AutoMigrate(&models.User{})
+	db.AutoMigrate(&models.User{}, &models.Message{})
 
 	router := gin.Default()
-	routes.SetupRoutes(router, db)
+	routes.SetupRoutes(router, db, rdb, cfg)
 
 	return router, db
 }
