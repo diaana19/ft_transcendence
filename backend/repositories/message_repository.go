@@ -1,6 +1,9 @@
 package repositories
 
 import (
+	"context"
+
+	"github.com/Transcendence/models"
 	"gorm.io/gorm"
 
 	"ft_transcendence/backend/models"
@@ -12,6 +15,7 @@ type MessageRepository interface {
 	GetReplies(parentID string) ([]models.Message, error)
 	PollSince(userID, since string, limit int) ([]models.Message, error)
 	ListConversation(userID, peerID, since string, limit int) ([]models.Message, error)
+	SearchByContent(ctx context.Context, userID, q string, limit, offset int, sort, order string) ([]models.Message, int64, error)
 }
 
 type messageRepository struct {
@@ -74,4 +78,42 @@ func runCursorQuery(q *gorm.DB, since string, limit int) ([]models.Message, erro
 	}
 	err := q.Where("id > ?", since).Order("id ASC").Limit(limit).Find(&messages).Error
 	return messages, err
+}
+
+func (r *messageRepository) SearchByContent(
+	ctx context.Context,
+	userID, q string,
+	limit, offset int,
+	sort, order string,
+) ([]models.Message, int64, error) {
+
+	allowedSort := map[string]bool{"created_at": true, "content": true}
+	if !allowedSort[sort] {
+		sort = "created_at"
+	}
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+
+	var messages []models.Message
+	var total int64
+
+	query := r.db.WithContext(ctx).
+		Model(&models.Message{}).
+		Where("(sender_id = ? OR recipient_id = ?)", userID, userID).
+		Where("content ILIKE ?", "%"+q+"%")
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.
+		Order(sort + " " + order).
+		Limit(limit).
+		Offset(offset).
+		Find(&messages).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return messages, total, nil
 }

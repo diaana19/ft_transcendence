@@ -1,6 +1,9 @@
 package repositories
 
 import (
+	"context"
+
+	"github.com/Transcendence/models"
 	"gorm.io/gorm"
 
 	"ft_transcendence/backend/models"
@@ -24,6 +27,7 @@ type UserRepository interface {
 	SetTwoFASecret(userID, secret string) error
 	SetTwoFAEnabled(userID string, enabled bool) error
 	ClearTwoFA(userID string) error
+	SearchByUsername(ctx context.Context, q string, limit, offset int, sort, order string) ([]models.User, int64, error)
 }
 
 func NewUserRepository(db *gorm.DB) UserRepository {
@@ -152,4 +156,35 @@ func (r *userRepository) ClearTwoFA(userID string) error {
 			"two_fa_secret":  nil,
 			"two_fa_enabled": false,
 		}).Error
+}
+
+func (r *userRepository) SearchByUsername(ctx context.Context, q string, limit, offset int, sort, order string) ([]models.User, int64, error) {
+
+	allowedSort := map[string]bool{"username": true, "created_at": true}
+	if !allowedSort[sort] {
+		sort = "username"
+	}
+
+	if order != "asc" && order != "desc" {
+		order = "asc"
+	}
+
+	var users []models.User
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&users).Where("username ILIKE ?", "%"+q+"%")
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.
+		Order(sort + " " + order).
+		Limit(limit).
+		Offset(offset).
+		Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
 }

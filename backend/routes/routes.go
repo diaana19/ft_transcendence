@@ -52,6 +52,9 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	authController := controllers.NewAuthController(authService, twoFAService, rdb)
 	twoFAController := controllers.NewTwoFAController(twoFAService)
 
+	searchService := services.NewSearchService(userRepo, msgRepo)
+	searchController := controllers.NewSearchController(searchService)
+
 	postRepo := repositories.NewPostRepository(DB)
 	postService := services.NewPostService(postRepo)
 
@@ -118,6 +121,9 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.GET("chat/poll", chatController.Poll)
 			protected.POST("friends/follow/:id", friendController.FollowUser)
 			protected.DELETE("friends/follow/:id", friendController.UnfollowUser)
+
+			// Search
+			protected.GET("search", searchController.Search)
 
 			protected.GET("users/:id/followers", friendController.GetFollowers)
 			protected.GET("users/:id/following", friendController.GetFollowing)
