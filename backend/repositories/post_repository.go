@@ -28,6 +28,8 @@ type PostRepository interface {
 	GetCommentByID(id string) (*models.Reply, error)
 	UpdateComment(id string, input models.UpdateCommentInput) (*models.Reply, error)
 	DeleteComment(id string) error
+
+	SeachByPost(ctx context.Context, q string, limit, offset int, sort, order string) ([]models.Post, int64, error)
 }
 
 type postRepository struct {
@@ -190,4 +192,34 @@ func (r *postRepository) DeleteComment(id string) error {
 		return fmt.Errorf("delete comment: %w", err)
 	}
 	return nil
+}
+
+func (r *postRepository) SeachByPost(ctx context.Context, q string, limit, offset int, sort, order string) ([]models.Post, int64, error) {
+	allowedSort := map[string]bool{"created_at": true, "likes_count": true, "comments_count": true}
+	if !allowedSort[sort] {
+		sort = "created_at"
+	}
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+
+	var posts []models.Post
+	var total int64
+
+	query := r.db.WithContext(ctx).
+		Model(&models.Post{}).
+		Where("content ILIKE ?", "%"+q+"%")
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.
+		Order(sort + " " + order).
+		Limit(limit).
+		Offset(offset).
+		Find(&posts).Error; err != nil {
+		return nil, 0, err
+	}
+	return posts, total, nil
 }

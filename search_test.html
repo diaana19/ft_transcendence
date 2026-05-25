@@ -18,7 +18,7 @@
 <body>
   <h2>Search API Test</h2>
   <div>Login first, then run a search.</div>
-  
+
   <!-- REGISTER -->
   <h3>Register</h3>
   <div>
@@ -48,10 +48,11 @@
   </div>
   <div>
     <label>Type</label>
-    <select id="type">
-      <option value="user">user</option>
+    <select id="type" onchange="onTypeChange()">
+      <option value="all">all</option>
+      <option value="user" selected>user</option>
       <option value="message">message</option>
-      <!-- <option value="group">group</option> -->
+      <option value="post">post</option>
     </select>
   </div>
   <div>
@@ -80,6 +81,19 @@
   <script>
     const BASE = 'http://localhost:8000'
     let token = null
+
+    // Sane default sort field per type.
+    const SORT_DEFAULTS = {
+      all: 'created_at',
+      user: 'username',
+      message: 'created_at',
+      post: 'created_at'
+    }
+
+    function onTypeChange() {
+      const type = document.getElementById('type').value
+      document.getElementById('sort').value = SORT_DEFAULTS[type] || 'created_at'
+    }
 
     function log(msg, type = 'system') {
       const div = document.getElementById('log')
@@ -162,8 +176,12 @@
         })
         const data = await res.json()
         if (res.ok) {
-          const count = (data.users?.length ?? 0) + (data.messages?.length ?? 0) + (data.groups?.length ?? 0)
-          log(`RECEIVED (${count} results, total=${data.total}, page=${data.page}): ${JSON.stringify(data)}`, 'received')
+          const nUsers    = data.users?.length    ?? 0
+          const nMessages = data.messages?.length ?? 0
+          const nPosts    = data.posts?.length    ?? 0
+          const count = nUsers + nMessages + nPosts
+          const breakdown = `users=${nUsers} messages=${nMessages} posts=${nPosts}`
+          log(`RECEIVED (${count} results [${breakdown}], total=${data.total}, page=${data.page}): ${JSON.stringify(data)}`, 'received')
         } else {
           log(`Search failed (${res.status}): ${JSON.stringify(data)}`, 'error')
         }
@@ -178,7 +196,6 @@
       search()
     }
 
-    // Enter key in the query field triggers a search
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && document.activeElement.id === 'q') {
         search()

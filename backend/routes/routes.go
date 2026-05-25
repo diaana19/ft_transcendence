@@ -52,11 +52,11 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	authController := controllers.NewAuthController(authService, twoFAService, rdb)
 	twoFAController := controllers.NewTwoFAController(twoFAService)
 
-	searchService := services.NewSearchService(userRepo, msgRepo)
-	searchController := controllers.NewSearchController(searchService)
-
 	postRepo := repositories.NewPostRepository(DB)
 	postService := services.NewPostService(postRepo)
+
+	searchService := services.NewSearchService(userRepo, msgRepo, postRepo)
+	searchController := controllers.NewSearchController(searchService)
 
 	userService := services.NewUserService(userRepo)
 	friendService := &services.FriendService{DB: DB}
