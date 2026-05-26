@@ -39,7 +39,7 @@ func newChatRouter(svc ChatServicer, userID string) *gin.Engine {
 	r := gin.New()
 	cc := NewChatController(svc)
 	r.Use(func(c *gin.Context) {
-		c.Set("userID", userID)
+		c.Set("user_id", userID)
 		c.Next()
 	})
 	r.POST("/chat/messages", cc.SendMessage)

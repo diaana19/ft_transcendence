@@ -25,7 +25,7 @@ func NewChatController(chatService ChatServicer) *ChatController {
 }
 
 func (cc *ChatController) SendMessage(c *gin.Context) {
-	userID := c.MustGet("userID").(string)
+	userID := c.MustGet("user_id").(string)
 
 	var input models.CreateMessageInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -50,7 +50,7 @@ func (cc *ChatController) SendMessage(c *gin.Context) {
 }
 
 func (cc *ChatController) Poll(c *gin.Context) {
-	userID := c.MustGet("userID").(string)
+	userID := c.MustGet("user_id").(string)
 	since := c.Query("since")
 	limit := parseLimit(c.Query("limit"))
 
@@ -63,7 +63,7 @@ func (cc *ChatController) Poll(c *gin.Context) {
 }
 
 func (cc *ChatController) ListConversation(c *gin.Context) {
-	userID := c.MustGet("userID").(string)
+	userID := c.MustGet("user_id").(string)
 	peerID := c.Query("with")
 	if peerID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing 'with' query parameter"})
