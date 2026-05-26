@@ -16,8 +16,8 @@ func createPostRoutes(api *gin.RouterGroup, rdb *redis.Client, postController *c
 	posts := api.Group("/posts")
 	{
 		posts.GET("", middleware.OptionalAuthMiddleware(), postController.GetPosts)
-		posts.GET("/:id", middleware.OptionalAuthMiddleware(), postController.GetPost)
 		posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(), postController.GetPostsByUser)
+		posts.GET("/:id", middleware.OptionalAuthMiddleware(), postController.GetPost)
 		posts.GET("/:id/comments", postController.GetComments)
 
 		protected := posts.Group("")
@@ -53,7 +53,6 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 	postRepo := repositories.NewPostRepository(DB)
 	postService := services.NewPostService(postRepo)
-	postController := controllers.NewPostController(postService, notifService)
 
 	userService := services.NewUserService(userRepo)
 	friendService := &services.FriendService{DB: DB}
@@ -69,6 +68,8 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 		Service:       uploadService,
 		FriendService: friendService,
 	}
+
+	postController := controllers.NewPostController(postService, notifService, uploadService)
 
 	wsManager := socket.NewWSManager()
 	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo, fileRepo)

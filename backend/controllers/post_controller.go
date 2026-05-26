@@ -1,9 +1,12 @@
 package controllers
 
 import (
+	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
+	// "strings"
 
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/services"
@@ -12,12 +15,21 @@ import (
 )
 
 type PostController struct {
-	postService         *services.PostService
-	notificationService *services.NotificationService
+    postService         *services.PostService
+    notificationService *services.NotificationService
+    uploadService       *services.UploadService  // ← AJOUTER
 }
 
-func NewPostController(postService *services.PostService, notifService *services.NotificationService) *PostController {
-	return &PostController{postService: postService, notificationService: notifService}
+func NewPostController(
+    postService *services.PostService,
+    notifService *services.NotificationService,
+    uploadService *services.UploadService,  // ← AJOUTER
+) *PostController {
+    return &PostController{
+        postService: postService,
+        notificationService: notifService,
+        uploadService: uploadService,  // ← AJOUTER
+    }
 }
 
 func (pc *PostController) GetPosts(c *gin.Context) {
@@ -93,6 +105,7 @@ func (pc *PostController) GetPostsByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses})
 }
 
+
 func (pc *PostController) CreatePost(c *gin.Context) {
 	var req struct {
 		Content  string  `json:"content" binding:"required"`
@@ -103,17 +116,45 @@ func (pc *PostController) CreatePost(c *gin.Context) {
 		return
 	}
 
+	// LOG: Voir la structure reçue
+	log.Printf("=== CreatePost REQUEST ===")
+	log.Printf("Content: %q", req.Content)
+	log.Printf("MediaURL: %v", req.MediaURL)
+	if req.MediaURL != nil {
+		log.Printf("MediaURL value: %q", *req.MediaURL)
+	}
+	reqData, _ := json.MarshalIndent(req, "", "  ")
+	log.Printf("Full request body:\n%s", string(reqData))
+
 	authorID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
+	log.Printf("AuthorID: %q", authorID.(string))
+
 	post, err := pc.postService.CreatePost(req.Content, authorID.(string), req.MediaURL)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// LOG: Voir le post créé
+	log.Printf("=== Post CREATED ===")
+	log.Printf("PostID: %q", post.ID)
+	log.Printf("PostMediaURL: %v", post.MediaURL)
+	if post.MediaURL != nil {
+		log.Printf("PostMediaURL value: %q", *post.MediaURL)
+	}
+	data, err := json.MarshalIndent(post, "", "  ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println(string(data))
+	postData, _ := json.MarshalIndent(post, "", "  ")
+	log.Printf("Full post object:\n%s", string(postData))
 
 	c.JSON(http.StatusCreated, post.ToResponse())
 }

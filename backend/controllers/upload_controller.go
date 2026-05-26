@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/services"
@@ -75,14 +77,22 @@ func (uc *UploadController) ServeFile(c *gin.Context) {
 		return
 	}
 
-	if _, err := os.Stat(file.Path); os.IsNotExist(err) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "file missing on disk"})
+	// Utiliser le chemin complet depuis la BD
+	realPath := filepath.Join("/root", file.Path)
+
+	fmt.Printf("[ServeFile] Trying real path: %s\n", realPath)
+
+	if _, err := os.Stat(realPath); err == nil {
+		fmt.Printf("[ServeFile] ✅ SUCCESS serving: %s\n", realPath)
+		c.Header("Content-Type", file.MimeType)
+		c.Header("Content-Disposition", `inline; filename="`+file.Filename+`"`)
+		c.File(realPath)
 		return
 	}
 
-	c.Header("Content-Type", file.MimeType)
-	c.Header("Content-Disposition", `inline; filename="`+file.Filename+`"`)
-	c.File(file.Path)
+	// Fallback si jamais
+	fmt.Printf("[ServeFile] ❌ Still not found at %s\n", realPath)
+	c.JSON(http.StatusNotFound, gin.H{"error": "file not found on disk"})
 }
 
 func (uc *UploadController) canAccess(file *models.File, userID string) bool {

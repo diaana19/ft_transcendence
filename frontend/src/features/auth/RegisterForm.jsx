@@ -33,7 +33,7 @@ const handleSubmit = async (e) => {
             formData.password,
             formData.dateOfBirth
         )
-        navigate ('/')
+        navigate ('/login')
     } catch (err) {
         setError(err.response?.data?.error || 'Something went wrong')
     } finally {
