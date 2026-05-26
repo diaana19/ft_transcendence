@@ -37,11 +37,13 @@ func createPostRoutes(api *gin.RouterGroup, rdb *redis.Client, postController *c
 }
 
 func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config.Config) {
-
 	notifRepo := repositories.NewNotificationRepositories(DB)
 	notifPubSub := repositories.NewNotificationPubSub(rdb)
 	notifService := services.NewNotificationService(notifRepo, notifPubSub)
 	notifController := controllers.NewNotificationController(notifService)
+
+	msgRepo := repositories.NewMessageRepository(DB)
+	msgController := controllers.NewMsgController(msgRepo)
 
 	userRepo := repositories.NewUserRepository(DB)
 	authService := services.NewAuthService(userRepo)
@@ -70,7 +72,11 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	postController := controllers.NewPostController(postService, notifService, uploadService)
 
 	wsManager := socket.NewWSManager()
-	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService, fileRepo)
+	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo, fileRepo)
+
+	chatService := services.NewChatService(msgRepo, userRepo)
+	chatController := controllers.NewChatController(chatService)
+
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
 	oauthController := controllers.NewOAuthController(oauthService, cfg)
 
@@ -84,6 +90,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 
 		api.GET("/auth/oauth/github/login", oauthController.OAuthLogin)
 		api.GET("/auth/oauth/github/callback", oauthController.OAuthCallback)
+
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware(rdb))
 		{
@@ -98,6 +105,14 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.POST("friends/reject/:id", friendController.RejectFriendRequest)
 			protected.DELETE("friends/:id", friendController.RemoveFriend)
 
+			// Room message history — served by the WebSocket primary path
+			protected.GET("rooms/:roomId/messages", msgController.GetRoomMsg)
+			protected.GET("messages/:messageId/replies", msgController.GetReplies)
+
+			// Poll/DM fallback — used when WebSocket is unavailable
+			protected.POST("chat/messages", chatController.SendMessage)
+			protected.GET("chat/messages", chatController.ListConversation)
+			protected.GET("chat/poll", chatController.Poll)
 			protected.POST("friends/follow/:id", friendController.FollowUser)
 			protected.DELETE("friends/follow/:id", friendController.UnfollowUser)
 

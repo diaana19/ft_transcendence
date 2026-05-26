@@ -72,6 +72,16 @@
     <input id="parentId" type="text" placeholder="parent_id (optional)" />
     <button onclick="sendMessage()">Send</button>
   </div>
+  <h3>Message History</h3>
+  <div>
+    <input id="history_room_id" type="text" placeholder="room_id" value="room-1" />
+    <button onclick="loadHistory()">Load Room History</button>
+  </div>
+
+  <div>
+    <input id="reply_parent_id" type="text" placeholder="message ID" />
+    <button onclick="loadReplies()">Load Replies</button>
+  </div>
 
   <div id="log"></div>
 
@@ -227,6 +237,30 @@
         sendMessage()
       }
     })
+
+    async function loadHistory() {
+      if (!token) { log('Login first!', 'error'); return }
+
+      const roomID = document.getElementById('history_room_id').value
+      const res = await fetch(`http://localhost:8000/api/rooms/${roomID}/messages`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await res.json()
+      log(`History (${data.data?.length || 0} messages): ${JSON.stringify(data)}`, 'system')
+    }
+
+  async function loadReplies() {
+    if (!token) { log('Login first!', 'error'); return }
+
+    const parentID = document.getElementById('reply_parent_id').value
+    if (!parentID) { log('Enter a parent message ID!', 'error'); return }
+
+    const res = await fetch(`http://localhost:8000/api/messages/${parentID}/replies`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    const data = await res.json()
+    log(`Replies: ${JSON.stringify(data)}`, 'system')
+  }
   </script>
 </body>
 </html>

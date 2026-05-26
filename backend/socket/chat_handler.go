@@ -24,7 +24,7 @@ import (
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
-		allowed := []string{"http://localhost:3000", "http://localhost"}
+		allowed := []string{"http://localhost:3000", "http://localhost", "null", ""}
 		for _, a := range allowed {
 			if origin == a {
 				return true
@@ -38,6 +38,7 @@ type ChatHandler struct {
 	manager             *WSManager
 	rdb                 *redis.Client
 	notificationService *services.NotificationService
+	msgRepo             repositories.MessageRepository
 	fileRepo            repositories.FileRepository
 	subscribedRooms     map[string]bool
 	subscribedMu        sync.Mutex
@@ -63,17 +64,18 @@ func NewChatHandler(
 	manager *WSManager,
 	rdb *redis.Client,
 	notifService *services.NotificationService,
+	msgRepo repositories.MessageRepository,
 	fileRepo repositories.FileRepository,
 ) *ChatHandler {
 	return &ChatHandler{
 		manager:             manager,
 		rdb:                 rdb,
 		notificationService: notifService,
+		msgRepo:             msgRepo,
 		fileRepo:            fileRepo,
 		subscribedRooms:     make(map[string]bool),
 	}
 }
-
 
 func (h *ChatHandler) sendPendingNotifications(client *Client) {
 	notifs, err := h.notificationService.GetUnread(client.ID)
@@ -237,8 +239,14 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		}
 	}
 
+	id, err := uuid.NewV7()
+	if err != nil {
+		log.Printf("uuid error: %v", err)
+		return
+	}
+
 	msg := models.Message{
-		ID:        uuid.New().String(),
+		ID:        id.String(),
 		CreatedAt: time.Now(),
 		SenderID:  client.ID,
 		Username:  client.Username,
@@ -247,6 +255,11 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		ParentID:  incoming.ParentID,
 		FileID:    incoming.FileID,
 		Type:      "dm",
+	}
+
+	if err := h.msgRepo.Create(&msg); err != nil {
+		log.Printf("Failed to save message: %v", err)
+		return
 	}
 
 	out := OutgoingMessage{

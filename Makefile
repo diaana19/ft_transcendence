@@ -1,6 +1,6 @@
 # Transcendence Makefile
 
-.PHONY: help build up down logs stop restart clean test dev prod migrate seed dev-backend logs-backend-only shell
+.PHONY: help build up down logs stop restart re clean test dev prod migrate seed dev-backend logs-backend-only shell
 
 NAME = Transcendence
 DOCKER_COMPOSE = docker compose -f infra/docker-compose.yml
@@ -79,8 +79,8 @@ dev-backend:
 	@echo "║     Backend Dev Started!               ║"
 	@echo "╚════════════════════════════════════════╝"
 	@echo ""
-	@echo "Backend:   http://localhost:8080"
-	@echo "Database:  postgres://localhost:5432"
+	@echo "Ports are configured in infra/.env (API_PORT)."
+	@echo "Run 'make ps' to see the published ports."
 
 all: build up
 	@echo ""
@@ -103,9 +103,8 @@ up:
 	@echo "║     Services Started!                  ║"
 	@echo "╚════════════════════════════════════════╝"
 	@echo ""
-	@echo "Frontend:  http://localhost"
-	@echo "Backend:   http://localhost/api"
-	@echo "Database:  postgres://localhost:5432"
+	@echo "Ports are configured in infra/.env (API_PORT, FRONTEND_PORT)."
+	@echo "Run 'make ps' to see the published ports."
 	@echo ""
 
 down:
@@ -121,6 +120,9 @@ stop:
 restart: down up
 	@echo "Restart complete!"
 
+re: down clean dev
+	@echo "Full restart complete!"
+
 reall:
 	@echo "Stopping containers..."
 	@make down
@@ -128,6 +130,19 @@ reall:
 	@docker rmi $$(docker images | grep backend | awk '{print $$3}') || true
 	@echo "Starting again..."
 	@make up
+
+
+redev:
+	@echo "Recreating containers (keeping cache)..."
+	@docker compose -f infra/docker-compose.yml up -d --build backend
+	@make logs
+
+redevclean: down clean prune
+	@echo "Removing backend image..."
+	@docker rmi $$(docker images -q infra-backend) 2>/dev/null || true
+	@echo "Rebuilding from scratch..."
+	@make dev-backend
+	@make logs
 
 clean:
 	@echo "Cleaning up containers and volumes..."
@@ -157,8 +172,8 @@ logs-frontend:
 	@$(DOCKER_COMPOSE) logs -f frontend
 
 logs-nginx:
-	@echo "Nginx logs:"
-	@$(DOCKER_COMPOSE) logs -f nginx
+	@echo "Nginx logs (served inside the frontend container):"
+	@$(DOCKER_COMPOSE) logs -f frontend
 
 logs-db:
 	@echo "Database logs:"
@@ -172,8 +187,8 @@ test:
 	@echo "Tests complete!"
 
 test-backend:
-	@echo "Running backend tests locally..."
-	@cd backend && DB_HOST=localhost go test ./tests/... -v -count=1 2>&1 | \
+	@echo "Running backend tests locally (testcontainers will start Postgres)..."
+	@cd backend && go test ./tests/... -v -count=1 2>&1 | \
 		sed 's/--- PASS/\x1b[32m--- PASS\x1b[0m/g' | \
 		sed 's/--- FAIL/\x1b[31m--- FAIL\x1b[0m/g' | \
 		sed 's/^ok/\x1b[32mok\x1b[0m/g' | \
@@ -222,10 +237,6 @@ shell-db:
 
 health:
 	@echo "Checking service health..."
-	@echo ""
-	@echo "Backend:  $$(curl -s http://localhost:8080/health || echo 'Down')"
-	@echo "Frontend: $$(curl -s http://localhost:3000 | head -1 || echo 'Down')"
-	@echo "Nginx:    $$(curl -s http://localhost | head -1 || echo 'Down')"
 	@echo ""
 	@$(DOCKER_COMPOSE) ps
 
