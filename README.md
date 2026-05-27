@@ -1,6 +1,6 @@
 *This project has been created as part of the 42 curriculum by luluzuri, vali, lepereir, rmarcas-, and dirituay.*
 
-# Transcendence — a real-time social network
+# ft_transcendence — a real-time social network
 
 > ft_transcendence (subject v21.1, the "Surprise." open-ended edition). A multi-user
 > social web application: users register, build a profile, follow and befriend each other,
@@ -28,7 +28,7 @@
 
 ## Description
 
-**Transcendence** is a social-network web application. Our goal was to build a real,
+**ft_transcendence** is a social-network web application. Our goal was to build a real,
 multi-user product that demonstrates a clean layered backend, real-time messaging, and a
 modern reactive frontend — the "Social Network" project archetype from the subject (§V.3).
 
@@ -282,10 +282,12 @@ required there.
 
 ### Prerequisites
 
-- **Docker** and **Docker Compose** (the only hard requirement to run the stack).
+- **Podman** (preferred — the school runs Fedora) **or Docker**, with the `compose`
+  subcommand. The Makefile auto-detects the engine (Podman first, Docker fallback); override
+  with `make ENGINE=docker <target>`.
 - **GNU Make** (wraps the common workflows).
-- Optional for host-side dev/tests: **Go 1.25+**, **Node 18+**, and **[mise](https://mise.jdx.dev/)**
-  (auto-loads `infra/.env` so `go test` / `go run` see the right env vars).
+- Optional for host-side dev: **Go 1.25+**, **Node 18+**, and **[mise](https://mise.jdx.dev/)**
+  (auto-loads `infra/.env` so host-side `go run` sees the right env vars).
 
 ### Configuration (`.env`)
 
@@ -304,27 +306,26 @@ Key variables (see the file for the full list): `API_PORT`, `FRONTEND_PORT`, `JW
 ### Run (single command)
 
 ```bash
-make dev
+make up
 ```
 
-This builds the images and starts **backend + frontend + nginx + PostgreSQL + Redis**, then
-follows the logs. Other useful targets:
+This builds the images and starts **backend + frontend (with nginx) + PostgreSQL + Redis** in
+the background; run `make logs` to follow output. Other useful targets:
 
 | Command | Description |
 |---|---|
-| `make dev-backend` | Backend + DB only (no frontend/nginx) |
-| `make re` | `down` + `clean` (wipes volumes) + `dev` |
+| `make logs` | Follow all logs (`logs-backend` / `logs-frontend` / `logs-db` for one) |
+| `make re` | Clean (removes volumes) + rebuild + up |
 | `make down` / `make clean` | Stop / stop and remove volumes |
-| `make seed` | Seed the DB (Go seeder, host-mapped DB) |
+| `make seed` | Seed the DB (Go seeder container) |
 | `make shell-db` | `psql` into the running Postgres |
-| `make help` | List all targets |
+| `make help` | List all targets (and the detected engine) |
 
 ### Default ports
 
 | Service | URL |
 |---|---|
-| nginx (entrypoint: `/` → frontend, `/api` → backend) | http://localhost |
-| Frontend (direct) | http://localhost:3000 |
+| App — frontend + nginx (proxies `/api` → backend) | http://localhost:3000 |
 | Backend API (direct) | http://localhost:8000 |
 | PostgreSQL | localhost:5432 |
 | Redis | localhost:6380 |
@@ -332,8 +333,14 @@ follows the logs. Other useful targets:
 ### Tests
 
 ```bash
-make test-backend          # integration suite (spins up Postgres 15 via testcontainers)
-cd backend && go test ./test/... -run TestName -v -count=1   # a single test
+make test          # backend suite inside a golang:1.25 container
+```
+
+The suite uses **testcontainers** to spin up a real Postgres 15, so the Go container talks to
+the host engine through its socket. With **Podman (rootless)**, enable the API socket once:
+
+```bash
+systemctl --user enable --now podman.socket
 ```
 
 CI (GitHub Actions) runs the suite on every PR (open/sync) and on demand, and **fails the

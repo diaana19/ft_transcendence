@@ -1,284 +1,157 @@
-# Transcendence Makefile
+# ft_transcendence Makefile
+#
+# One environment, one compose file. What changes between machines/deploys is
+# only infra/.env (compose reads it; fixed topology like DB_HOST/REDIS_HOST lives
+# in infra/docker-compose.yml). There is no dev/prod split here.
+#
+# Container engine: Podman is preferred (the school runs Fedora); Docker is used
+# as a fallback. Both are supported — override the auto-detection with:
+#   make ENGINE=docker up
+# If `podman compose` is unavailable on your box, point COMPOSE at a provider:
+#   make COMPOSE="podman-compose -f infra/docker-compose.yml" up
 
-.PHONY: help build up down logs stop restart re clean test dev prod migrate seed dev-backend logs-backend-only shell
+NAME       := ft_transcendence
+ENGINE     ?= $(shell command -v podman >/dev/null 2>&1 && echo podman || echo docker)
+COMPOSE    ?= $(ENGINE) compose -f infra/docker-compose.yml
+GO_IMAGE   := golang:1.25
 
-NAME = Transcendence
-DOCKER_COMPOSE = docker compose -f infra/docker-compose.yml
-DOCKER_COMPOSE_PROD = docker compose -f infra/docker-compose.prod.yml
+.PHONY: help build up down stop restart re clean ps \
+        logs logs-backend logs-frontend logs-db \
+        test test-frontend seed seed-clean \
+        shell-backend shell-frontend shell-db fmt lint prune version
+.DEFAULT_GOAL := help
 
-SERVICES_BACKEND = backend db
-
-# ==================== Main Commands ====================
+# ==================== Help ====================
 
 help:
-	@echo "╔═════════════════════════════════════════════╗"
-	@echo "║    $(NAME) - Development Commands     ║"
-	@echo "╚═════════════════════════════════════════════╝"
+	@echo "$(NAME) — using container engine: $(ENGINE)"
 	@echo ""
-	@echo "Quick Start:"
-	@echo "  make dev                - Full dev setup (build + up + logs)"
-	@echo "  make dev-backend        - Start backend + db only"
-	@echo "  make re                 - Full restart (down + clean + build + up)"
+	@echo "Stack:"
+	@echo "  make up            Build and start everything (detached)"
+	@echo "  make down          Stop containers (keep volumes)"
+	@echo "  make stop          Stop containers without removing them"
+	@echo "  make restart       down + up"
+	@echo "  make re            Rebuild from clean state (down -v + build + up)"
+	@echo "  make clean         Stop and remove containers + volumes"
+	@echo "  make ps            Show container status"
 	@echo ""
-	@echo "Docker Commands:"
-	@echo "  make build              - Build all Docker images"
-	@echo "  make up                 - Start all containers"
-	@echo "  make down               - Stop containers (keep volumes)"
-	@echo "  make stop               - Stop containers gracefully"
-	@echo "  make restart            - Restart containers"
-	@echo "  make clean              - Remove containers and volumes"
-	@echo "  make ps                 - Show container status"
+	@echo "Logs (follow):"
+	@echo "  make logs          All services      make logs-backend   Backend"
+	@echo "  make logs-frontend Frontend          make logs-db        Database"
 	@echo ""
-	@echo "Logs & Debugging:"
-	@echo "  make logs               - Show all logs (follow mode)"
-	@echo "  make logs-backend       - Show backend logs only"
-	@echo "  make logs-backend-only  - Backend + DB logs"
-	@echo "  make logs-frontend      - Show frontend logs only"
-	@echo "  make logs-nginx         - Show nginx logs only"
-	@echo "  make logs-db            - Show database logs only"
-	@echo ""
-	@echo "Testing:"
-	@echo "  make test               - Run all tests"
-	@echo "  make test-backend       - Run backend tests"
-	@echo "  make test-frontend      - Run frontend tests"
+	@echo "Tests:"
+	@echo "  make test          Backend tests inside a $(GO_IMAGE) container"
+	@echo "  make test-frontend Frontend tests (inside the frontend container)"
 	@echo ""
 	@echo "Database:"
-	@echo "  make migrate            - Run database migrations"
-	@echo "  make seed               - Seed database with test data"
+	@echo "  make seed          Seed the database (Go seeder container)"
+	@echo "  make seed-clean    Fresh volumes, then seed"
 	@echo ""
-	@echo "Development:"
-	@echo "  make shell              - Access backend container shell"
-	@echo "  make shell-backend      - Access backend container shell"
-	@echo "  make shell-frontend     - Access frontend container shell"
-	@echo "  make shell-db           - Access database shell"
-	@echo "  make health             - Check health of all services"
-	@echo "  make fmt                - Format Go code"
-	@echo "  make lint               - Lint Go code"
+	@echo "Shells:"
+	@echo "  make shell-backend   Open a shell in the backend container"
+	@echo "  make shell-frontend  Open a shell in the frontend container"
+	@echo "  make shell-db        Open a psql prompt in the database container"
 	@echo ""
-	@echo "Production:"
-	@echo "  make build-prod         - Build production images"
-	@echo "  make up-prod            - Start production containers"
-	@echo "  make down-prod          - Stop production containers"
+	@echo "Tools:"
+	@echo "  make fmt             Format Go code (go fmt ./...)"
+	@echo "  make lint            Vet Go code (go vet ./...)"
+	@echo "  make prune           Reclaim unused engine resources"
+	@echo "  make version         Show engine and compose versions"
 	@echo ""
-	@echo "Utilities:"
-	@echo "  make prune              - Clean up Docker resources"
-	@echo "  make version            - Show versions"
-	@echo ""
+	@echo "Override the engine: make ENGINE=docker <target>"
 
-# ==================== Quick Commands ====================
-
-dev: build up logs
-	@echo ""
-	@echo "Dev environment ready!"
-
-dev-backend:
-	@echo "Starting backend + database only..."
-	@$(DOCKER_COMPOSE) up -d --build $(SERVICES_BACKEND)
-	@echo ""
-	@echo "╔════════════════════════════════════════╗"
-	@echo "║     Backend Dev Started!               ║"
-	@echo "╚════════════════════════════════════════╝"
-	@echo ""
-	@echo "Ports are configured in infra/.env (API_PORT)."
-	@echo "Run 'make ps' to see the published ports."
-
-all: build up
-	@echo ""
-	@echo "All services started!"
-
-re: clean prune dev
-# ==================== Docker Commands ====================
-
-build:
-	@echo "Building Docker images..."
-	@$(DOCKER_COMPOSE) build
-	@echo "Build complete!"
+# ==================== Stack ====================
 
 up:
-	@echo "Starting containers..."
-	@$(DOCKER_COMPOSE) up -d
-	@sleep 2
-	@echo ""
-	@echo "╔════════════════════════════════════════╗"
-	@echo "║     Services Started!                  ║"
-	@echo "╚════════════════════════════════════════╝"
-	@echo ""
-	@echo "Ports are configured in infra/.env (API_PORT, FRONTEND_PORT)."
-	@echo "Run 'make ps' to see the published ports."
-	@echo ""
+	@echo "Starting stack with $(ENGINE)..."
+	@$(COMPOSE) up -d --build
+	@echo "Up. Ports come from infra/.env (API_PORT, FRONTEND_PORT). 'make ps' to see them, 'make logs' to follow."
 
 down:
-	@echo "Stopping containers..."
-	@$(DOCKER_COMPOSE) down
-	@echo "Services stopped"
+	@$(COMPOSE) down
 
 stop:
-	@echo "Stopping containers gracefully..."
-	@$(DOCKER_COMPOSE) stop
-	@echo "Services stopped"
+	@$(COMPOSE) stop
 
 restart: down up
-	@echo "Restart complete!"
 
-re: down clean dev
-	@echo "Full restart complete!"
-
-reall:
-	@echo "Stopping containers..."
-	@make down
-	@echo "Removing backend images..."
-	@docker rmi $$(docker images | grep backend | awk '{print $$3}') || true
-	@echo "Starting again..."
-	@make up
-
-
-redev:
-	@echo "Recreating containers (keeping cache)..."
-	@docker compose -f infra/docker-compose.yml up -d --build backend
-	@make logs
-
-redevclean: down clean prune
-	@echo "Removing backend image..."
-	@docker rmi $$(docker images -q infra-backend) 2>/dev/null || true
-	@echo "Rebuilding from scratch..."
-	@make dev-backend
-	@make logs
+re: clean up
 
 clean:
-	@echo "Cleaning up containers and volumes..."
-	@$(DOCKER_COMPOSE) down -v
-	@echo "Cleanup complete!"
+	@$(COMPOSE) down -v
 
 ps:
-	@echo "Container status:"
-	@$(DOCKER_COMPOSE) ps
+	@$(COMPOSE) ps
 
 # ==================== Logs ====================
 
 logs:
-	@echo "Showing all logs (Press Ctrl+C to stop)..."
-	@$(DOCKER_COMPOSE) logs -f
+	@$(COMPOSE) logs -f
 
 logs-backend:
-	@echo "Backend logs:"
-	@$(DOCKER_COMPOSE) logs -f backend
-
-logs-backend-only:
-	@echo "Backend + DB logs:"
-	@$(DOCKER_COMPOSE) logs -f backend db
+	@$(COMPOSE) logs -f backend
 
 logs-frontend:
-	@echo "Frontend logs:"
-	@$(DOCKER_COMPOSE) logs -f frontend
-
-logs-nginx:
-	@echo "Nginx logs (served inside the frontend container):"
-	@$(DOCKER_COMPOSE) logs -f frontend
+	@$(COMPOSE) logs -f frontend
 
 logs-db:
-	@echo "Database logs:"
-	@$(DOCKER_COMPOSE) logs -f db
+	@$(COMPOSE) logs -f db
 
-# ==================== Testing ====================
+# ==================== Tests ====================
 
+# Backend tests run inside a Go container. The suite uses testcontainers, so the
+# container talks to the host engine through its socket to spin up Postgres.
+# Podman (rootless) needs its API socket enabled once:
+#   systemctl --user enable --now podman.socket
 test:
-	@echo "Running all tests..."
-	@$(DOCKER_COMPOSE) exec -T backend go test ./...
-	@echo "Tests complete!"
-
-test-backend:
-	@echo "Running backend tests locally (testcontainers will start Postgres)..."
-	@cd backend && go test ./test/... -v -count=1 2>&1 | \
-		sed 's/--- PASS/\x1b[32m--- PASS\x1b[0m/g' | \
-		sed 's/--- FAIL/\x1b[31m--- FAIL\x1b[0m/g' | \
-		sed 's/^ok/\x1b[32mok\x1b[0m/g' | \
-		sed 's/^FAIL/\x1b[31mFAIL\x1b[0m/g'
-
-# test-backend:
-# 	@echo "Running backend tests..."
-# 	@$(DOCKER_COMPOSE) exec -T backend go test ./...
+	@echo "Running backend tests in $(GO_IMAGE) via $(ENGINE)..."
+	@sock=$$( [ "$(ENGINE)" = "podman" ] \
+		&& echo "$${XDG_RUNTIME_DIR:-/run/user/$$(id -u)}/podman/podman.sock" \
+		|| echo /var/run/docker.sock ); \
+	$(ENGINE) run --rm \
+		-v "$(CURDIR)/backend":/app:z -w /app \
+		-v "$$sock":/var/run/docker.sock:z \
+		-v transcendence-gomod:/go/pkg/mod \
+		-e DOCKER_HOST=unix:///var/run/docker.sock \
+		-e TESTCONTAINERS_RYUK_DISABLED=true \
+		--env-file infra/.env \
+		$(GO_IMAGE) go test ./test/... -count=1
 
 test-frontend:
-	@echo "Running frontend tests..."
-	@$(DOCKER_COMPOSE) exec -T frontend npm test
+	@$(COMPOSE) exec -T frontend npm test
 
 # ==================== Database ====================
 
 seed:
-	@echo "Seeding database via Docker..."
-	@$(DOCKER_COMPOSE) --profile seed run --rm seed
-	@echo "Seed complete!"
+	@$(COMPOSE) --profile seed run --rm seed
 
 seed-clean: clean up
-	@echo "Fresh DB, now seeding..."
 	@sleep 3
-	@$(DOCKER_COMPOSE) --profile seed run --rm seed
-	@echo "Clean seed complete!"
+	@$(COMPOSE) --profile seed run --rm seed
 
-# ==================== Shell Access ====================
-
-shell:
-	@echo "Accessing backend container..."
-	@$(DOCKER_COMPOSE) exec backend sh
+# ==================== Shells & tools ====================
 
 shell-backend:
-	@echo "Accessing backend container..."
-	@$(DOCKER_COMPOSE) exec backend sh
+	@$(COMPOSE) exec backend sh
 
 shell-frontend:
-	@echo "Accessing frontend container..."
-	@$(DOCKER_COMPOSE) exec frontend sh
+	@$(COMPOSE) exec frontend sh
 
 shell-db:
-	@echo "Accessing database container..."
-	@$(DOCKER_COMPOSE) exec db psql -U app -d app_db
-
-# ==================== Health Checks ====================
-
-health:
-	@echo "Checking service health..."
-	@echo ""
-	@$(DOCKER_COMPOSE) ps
-
-# ==================== Development Tools ====================
+	@$(COMPOSE) exec db psql -U app -d app_db
 
 fmt:
-	@echo "Formatting code..."
 	@cd backend && go fmt ./...
-	@echo "Format complete!"
 
 lint:
-	@echo "Linting code..."
 	@cd backend && go vet ./...
-	@echo "Lint complete!"
-
-# ==================== Production Commands ====================
-
-build-prod:
-	@echo "Building production images..."
-	@$(DOCKER_COMPOSE_PROD) build
-	@echo "Production build complete!"
-
-up-prod:
-	@echo "Starting production containers..."
-	@$(DOCKER_COMPOSE_PROD) up -d
-	@echo "Production services started!"
-
-down-prod:
-	@echo "Stopping production containers..."
-	@$(DOCKER_COMPOSE_PROD) down
-	@echo "Production services stopped"
 
 # ==================== Utils ====================
 
 prune:
-	@echo "Pruning unused Docker resources..."
-	@docker system prune -f
-	@echo "Prune complete!"
+	@$(ENGINE) system prune -f
 
 version:
-	@echo "$(NAME) Makefile v1.0"
-	@echo "Docker: $$(docker --version)"
-	@echo "Compose: $$(docker compose --version)"
-
-.DEFAULT_GOAL := help
+	@echo "$(NAME) — engine: $(ENGINE)"
+	@$(ENGINE) --version
+	@$(COMPOSE) version
