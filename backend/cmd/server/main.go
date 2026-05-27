@@ -8,9 +8,9 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
-	"ft_transcendence/backend/config"
-	"ft_transcendence/backend/redis"
-	"ft_transcendence/backend/routes"
+	"ft_transcendence/backend/internal/config"
+	"ft_transcendence/backend/internal/redis"
+	"ft_transcendence/backend/internal/routes"
 )
 
 func main() {

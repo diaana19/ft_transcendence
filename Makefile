@@ -188,7 +188,7 @@ test:
 
 test-backend:
 	@echo "Running backend tests locally (testcontainers will start Postgres)..."
-	@cd backend && go test ./tests/... -v -count=1 2>&1 | \
+	@cd backend && go test ./test/... -v -count=1 2>&1 | \
 		sed 's/--- PASS/\x1b[32m--- PASS\x1b[0m/g' | \
 		sed 's/--- FAIL/\x1b[31m--- FAIL\x1b[0m/g' | \
 		sed 's/^ok/\x1b[32mok\x1b[0m/g' | \

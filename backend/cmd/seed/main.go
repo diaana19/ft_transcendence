@@ -11,8 +11,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
-	"ft_transcendence/backend/config"
-	"ft_transcendence/backend/models"
+	"ft_transcendence/backend/internal/config"
+	"ft_transcendence/backend/internal/models"
 )
 
 var postContents = []string{
