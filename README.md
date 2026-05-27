@@ -98,7 +98,7 @@ The team is composed of 5 members. Roles follow the subject's recommended struct
 | **Cache / pub-sub** | Redis 7 | Token/session helpers, per-IP rate-limit buckets, and pub/sub for broadcasting real-time notifications and chat across connections. |
 | **Auth** | `golang-jwt/jwt/v5`, `pquerna/otp` (TOTP), `golang.org/x/crypto` (bcrypt), GitHub OAuth 2.0 | Standard, audited libraries for JWT, RFC-6238 TOTP, and password hashing. |
 | **Real-time** | `gorilla/websocket` | Battle-tested WebSocket implementation for the chat hub. |
-| **Reverse proxy** | nginx | Single public entrypoint: serves the frontend and proxies `/api` → backend. |
+| **Reverse proxy** | nginx (edge) | Single public entrypoint: terminates **TLS/HTTPS**, redirects HTTP→HTTPS, and routes `/api` (incl. WebSocket upgrade) + `/uploads` → backend and `/` → the static frontend. |
 | **Containerisation** | Docker + Docker Compose | One-command, reproducible multi-service deployment. |
 | **Testing / CI** | testcontainers-go, GitHub Actions, golangci-lint | Real-Postgres integration tests, a coverage gate, and static analysis. |
 
@@ -309,8 +309,8 @@ Key variables (see the file for the full list): `API_PORT`, `FRONTEND_PORT`, `JW
 make up
 ```
 
-This builds the images and starts **backend + frontend (with nginx) + PostgreSQL + Redis** in
-the background; run `make logs` to follow output. Other useful targets:
+This builds the images and starts the **nginx reverse proxy + frontend + backend + PostgreSQL
++ Redis** in the background; run `make logs` to follow output. Other useful targets:
 
 | Command | Description |
 |---|---|
@@ -318,17 +318,22 @@ the background; run `make logs` to follow output. Other useful targets:
 | `make re` | Clean (removes volumes) + rebuild + up |
 | `make down` / `make clean` | Stop / stop and remove volumes |
 | `make seed` | Seed the DB (Go seeder container) |
-| `make shell-db` | `psql` into the running Postgres |
+| `make shell-postgres` / `shell-redis` | `psql` / `redis-cli` into the database / cache |
 | `make help` | List all targets (and the detected engine) |
 
 ### Default ports
 
 | Service | URL |
 |---|---|
-| App — frontend + nginx (proxies `/api` → backend) | http://localhost:3000 |
-| Backend API (direct) | http://localhost:8000 |
+| **App** — via the nginx reverse proxy (HTTPS) | **https://localhost** |
+| Backend API (direct, dev convenience) | http://localhost:8000 |
 | PostgreSQL | localhost:5432 |
 | Redis | localhost:6380 |
+
+The proxy uses a **self-signed certificate** in dev, so the browser shows a one-time
+"not secure" warning the first time — click through it (Advanced → proceed). The frontend
+itself is not published to the host; it is reached only through the proxy. HTTP (`:80`)
+redirects to HTTPS (`:443`).
 
 ### Tests
 
@@ -399,9 +404,6 @@ defense (several are mandatory per the subject):
   but the actual pages do not yet exist. The subject states that missing/inadequate legal pages
   **result in project rejection** — these must be added (accessible from the app, with real
   content) before evaluation.
-- **⚠️ HTTPS (mandatory).** nginx currently listens on `:80` only. Browser↔backend traffic must
-  use HTTPS; add a TLS listener (e.g. self-signed certs for the dev container) before the
-  defense.
 - **Chat UI.** The WebSocket chat backend is complete and message persistence works, but the
   frontend chat components (`features/chat/*`) and the `useWebSocket` hook are not yet wired —
   required to demonstrate the *real-time* and *user-interaction* majors end-to-end.

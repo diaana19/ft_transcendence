@@ -1,5 +1,17 @@
+# Edge reverse proxy: TLS termination + routing to frontend and backend.
 FROM nginx:alpine
 
-COPY docker/nginx.conf /etc/nginx/nginx.conf
+# Self-signed certificate for local HTTPS (dev / school evaluation). Generated at
+# build time so nothing sensitive is committed; mount real certs over
+# /etc/nginx/certs for production.
+RUN apk add --no-cache openssl \
+ && mkdir -p /etc/nginx/certs \
+ && openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
+      -keyout /etc/nginx/certs/server.key \
+      -out    /etc/nginx/certs/server.crt \
+      -subj "/CN=localhost" \
+      -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
 
-EXPOSE 80
+COPY docker/proxy.nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80 443

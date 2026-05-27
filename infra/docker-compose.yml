@@ -27,10 +27,23 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.frontend
     container_name: frontend
-    ports:
-      - "${FRONTEND_PORT:-3000}:80"
+    # Internal only — the proxy is the public entrypoint.
+    expose:
+      - "80"
     depends_on:
       - backend
+
+  proxy:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.nginx
+    container_name: proxy
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    depends_on:
+      - backend
+      - frontend
 
   db:
     image: postgres:15

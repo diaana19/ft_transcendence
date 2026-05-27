@@ -16,9 +16,10 @@ COMPOSE    ?= $(ENGINE) compose -f infra/docker-compose.yml
 GO_IMAGE   := golang:1.25
 
 .PHONY: help build up down stop restart re clean ps \
-        logs logs-backend logs-frontend logs-db \
+        logs logs-backend logs-frontend logs-nginx logs-db \
         test test-frontend seed seed-clean \
-        shell-backend shell-frontend shell-db fmt lint prune version
+        shell-backend shell-frontend shell-nginx shell-postgres shell-redis \
+        fmt lint prune version
 .DEFAULT_GOAL := help
 
 # ==================== Help ====================
@@ -37,7 +38,8 @@ help:
 	@echo ""
 	@echo "Logs (follow):"
 	@echo "  make logs          All services      make logs-backend   Backend"
-	@echo "  make logs-frontend Frontend          make logs-db        Database"
+	@echo "  make logs-frontend Frontend          make logs-nginx     Proxy (nginx)"
+	@echo "  make logs-db       Database"
 	@echo ""
 	@echo "Tests:"
 	@echo "  make test          Backend tests inside a $(GO_IMAGE) container"
@@ -48,9 +50,11 @@ help:
 	@echo "  make seed-clean    Fresh volumes, then seed"
 	@echo ""
 	@echo "Shells:"
-	@echo "  make shell-backend   Open a shell in the backend container"
-	@echo "  make shell-frontend  Open a shell in the frontend container"
-	@echo "  make shell-db        Open a psql prompt in the database container"
+	@echo "  make shell-backend   Open a shell in the backend (Go API) container"
+	@echo "  make shell-frontend  Open a shell in the frontend (web) container"
+	@echo "  make shell-nginx     Open a shell in the nginx reverse-proxy container"
+	@echo "  make shell-postgres  Open a psql prompt in the PostgreSQL container"
+	@echo "  make shell-redis     Open a redis-cli prompt in the Redis container"
 	@echo ""
 	@echo "Tools:"
 	@echo "  make fmt             Format Go code (go fmt ./...)"
@@ -93,6 +97,9 @@ logs-backend:
 
 logs-frontend:
 	@$(COMPOSE) logs -f frontend
+
+logs-nginx:
+	@$(COMPOSE) logs -f proxy
 
 logs-db:
 	@$(COMPOSE) logs -f db
@@ -137,8 +144,14 @@ shell-backend:
 shell-frontend:
 	@$(COMPOSE) exec frontend sh
 
-shell-db:
+shell-nginx:
+	@$(COMPOSE) exec proxy sh
+
+shell-postgres:
 	@$(COMPOSE) exec db psql -U app -d app_db
+
+shell-redis:
+	@$(COMPOSE) exec redis redis-cli
 
 fmt:
 	@cd backend && go fmt ./...
@@ -149,7 +162,10 @@ lint:
 # ==================== Utils ====================
 
 prune:
-	@$(ENGINE) system prune -f
+	@echo "Reclaiming unused $(ENGINE) data: stopped containers, unused networks, dangling"
+	@echo "images and build cache. Named volumes are kept. This can take a while when there"
+	@echo "is a lot to remove (run '$(ENGINE) system df' to see how much)."
+	$(ENGINE) system prune -f
 
 version:
 	@echo "$(NAME) — engine: $(ENGINE)"
