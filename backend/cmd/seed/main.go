@@ -7,11 +7,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Transcendence/config"
-	"github.com/Transcendence/models"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+
+	"github.com/Transcendence/config"
+	"github.com/Transcendence/models"
 )
 
 var postContents = []string{
@@ -77,7 +78,7 @@ func getMimeType(filename string) string {
 	}
 }
 
-// createFileRecord : crée un File record qui pointe vers un fichier existant
+// createFileRecord : crée un File record qui pointe vers un fichier existent
 // N'utilise PAS l'UUID comme nom de fichier - garde le nom original
 func createFileRecord(db *gorm.DB, userID, sourceFileName, subDir string) (string, error) {
 	if sourceFileName == "" {
@@ -86,7 +87,7 @@ func createFileRecord(db *gorm.DB, userID, sourceFileName, subDir string) (strin
 
 	fileID := uuid.NewString()
 
-	// Le chemin en BDD pointe vers le fichier EXISTANT
+	// Le chemin en BDD pointe vers le fichier EXISTENT
 	dbPath := filepath.Join("uploads", subDir, sourceFileName)
 
 	fileRecord := models.File{
@@ -194,7 +195,7 @@ func seedFriendships(db *gorm.DB, users []models.User) {
 
 	accepted := 0
 	pending := 0
-	for i := 0; i < n; i++ {
+	for i := range n {
 		acceptedTarget := users[(i+1)%n]
 		var count int64
 		db.Model(&models.Friend{}).
@@ -237,7 +238,7 @@ func seedFollows(db *gorm.DB, users []models.User) {
 	}
 
 	created := 0
-	for i := 0; i < n; i++ {
+	for i := range n {
 		for offset := 1; offset <= 2 && offset < n; offset++ {
 			target := users[(i+offset)%n]
 			var count int64
@@ -304,7 +305,7 @@ func seedLikes(db *gorm.DB, users []models.User, posts []models.Post) {
 			if user.ID == post.AuthorID {
 				continue
 			}
-			if (len(post.ID) + len(user.ID)) % 2 == 0 {
+			if (len(post.ID)+len(user.ID))%2 == 0 {
 				continue
 			}
 
@@ -339,7 +340,7 @@ func seedReplies(db *gorm.DB, users []models.User, posts []models.Post) {
 	created := 0
 	for i, post := range posts {
 		count := 1 + (i % 2)
-		for j := 0; j < count; j++ {
+		for j := range count {
 			authorIdx := (i + j + 1) % len(users)
 			author := users[authorIdx]
 			if author.ID == post.AuthorID {

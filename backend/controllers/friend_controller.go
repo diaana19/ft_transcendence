@@ -2,12 +2,12 @@ package controllers
 
 import (
 	"log"
-
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/services"
-	"github.com/gin-gonic/gin"
 )
 
 type FriendController struct {

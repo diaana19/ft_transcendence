@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Transcendence/repositories"
 	"github.com/pquerna/otp/totp"
+
+	"github.com/Transcendence/repositories"
 )
 
 type SetupResponse struct {

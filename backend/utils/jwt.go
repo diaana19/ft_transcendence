@@ -30,7 +30,7 @@ func GenerateJWT(userId string, username string) (string, error) {
 
 func ValidateJWT(tokenStr string) (*Claims, error) {
 	secret := os.Getenv("JWT_SECRET")
-	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}

@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Transcendence/repositories"
 	"github.com/gin-gonic/gin"
+
+	"github.com/Transcendence/repositories"
 )
 
 type MsgController struct {

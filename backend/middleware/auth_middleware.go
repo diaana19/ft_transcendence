@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/Transcendence/utils"
 )
 
 func extractToken(c *gin.Context) string {

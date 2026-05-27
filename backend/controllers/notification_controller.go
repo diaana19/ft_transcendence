@@ -3,8 +3,9 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/Transcendence/services"
 	"github.com/gin-gonic/gin"
+
+	"github.com/Transcendence/services"
 )
 
 type NotificationController struct {

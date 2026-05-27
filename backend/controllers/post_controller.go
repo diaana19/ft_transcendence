@@ -6,30 +6,30 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	// "strings"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/services"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type PostController struct {
-    postService         *services.PostService
-    notificationService *services.NotificationService
-    uploadService       *services.UploadService  // ← AJOUTER
+	postService         *services.PostService
+	notificationService *services.NotificationService
+	uploadService       *services.UploadService // ← AJOUTER
 }
 
 func NewPostController(
-    postService *services.PostService,
-    notifService *services.NotificationService,
-    uploadService *services.UploadService,  // ← AJOUTER
+	postService *services.PostService,
+	notifService *services.NotificationService,
+	uploadService *services.UploadService, // ← AJOUTER
 ) *PostController {
-    return &PostController{
-        postService: postService,
-        notificationService: notifService,
-        uploadService: uploadService,  // ← AJOUTER
-    }
+	return &PostController{
+		postService:         postService,
+		notificationService: notifService,
+		uploadService:       uploadService, // ← AJOUTER
+	}
 }
 
 func (pc *PostController) GetPosts(c *gin.Context) {
@@ -104,7 +104,6 @@ func (pc *PostController) GetPostsByUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": responses})
 }
-
 
 func (pc *PostController) CreatePost(c *gin.Context) {
 	var req struct {

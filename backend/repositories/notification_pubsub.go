@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/Transcendence/models"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/Transcendence/models"
 )
 
 type NotificationPubSub struct {
@@ -18,7 +19,7 @@ func NewNotificationPubSub(rdb *redis.Client) *NotificationPubSub {
 }
 
 func (p *NotificationPubSub) PublishToUser(ctx context.Context, userID string, notif *models.Notification) error {
-	payload, err := json.Marshal(map[string]interface{}{
+	payload, err := json.Marshal(map[string]any{
 		"type":         "notification",
 		"notification": notif,
 	})

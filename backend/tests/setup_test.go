@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	goredis "github.com/redis/go-redis/v9"
 	"github.com/testcontainers/testcontainers-go"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -97,6 +98,15 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// sharedDB and sharedRDB are initialised once and reused across every test.
+// Tests run serially, so a single connection pool avoids exhausting Postgres'
+// connection limit (each config.ConnectDB call would otherwise open a pool that
+// is never closed).
+var (
+	sharedDB  *gorm.DB
+	sharedRDB *goredis.Client
+)
+
 func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 	gin.SetMode(gin.TestMode)
 
@@ -105,15 +115,25 @@ func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 		panic(err)
 	}
 
-	db, err := config.ConnectDB()
-	if err != nil {
-		panic(fmt.Errorf("connect test db: %w", err))
+	if sharedDB == nil {
+		db, err := config.ConnectDB()
+		if err != nil {
+			panic(fmt.Errorf("connect test db: %w", err))
+		}
+		sharedDB = db
 	}
+	db := sharedDB
 
-	rdb, err := redis.InitRedis()
-	if err != nil {
-		panic(err)
+	if sharedRDB == nil {
+		rdb, err := redis.InitRedis()
+		if err != nil {
+			panic(err)
+		}
+		sharedRDB = rdb
 	}
+	rdb := sharedRDB
+
+	rdb.FlushDB(context.Background())
 
 	db.Exec("DROP TABLE IF EXISTS messages CASCADE")
 	db.Exec("DROP TABLE IF EXISTS users CASCADE")

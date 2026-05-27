@@ -11,9 +11,21 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Ratchet threshold — local baseline is ~37.6% (with integration tests
-  # failing under podman). Bump this whenever real coverage climbs.
-  COVERAGE_THRESHOLD: "35.0"
+  # Coverage gate: the job fails if total statement coverage drops below this.
+  # Measured with -coverpkg=./... so end-to-end tests count toward source
+  # packages. Current real coverage is ~81%. Raise this only as coverage climbs.
+  COVERAGE_THRESHOLD: "80.0"
+
+  # Test-only configuration. The integration suite (backend/tests) spins up
+  # Postgres/Redis via testcontainers and reads these to create the containers
+  # and load config; values are throwaway and contain no real secrets.
+  DB_NAME: app_db
+  DB_USER: app
+  DB_PASSWORD: app
+  JWT_SECRET: ci-test-only-secret-0123456789abcdef
+  FRONTEND_URL: http://localhost:3000
+  API_PORT: "8000"
+  GIN_MODE: release
 
 jobs:
   backend:
@@ -36,18 +48,6 @@ jobs:
 
       - name: Download modules
         run: go mod download
-
-      - name: go vet
-        run: go vet ./...
-
-      - name: gofmt
-        run: |
-          out=$(gofmt -l .)
-          if [ -n "$out" ]; then
-            echo "::error::gofmt found unformatted files:"
-            echo "$out"
-            exit 1
-          fi
 
       - name: Run tests with coverage
         # -race catches data races (rate limiter uses sync.Map + atomics).
@@ -116,3 +116,26 @@ jobs:
             echo "::error::backend coverage ${total}% is below ${threshold}% threshold"
             exit 1
           fi
+
+  lint:
+    name: Lint (golangci-lint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          # golangci-lint-action manages its own build/lint cache.
+          cache: false
+
+      # Runs gofmt/gofumpt/goimports/gci formatters, go vet (govet) and the full
+      # linter set from backend/.golangci.yml. Config: backend/.golangci.yml.
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          working-directory: backend

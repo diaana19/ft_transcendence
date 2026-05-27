@@ -2,18 +2,18 @@ package services
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/repositories"
 	"github.com/Transcendence/utils"
-	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
-
-	"crypto/rand"
-	"encoding/base64"
-	"fmt"
 )
 
 type AuthService struct {

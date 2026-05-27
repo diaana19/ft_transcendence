@@ -6,10 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Transcendence/models"
-	"github.com/Transcendence/repositories"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+
+	"github.com/Transcendence/models"
+	"github.com/Transcendence/repositories"
 )
 
 const (

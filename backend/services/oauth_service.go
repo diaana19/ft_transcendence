@@ -11,13 +11,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Transcendence/config"
-	"github.com/Transcendence/models"
-	"github.com/Transcendence/repositories"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"gorm.io/gorm"
+
+	"github.com/Transcendence/config"
+	"github.com/Transcendence/models"
+	"github.com/Transcendence/repositories"
 )
 
 type GitHubUser struct {

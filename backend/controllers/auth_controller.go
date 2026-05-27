@@ -6,11 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
+
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/services"
 	"github.com/Transcendence/utils"
-	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 )
 
 // Identifier can be either email or username
@@ -202,7 +203,7 @@ func (ac *AuthController) LogoutUser(c *gin.Context) {
 
 type Verify2FAInput struct {
 	PendingToken string `json:"pending_token" binding:"required"`
-	Code string `json:"code" binding:"required,len=6,numeric"`
+	Code         string `json:"code" binding:"required,len=6,numeric"`
 }
 
 func (ac *AuthController) Verify2FA(c *gin.Context) {

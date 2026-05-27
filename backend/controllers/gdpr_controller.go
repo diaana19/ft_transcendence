@@ -5,15 +5,16 @@
 ** - Handle user data export requests
 ** - Handle user data deletion requests
 ** - Extract user identity from JWT token
-*/
+ */
 
 package controllers
 
 import (
 	"net/http"
 
-	"github.com/Transcendence/services"
 	"github.com/gin-gonic/gin"
+
+	"github.com/Transcendence/services"
 )
 
 type GDPRController struct {

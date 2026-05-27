@@ -4,13 +4,14 @@
 ** Responsibilities:
 ** - Export all user data in JSON format
 ** - Permanently delete all user data from the database
-*/
+ */
 
 package services
 
 import (
-	"github.com/Transcendence/models"
 	"gorm.io/gorm"
+
+	"github.com/Transcendence/models"
 )
 
 type GDPRService struct {
@@ -22,7 +23,7 @@ func NewGDPRService(db *gorm.DB) *GDPRService {
 }
 
 type GDPRExportData struct {
-	User  models.UserResponse  `json:"user"`
+	User  models.UserResponse   `json:"user"`
 	Posts []models.PostResponse `json:"posts"`
 }
 

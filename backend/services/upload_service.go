@@ -8,9 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/repositories"
-	"github.com/google/uuid"
 )
 
 const (

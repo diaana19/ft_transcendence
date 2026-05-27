@@ -21,7 +21,7 @@ func TestFriend_FollowAndListFollowers(t *testing.T) {
 		t.Fatalf("followers: expected 200, got %d", w.Code)
 	}
 	var resp struct {
-		Data []map[string]interface{} `json:"data"`
+		Data []map[string]any `json:"data"`
 	}
 	json.Unmarshal(w.Body.Bytes(), &resp)
 	if len(resp.Data) != 1 {

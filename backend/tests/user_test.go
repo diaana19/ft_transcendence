@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
+
+	"github.com/Transcendence/utils"
 )
 
 const testUserPassword = "StrongPass123!"
@@ -32,7 +33,7 @@ func createUserAndGetID(router *gin.Engine, t *testing.T) string {
 		t.Fatalf("failed to create test user, status: %d, body: %s", w.Code, w.Body.String())
 	}
 
-	var resp map[string]interface{}
+	var resp map[string]any
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatal("failed to unmarshal create user response")
 	}
@@ -67,7 +68,7 @@ func TestGetUsers_Success(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 
-	var users []map[string]interface{}
+	var users []map[string]any
 	if err := json.Unmarshal(w.Body.Bytes(), &users); err != nil {
 		t.Fatal("failed to unmarshal users list")
 	}
@@ -91,7 +92,7 @@ func TestGetUsers_Empty(t *testing.T) {
 		t.Fatalf("expected 200 even if empty, got %d", w.Code)
 	}
 
-	var users []interface{}
+	var users []any
 	json.Unmarshal(w.Body.Bytes(), &users)
 	if len(users) != 0 {
 		t.Fatal("expected empty array")
@@ -107,7 +108,7 @@ func TestGetUser_Success(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 
-	var user map[string]interface{}
+	var user map[string]any
 	json.Unmarshal(w.Body.Bytes(), &user)
 
 	if user["id"] != id {
@@ -145,7 +146,7 @@ func TestUpdateUser_Success_Partial(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 
-	var updated map[string]interface{}
+	var updated map[string]any
 	json.Unmarshal(w.Body.Bytes(), &updated)
 
 	if updated["name"] != "Updated Name" || updated["username"] != "newusername" {

@@ -4,10 +4,11 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/Transcendence/config"
 	"github.com/Transcendence/services"
 	"github.com/Transcendence/utils"
-	"github.com/gin-gonic/gin"
 )
 
 type OAuthController struct {

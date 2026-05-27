@@ -28,7 +28,6 @@ func CheckPasswordFormat(password string, username string) (bool, int) {
 	lowerUser := strings.ToLower(strings.TrimSpace(username))
 
 	if len(lowerUser) >= 4 {
-
 		for i := 0; i <= len(lowerUser)-4; i++ {
 			sub := lowerUser[i : i+4]
 			if strings.Contains(lowerPass, sub) {

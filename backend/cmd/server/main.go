@@ -5,15 +5,16 @@ import (
 	"log"
 	"os"
 
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+
 	"github.com/Transcendence/config"
 	"github.com/Transcendence/redis"
 	"github.com/Transcendence/routes"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	var conf, err = config.Load()
+	conf, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,7 +23,7 @@ func main() {
 		log.Fatal(dberr)
 	}
 
-	var router *gin.Engine = gin.Default()
+	router := gin.Default()
 	router.SetTrustedProxies(nil)
 
 	router.Use(cors.New(cors.Config{
@@ -73,5 +74,4 @@ func main() {
 	if err := router.Run(":" + conf.ApiPort); err != nil {
 		log.Fatal("Server failed to start: ", err)
 	}
-
 }

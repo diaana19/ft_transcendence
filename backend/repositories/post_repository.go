@@ -1,9 +1,10 @@
 package repositories
 
 import (
-	"github.com/Transcendence/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+
+	"github.com/Transcendence/models"
 )
 
 func generateUUID() string { return uuid.New().String() }
@@ -160,7 +161,6 @@ func (r *postRepository) UpdateComment(id string, input models.UpdateCommentInpu
 }
 
 func (r *postRepository) DeleteComment(id string) error {
-
 	var comment models.Reply
 	if err := r.db.First(&comment, "id = ?", id).Error; err != nil {
 		return err

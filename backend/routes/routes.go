@@ -1,15 +1,16 @@
 package routes
 
 import (
+	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
+
 	"github.com/Transcendence/config"
 	"github.com/Transcendence/controllers"
 	"github.com/Transcendence/middleware"
 	"github.com/Transcendence/repositories"
 	"github.com/Transcendence/services"
 	"github.com/Transcendence/socket"
-	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 )
 
 func createPostRoutes(api *gin.RouterGroup, rdb *redis.Client, postController *controllers.PostController) {

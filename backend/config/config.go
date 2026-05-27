@@ -1,8 +1,9 @@
 package config
 
 import (
-	_ "github.com/lib/pq"
 	"os"
+
+	_ "github.com/lib/pq"
 )
 
 type Config struct {
@@ -17,7 +18,7 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	var conf *Config = &Config{
+	conf := &Config{
 		ApiPort:            os.Getenv("API_PORT"),
 		DebugMode:          os.Getenv("GIN_MODE"),
 		JWT:                os.Getenv("JWT_SECRET"),

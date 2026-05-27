@@ -44,8 +44,8 @@ func TestPost_CreateAndGet(t *testing.T) {
 		t.Fatalf("list posts: expected 200, got %d", w.Code)
 	}
 	var list struct {
-		Data  []map[string]interface{} `json:"data"`
-		Total int64                    `json:"total"`
+		Data  []map[string]any `json:"data"`
+		Total int64            `json:"total"`
 	}
 	if err := json.Unmarshal(w.Body.Bytes(), &list); err != nil {
 		t.Fatalf("decode list: %v", err)
@@ -179,7 +179,7 @@ func TestPost_GetByUser(t *testing.T) {
 		t.Fatalf("get by user: expected 200, got %d", w.Code)
 	}
 	var resp struct {
-		Data []map[string]interface{} `json:"data"`
+		Data []map[string]any `json:"data"`
 	}
 	json.Unmarshal(w.Body.Bytes(), &resp)
 	if len(resp.Data) != 2 {

@@ -5,14 +5,17 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
-	"github.com/Transcendence/models"
-	"github.com/Transcendence/services"
 	"github.com/gin-gonic/gin"
+
+	"github.com/Transcendence/models"
 )
 
+// fakeChatService lets the controller's error-mapping be tested in isolation.
+// The success, bind-error, empty-content, recipient-not-found and missing-"with"
+// cases are covered end-to-end through the /chat endpoints; only the generic
+// service/DB error mappings (which cannot be triggered over HTTP) live here.
 type fakeChatService struct {
 	sendResp *models.MessageResponse
 	sendErr  error
@@ -64,74 +67,12 @@ func doJSON(r *gin.Engine, method, path, body string) *httptest.ResponseRecorder
 	return w
 }
 
-func TestSendMessage_Created(t *testing.T) {
-	svc := &fakeChatService{sendResp: &models.MessageResponse{ID: "x", SenderID: "a", RecipientID: "b", Content: "hi"}}
-	r := newChatRouter(svc, "a")
-	w := doJSON(r, "POST", "/chat/messages", `{"recipient_id":"b","content":"hi"}`)
-	if w.Code != http.StatusCreated {
-		t.Fatalf("expected 201, got %d", w.Code)
-	}
-}
-
-func TestSendMessage_BindError(t *testing.T) {
-	r := newChatRouter(&fakeChatService{}, "a")
-	w := doJSON(r, "POST", "/chat/messages", `{"recipient_id":}`)
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400 on bind error, got %d", w.Code)
-	}
-}
-
-func TestSendMessage_EmptyContentError(t *testing.T) {
-	svc := &fakeChatService{sendErr: services.ErrEmptyContent}
-	r := newChatRouter(svc, "a")
-	w := doJSON(r, "POST", "/chat/messages", `{"recipient_id":"b","content":"hi"}`)
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400 for empty content, got %d", w.Code)
-	}
-}
-
-func TestSendMessage_RecipientNotFoundError(t *testing.T) {
-	svc := &fakeChatService{sendErr: services.ErrRecipientNotFound}
-	r := newChatRouter(svc, "a")
-	w := doJSON(r, "POST", "/chat/messages", `{"recipient_id":"b","content":"hi"}`)
-	if w.Code != http.StatusNotFound {
-		t.Fatalf("expected 404, got %d", w.Code)
-	}
-}
-
 func TestSendMessage_GenericError(t *testing.T) {
 	svc := &fakeChatService{sendErr: errors.New("boom")}
 	r := newChatRouter(svc, "a")
 	w := doJSON(r, "POST", "/chat/messages", `{"recipient_id":"b","content":"hi"}`)
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("expected 500, got %d", w.Code)
-	}
-}
-
-func TestPoll_Success(t *testing.T) {
-	svc := &fakeChatService{pollResp: &models.PollResponse{Messages: []models.MessageResponse{}, NextCursor: ""}}
-	r := newChatRouter(svc, "a")
-	w := doJSON(r, "GET", "/chat/poll", "")
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-}
-
-func TestPoll_PassesParsedLimit(t *testing.T) {
-	svc := &fakeChatService{pollResp: &models.PollResponse{}}
-	r := newChatRouter(svc, "a")
-	w := doJSON(r, "GET", "/chat/poll?since=abc&limit=10", "")
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-}
-
-func TestPoll_InvalidLimitFallsBackToDefault(t *testing.T) {
-	svc := &fakeChatService{pollResp: &models.PollResponse{}}
-	r := newChatRouter(svc, "a")
-	w := doJSON(r, "GET", "/chat/poll?limit=notanumber", "")
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
 	}
 }
 
@@ -144,26 +85,6 @@ func TestPoll_ServiceError(t *testing.T) {
 	}
 }
 
-func TestListConversation_Success(t *testing.T) {
-	svc := &fakeChatService{listResp: &models.PollResponse{}}
-	r := newChatRouter(svc, "a")
-	w := doJSON(r, "GET", "/chat/messages?with=b", "")
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-}
-
-func TestListConversation_MissingWith(t *testing.T) {
-	r := newChatRouter(&fakeChatService{}, "a")
-	w := doJSON(r, "GET", "/chat/messages", "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
-	}
-	if !strings.Contains(w.Body.String(), "with") {
-		t.Errorf("expected error to mention 'with', got %s", w.Body.String())
-	}
-}
-
 func TestListConversation_ServiceError(t *testing.T) {
 	svc := &fakeChatService{listErr: errors.New("db")}
 	r := newChatRouter(svc, "a")
@@ -172,20 +93,3 @@ func TestListConversation_ServiceError(t *testing.T) {
 		t.Fatalf("expected 500, got %d", w.Code)
 	}
 }
-
-func TestParseLimit(t *testing.T) {
-	cases := []struct {
-		in   string
-		want int
-	}{
-		{"", 0},
-		{"abc", 0},
-		{"42", 42},
-	}
-	for _, tc := range cases {
-		if got := parseLimit(tc.in); got != tc.want {
-			t.Errorf("parseLimit(%q)=%d, want %d", tc.in, got, tc.want)
-		}
-	}
-}
-

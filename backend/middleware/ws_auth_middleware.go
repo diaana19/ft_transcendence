@@ -3,8 +3,9 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/Transcendence/utils"
 	"github.com/gin-gonic/gin"
+
+	"github.com/Transcendence/utils"
 )
 
 func WSAuthMiddleware() gin.HandlerFunc {

@@ -5,20 +5,20 @@ import (
 )
 
 type Message struct {
-	ID          string    `gorm:"primaryKey;type:varchar(36);index:idx_msg_sender,priority:2;index:idx_msg_recipient,priority:2" json:"id"`
-	CreatedAt   time.Time `json:"created_at"`
-	
-	SenderID    string    `gorm:"type:varchar(36);not null;index:idx_msg_sender,priority:1" json:"sender_id"`
-	Username    string    `json:"username" gorm:"default:''"`
-	
-	Type        string    `json:"type,omitempty"`
-	Content     string    `gorm:"type:text;not null" json:"content"`
-    FileID   *string `json:"file_id,omitempty" gorm:"type:uuid;default:null"`
-	RoomID      string    `json:"room_id,omitempty" gorm:"default:null"`
-	ParentID    *string   `json:"parent_id,omitempty" gorm:"default:null"`
-	RecipientID string    `gorm:"type:varchar(36);default:null;index:idx_msg_recipient,priority:1" json:"recipient_id,omitempty"`
+	ID        string    `gorm:"primaryKey;type:varchar(36);index:idx_msg_sender,priority:2;index:idx_msg_recipient,priority:2" json:"id"`
+	CreatedAt time.Time `json:"created_at"`
 
-	Replies     []Message `json:"replies,omitempty" gorm:"foreignKey:ParentID"`
+	SenderID string `gorm:"type:varchar(36);not null;index:idx_msg_sender,priority:1" json:"sender_id"`
+	Username string `json:"username" gorm:"default:''"`
+
+	Type        string  `json:"type,omitempty"`
+	Content     string  `gorm:"type:text;not null" json:"content"`
+	FileID      *string `json:"file_id,omitempty" gorm:"type:uuid;default:null"`
+	RoomID      string  `json:"room_id,omitempty" gorm:"default:null"`
+	ParentID    *string `json:"parent_id,omitempty" gorm:"default:null"`
+	RecipientID string  `gorm:"type:varchar(36);default:null;index:idx_msg_recipient,priority:1" json:"recipient_id,omitempty"`
+
+	Replies []Message `json:"replies,omitempty" gorm:"foreignKey:ParentID"`
 }
 
 type CreateMessageInput struct {

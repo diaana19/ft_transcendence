@@ -5,9 +5,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/Transcendence/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/Transcendence/models"
 )
 
 type DBConfig struct {

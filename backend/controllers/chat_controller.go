@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/services"
-	"github.com/gin-gonic/gin"
 )
 
 type ChatServicer interface {

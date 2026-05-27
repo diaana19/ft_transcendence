@@ -8,14 +8,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Transcendence/models"
-	"github.com/Transcendence/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+
+	"github.com/Transcendence/models"
+	"github.com/Transcendence/services"
 )
 
 type UploadController struct {
-	Service *services.UploadService
+	Service       *services.UploadService
 	FriendService *services.FriendService
 }
 

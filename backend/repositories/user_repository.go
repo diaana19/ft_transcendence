@@ -1,8 +1,9 @@
 package repositories
 
 import (
-	"github.com/Transcendence/models"
 	"gorm.io/gorm"
+
+	"github.com/Transcendence/models"
 )
 
 type userRepository struct {
@@ -47,7 +48,7 @@ func (r *userRepository) Update(id string, input models.UpdateUserInput) (*model
 		return nil, err
 	}
 
-	updates := make(map[string]interface{})
+	updates := make(map[string]any)
 	if input.Name != "" {
 		updates["name"] = input.Name
 	}
@@ -127,7 +128,7 @@ func (r *userRepository) GetByGithubID(githubID string) (*models.User, error) {
 func (r *userRepository) LinkGithub(userID, githubID string) error {
 	result := r.db.Model(&models.User{}).
 		Where("id = ?", userID).
-		Updates(map[string]interface{}{
+		Updates(map[string]any{
 			"github_id": githubID,
 			"provider":  "github",
 		})
@@ -147,7 +148,7 @@ func (r *userRepository) SetTwoFAEnabled(userID string, enabled bool) error {
 func (r *userRepository) ClearTwoFA(userID string) error {
 	return r.db.Model(&models.User{}).
 		Where("id = ?", userID).
-		Updates(map[string]interface{}{
+		Updates(map[string]any{
 			"two_fa_secret":  nil,
 			"two_fa_enabled": false,
 		}).Error

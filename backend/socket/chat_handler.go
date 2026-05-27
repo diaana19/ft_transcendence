@@ -6,31 +6,28 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/Transcendence/models"
 	redispub "github.com/Transcendence/redis"
 	"github.com/Transcendence/repositories"
 	"github.com/Transcendence/services"
 	"github.com/Transcendence/utils"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
-	"github.com/redis/go-redis/v9"
 )
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
 		allowed := []string{"http://localhost:3000", "http://localhost", "null", ""}
-		for _, a := range allowed {
-			if origin == a {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(allowed, origin)
 	},
 }
 
@@ -83,7 +80,7 @@ func (h *ChatHandler) sendPendingNotifications(client *Client) {
 		return
 	}
 	for _, n := range notifs {
-		payload, err := json.Marshal(map[string]interface{}{
+		payload, err := json.Marshal(map[string]any{
 			"type":         "notification",
 			"notification": n,
 		})
@@ -96,7 +93,6 @@ func (h *ChatHandler) sendPendingNotifications(client *Client) {
 }
 
 func (h *ChatHandler) HandleWS(c *gin.Context) {
-
 	var userID string
 	var username string
 	if id, exists := c.Get("user_id"); exists {
@@ -105,7 +101,6 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 			username = u.(string)
 		}
 	} else {
-
 		token := c.Query("token")
 		if token == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})

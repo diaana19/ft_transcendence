@@ -3,9 +3,10 @@ package services
 import (
 	"errors"
 
+	"github.com/google/uuid"
+
 	"github.com/Transcendence/models"
 	"github.com/Transcendence/repositories"
-	"github.com/google/uuid"
 )
 
 type PostService struct {
@@ -70,7 +71,6 @@ func (s *PostService) DeletePost(id string, authorID string) error {
 }
 
 func (s *PostService) ToggleLike(userID, postID string) (bool, *models.Post, error) {
-
 	post, err := s.repo.GetByID(postID)
 	if err != nil {
 		return false, nil, err
@@ -129,7 +129,6 @@ func (s *PostService) CreateComment(content, authorID, postID string) (*models.R
 }
 
 func (s *PostService) GetComments(postID string) ([]models.Reply, error) {
-
 	if _, err := s.repo.GetByID(postID); err != nil {
 		return nil, errors.New("post not found")
 	}

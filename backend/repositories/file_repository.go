@@ -1,8 +1,9 @@
 package repositories
 
 import (
-	"github.com/Transcendence/models"
 	"gorm.io/gorm"
+
+	"github.com/Transcendence/models"
 )
 
 type FileRepository interface {

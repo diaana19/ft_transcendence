@@ -3,8 +3,9 @@ package services
 import (
 	"errors"
 
-	"github.com/Transcendence/models"
 	"gorm.io/gorm"
+
+	"github.com/Transcendence/models"
 )
 
 type FriendService struct {
