@@ -10,16 +10,16 @@ import (
 )
 
 type SearchController struct {
-	srchservice *services.SearchService
+	service *services.SearchService
 }
 
-func NewSearchController(srchservice *services.SearchService) *SearchController {
-	return &SearchController{srchservice: srchservice}
+func NewSearchController(service *services.SearchService) *SearchController {
+	return &SearchController{service: service}
 }
 
 func (sc *SearchController) Search(c *gin.Context) {
-	userID, exist := c.Get("user_id")
-	if !exist {
+	userID, exists := c.Get("user_id")
+	if !exists {
 		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized"})
 		return
 	}
@@ -43,7 +43,8 @@ func (sc *SearchController) Search(c *gin.Context) {
 	if limit < 1 || limit > 100 {
 		limit = 20
 	}
-	result, err := sc.srchservice.Search(c.Request.Context(), userID.(string), q, searchType, sort, order, page, limit)
+
+	result, err := sc.service.Search(c.Request.Context(), userID.(string), q, searchType, sort, order, page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -83,6 +83,9 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
 	oauthController := controllers.NewOAuthController(oauthService, cfg)
 
+	searchService := services.NewSearchService(userRepo, msgRepo, postRepo)
+	searchController := controllers.NewSearchController(searchService)
+
 	api := router.Group("/api")
 	{
 		api.POST("/auth/2fa/verify", middleware.RateLimitMiddleware(rdb), authController.Verify2FA)
@@ -134,6 +137,8 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 			protected.POST("/2fa/setup", twoFAController.Setup)
 			protected.POST("/2fa/enable", twoFAController.Enable)
 			protected.POST("/2fa/disable", twoFAController.Disable)
+
+			protected.GET("search", searchController.Search)
 		}
 
 		createPostRoutes(api, rdb, postController)
