@@ -53,7 +53,10 @@ func CheckPasswordFormat(password string, username string) (bool, int) {
 			hasUpper = true
 		case char >= '0' && char <= '9':
 			hasDigit = true
-		case (char >= '!' && char <= '/') || (char >= ':' && char <= '@') || (char >= '[' && char <= '`') || (char >= '{' && char <= '~'):
+		case (char >= '!' && char <= '/') ||
+			(char >= ':' && char <= '@') ||
+			(char >= '[' && char <= '`') ||
+			(char >= '{' && char <= '~'):
 			hasSpecial = true
 		}
 	}

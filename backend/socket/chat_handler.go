@@ -89,7 +89,7 @@ func (h *ChatHandler) sendPendingNotifications(client *Client) {
 		}
 		safeSend(client.Send, payload)
 	}
-	h.notificationService.MarkAllRead(client.ID)
+	_ = h.notificationService.MarkAllRead(client.ID)
 }
 
 func (h *ChatHandler) HandleWS(c *gin.Context) {
@@ -134,7 +134,8 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 	defer cancel()
 	defer h.manager.UnregisterClient(client)
 
-	log.Printf("[WS] Client connected username=%q userID=%s , subscribing to notifications:%s", client.Username, client.ID, client.ID)
+	log.Printf("[WS] Client connected username=%q userID=%s , subscribing to notifications:%s",
+		client.Username, client.ID, client.ID)
 	redispub.Subscribe(ctx, h.rdb, "notifications:"+client.ID, func(payload string) {
 		log.Printf("[WS] Forwarding notification to client username=%q userID=%s ", client.Username, client.ID)
 		safeSend(client.Send, []byte(payload))
@@ -147,7 +148,7 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 }
 
 func (h *ChatHandler) readPump(client *Client) {
-	defer client.Conn.Close()
+	defer func() { _ = client.Conn.Close() }()
 
 	for {
 		_, raw, err := client.Conn.ReadMessage()

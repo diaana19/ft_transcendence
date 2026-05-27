@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/redis/go-redis/v9"
@@ -24,10 +25,13 @@ func (p *NotificationPubSub) PublishToUser(ctx context.Context, userID string, n
 		"notification": notif,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal notification: %w", err)
 	}
 	channel := "notifications:" + userID
 	log.Printf("[PubSub] Publishing to channel=%q type=%q actor=%q -> recipient=%q content=%q",
 		channel, notif.Type, notif.ActorUsername, notif.UserUsername, notif.Content)
-	return p.rdb.Publish(ctx, channel, string(payload)).Err()
+	if err := p.rdb.Publish(ctx, channel, string(payload)).Err(); err != nil {
+		return fmt.Errorf("publish notification: %w", err)
+	}
+	return nil
 }

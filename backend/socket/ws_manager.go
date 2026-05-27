@@ -110,7 +110,7 @@ func (m *WSManager) GetRoomMembers(roomID string) []string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	members := []string{}
+	members := make([]string, 0, len(m.rooms[roomID]))
 	for clientID := range m.rooms[roomID] {
 		members = append(members, clientID)
 	}
@@ -118,7 +118,7 @@ func (m *WSManager) GetRoomMembers(roomID string) []string {
 }
 
 func (c *Client) WritePump() {
-	defer c.Conn.Close()
+	defer func() { _ = c.Conn.Close() }()
 	for message := range c.Send {
 		if err := c.Conn.WriteMessage(websocket.TextMessage, message); err != nil {
 			log.Printf("Write error for client %s: %v\n", c.ID, err)

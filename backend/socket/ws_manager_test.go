@@ -65,7 +65,7 @@ func TestWSManager_Unregister(t *testing.T) {
 	}
 }
 
-func TestSafeSend_BufferFullAndClosed(t *testing.T) {
+func TestSafeSend_BufferFullAndClosed(_ *testing.T) {
 	// full buffer: message is dropped without blocking
 	full := make(chan []byte, 1)
 	full <- []byte("first")

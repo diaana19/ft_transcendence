@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -27,7 +28,7 @@ var newMessageID = func() (string, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
 		log.Printf("error uuid: %v", err)
-		return "", err
+		return "", fmt.Errorf("generate message id: %w", err)
 	}
 	return id.String(), nil
 }

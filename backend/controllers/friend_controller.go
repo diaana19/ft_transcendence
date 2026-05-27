@@ -33,7 +33,7 @@ func (fc *FriendController) SendFriendRequest(c *gin.Context) {
 	}
 
 	log.Printf("[FriendRequest] sender userID=%s username=%q -> target userID=%s", userID, userUsername, targetID)
-	fc.NotificationService.SendNotification(
+	_ = fc.NotificationService.SendNotification(
 		targetID,
 		userUsername.(string),
 		userID.(string),

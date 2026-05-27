@@ -59,7 +59,7 @@ func newMockOAuthService(tokenServerURL string, rt http.RoundTripper) (*OAuthSer
 
 func tokenServer(t *testing.T) *httptest.Server {
 	t.Helper()
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, `{"access_token":"mock-access-token","token_type":"bearer"}`)
 	}))

@@ -3,7 +3,7 @@ package config
 import (
 	"os"
 
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // registers the Postgres driver for database/sql
 )
 
 type Config struct {

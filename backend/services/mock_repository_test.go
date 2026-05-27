@@ -9,9 +9,8 @@ import (
 )
 
 type mockUserRepository struct {
-	users  map[string]*models.User
-	err    error
-	nextID int
+	users map[string]*models.User
+	err   error
 }
 
 func newMockRepo() *mockUserRepository {

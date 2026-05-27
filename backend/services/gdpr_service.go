@@ -52,9 +52,5 @@ func (s *GDPRService) DeleteUserData(userID string) error {
 		return err
 	}
 
-	if err := s.db.Where("id = ?", userID).Delete(&models.User{}).Error; err != nil {
-		return err
-	}
-
-	return nil
+	return s.db.Where("id = ?", userID).Delete(&models.User{}).Error
 }

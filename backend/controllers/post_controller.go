@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -29,6 +30,21 @@ func NewPostController(
 		postService:         postService,
 		notificationService: notifService,
 		uploadService:       uploadService, // ← AJOUTER
+	}
+}
+
+// respondOwnedResourceError maps a service error for an owner-guarded resource
+// (post or comment update/delete) to an HTTP response: not-found uses
+// notFoundMsg, ownership violations ("you can only ...") become 403, and any
+// other error becomes 500.
+func respondOwnedResourceError(c *gin.Context, err error, notFoundMsg string) {
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		c.JSON(http.StatusNotFound, gin.H{"error": notFoundMsg})
+	case strings.HasPrefix(err.Error(), "you can only"):
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 }
 
@@ -66,7 +82,7 @@ func (pc *PostController) GetPost(c *gin.Context) {
 	post, err := pc.postService.GetPost(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": msgPostNotFound})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -174,14 +190,7 @@ func (pc *PostController) UpdatePost(c *gin.Context) {
 
 	post, err := pc.postService.UpdatePost(id, input, authorID.(string))
 	if err != nil {
-		switch {
-		case errors.Is(err, gorm.ErrRecordNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
-		case err.Error() == "you can only update your own posts":
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		}
+		respondOwnedResourceError(c, err, msgPostNotFound)
 		return
 	}
 
@@ -199,14 +208,7 @@ func (pc *PostController) DeletePost(c *gin.Context) {
 
 	err := pc.postService.DeletePost(id, authorID.(string))
 	if err != nil {
-		switch {
-		case errors.Is(err, gorm.ErrRecordNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
-		case err.Error() == "you can only delete your own posts":
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		}
+		respondOwnedResourceError(c, err, msgPostNotFound)
 		return
 	}
 
@@ -225,7 +227,7 @@ func (pc *PostController) ToggleLike(c *gin.Context) {
 	liked, post, err := pc.postService.ToggleLike(userID.(string), postID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": msgPostNotFound})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -234,7 +236,7 @@ func (pc *PostController) ToggleLike(c *gin.Context) {
 
 	if liked && post.AuthorID != userID.(string) {
 		username, _ := c.Get("username")
-		pc.notificationService.SendNotification(
+		_ = pc.notificationService.SendNotification(
 			post.AuthorID,
 			post.Author.Username,
 			userID.(string),
@@ -257,7 +259,7 @@ func (pc *PostController) GetComments(c *gin.Context) {
 	comments, err := pc.postService.GetComments(postID)
 	if err != nil {
 		if err.Error() == "post not found" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": msgPostNotFound})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -289,14 +291,14 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 
 	post, err := pc.postService.GetPost(postID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": msgPostNotFound})
 		return
 	}
 
 	comment, err := pc.postService.CreateComment(input.Content, authorID.(string), postID)
 	if err != nil {
 		if err.Error() == "post not found" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": msgPostNotFound})
 			return
 		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -305,7 +307,7 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 
 	if post.AuthorID != authorID.(string) {
 		username, _ := c.Get("username")
-		pc.notificationService.SendCommentNotification(
+		_ = pc.notificationService.SendCommentNotification(
 			post.AuthorID,
 			authorID.(string),
 			username.(string),
@@ -334,14 +336,7 @@ func (pc *PostController) UpdateComment(c *gin.Context) {
 
 	comment, err := pc.postService.UpdateComment(commentID, input, authorID.(string))
 	if err != nil {
-		switch {
-		case errors.Is(err, gorm.ErrRecordNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": "Comment not found"})
-		case err.Error() == "you can only update your own comments":
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		}
+		respondOwnedResourceError(c, err, "Comment not found")
 		return
 	}
 
@@ -359,14 +354,7 @@ func (pc *PostController) DeleteComment(c *gin.Context) {
 
 	err := pc.postService.DeleteComment(commentID, authorID.(string))
 	if err != nil {
-		switch {
-		case errors.Is(err, gorm.ErrRecordNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": "Comment not found"})
-		case err.Error() == "you can only delete your own comments":
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		}
+		respondOwnedResourceError(c, err, "Comment not found")
 		return
 	}
 

@@ -135,7 +135,9 @@ func (s *PostService) GetComments(postID string) ([]models.Reply, error) {
 	return s.repo.GetCommentsByPostID(postID)
 }
 
-func (s *PostService) UpdateComment(commentID string, input models.UpdateCommentInput, authorID string) (*models.Reply, error) {
+func (s *PostService) UpdateComment(
+	commentID string, input models.UpdateCommentInput, authorID string,
+) (*models.Reply, error) {
 	comment, err := s.repo.GetCommentByID(commentID)
 	if err != nil {
 		return nil, err

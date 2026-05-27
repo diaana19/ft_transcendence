@@ -27,8 +27,8 @@ func newMockPostRepo() *mockPostRepo {
 	}
 }
 
-func (m *mockPostRepo) GetAll(page, limit int) ([]models.Post, int64, error) {
-	out := []models.Post{}
+func (m *mockPostRepo) GetAll(_, _ int) ([]models.Post, int64, error) {
+	out := make([]models.Post, 0, len(m.posts))
 	for _, p := range m.posts {
 		out = append(out, *p)
 	}
@@ -44,7 +44,7 @@ func (m *mockPostRepo) GetByID(id string) (*models.Post, error) {
 }
 
 func (m *mockPostRepo) GetByAuthorID(authorID string) ([]models.Post, error) {
-	out := []models.Post{}
+	out := make([]models.Post, 0, len(m.posts))
 	for _, p := range m.posts {
 		if p.AuthorID == authorID {
 			out = append(out, *p)

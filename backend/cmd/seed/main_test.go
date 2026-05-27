@@ -143,7 +143,7 @@ func TestSeedPipeline(t *testing.T) {
 }
 
 // TestRunMain exercises the top-level orchestration exactly as the CLI does.
-func TestRunMain(t *testing.T) {
+func TestRunMain(_ *testing.T) {
 	main()
 }
 

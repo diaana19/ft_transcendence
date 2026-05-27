@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/redis/go-redis/v9"
@@ -12,7 +13,7 @@ func Publish(rdb *redis.Client, channel, message string) error {
 	err := rdb.Publish(ctx, channel, message).Err()
 	if err != nil {
 		log.Printf("Error: failed to publish to [%s]: %v\n", channel, err)
-		return err
+		return fmt.Errorf("publish to %s: %w", channel, err)
 	}
 	log.Printf("Publish to [%s]: %s\n", channel, message)
 	return nil
@@ -22,7 +23,7 @@ func Subscribe(ctx context.Context, rdb *redis.Client, channel string, handler f
 	sub := rdb.Subscribe(ctx, channel)
 
 	go func() {
-		defer sub.Close()
+		defer func() { _ = sub.Close() }()
 		log.Printf("Subscribe to channel: [%s]\n", channel)
 		for msg := range sub.Channel() {
 			log.Printf("Received on [%s]: %s\n", msg.Channel, msg.Payload)

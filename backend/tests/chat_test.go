@@ -16,7 +16,7 @@ type chatTestUser struct {
 	Token string
 }
 
-func registerAndLogin(t *testing.T, router *gin.Engine, username, email, password string) chatTestUser {
+func registerAndLogin(t *testing.T, router *gin.Engine, username, email, password string) chatTestUser { //nolint:unparam
 	t.Helper()
 
 	regBody := fmt.Sprintf(`{

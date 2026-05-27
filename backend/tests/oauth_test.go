@@ -120,7 +120,7 @@ func TestOAuthService_FindOrCreateUser(t *testing.T) {
 	ctx := context.Background()
 
 	gh := &services.GitHubUser{
-		ID:        int64(time.Now().UnixNano() % 1000000000),
+		ID:        time.Now().UnixNano() % 1000000000,
 		Login:     "ghnewuser",
 		Name:      "GH New User",
 		Email:     "ghnew@example.com",
@@ -154,7 +154,7 @@ func TestOAuthService_FindOrCreateUser_LinksExistingEmail(t *testing.T) {
 	registerAndLogin(t, router, "linklocal", "linkme@example.com", "StrongPass123!")
 
 	gh := &services.GitHubUser{
-		ID:    int64(time.Now().UnixNano()%1000000000) + 1,
+		ID:    time.Now().UnixNano()%1000000000 + 1,
 		Login: "linklocal",
 		Name:  "Link Local",
 		Email: "linkme@example.com",
@@ -181,7 +181,7 @@ func TestOAuthService_FindOrCreateUser_UsernameCollision(t *testing.T) {
 	registerAndLogin(t, router, "octocat", "octocat@example.com", "StrongPass123!")
 
 	gh := &services.GitHubUser{
-		ID:    int64(time.Now().UnixNano()%1000000000) + 2,
+		ID:    time.Now().UnixNano()%1000000000 + 2,
 		Login: "octocat",
 		Email: "freshoctocat@example.com",
 	}

@@ -24,10 +24,10 @@ func main() {
 	}
 
 	router := gin.Default()
-	router.SetTrustedProxies(nil)
+	_ = router.SetTrustedProxies(nil)
 
 	router.Use(cors.New(cors.Config{
-		AllowOriginFunc:  func(origin string) bool { return true },
+		AllowOriginFunc:  func(_ string) bool { return true },
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Cookie"},
 		ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},

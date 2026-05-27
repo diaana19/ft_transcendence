@@ -35,6 +35,8 @@ type ghEmail struct {
 	Verified bool   `json:"verified"`
 }
 
+const providerGitHub = "github"
+
 type OAuthService struct {
 	userRepo    repositories.UserRepository
 	redisClient *redis.Client
@@ -118,7 +120,7 @@ func (s *OAuthService) FetchGitHubUser(ctx context.Context, token *oauth2.Token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("github returned status %d when fetching user", resp.StatusCode)
@@ -139,12 +141,12 @@ func (s *OAuthService) FetchGitHubUser(ctx context.Context, token *oauth2.Token)
 	return &ghUser, nil
 }
 
-func (s *OAuthService) fetchPrimaryVerifiedEmail(ctx context.Context, client *http.Client) (string, error) {
+func (s *OAuthService) fetchPrimaryVerifiedEmail(_ context.Context, client *http.Client) (string, error) {
 	resp, err := client.Get("https://api.github.com/user/emails")
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch emails: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("github returned status %d when fetching emails", resp.StatusCode)
@@ -164,7 +166,7 @@ func (s *OAuthService) fetchPrimaryVerifiedEmail(ctx context.Context, client *ht
 	return "", errors.New("no verified primary email found on github account")
 }
 
-func (s *OAuthService) FindOrCreateUser(ctx context.Context, ghUser *GitHubUser) (*models.User, error) {
+func (s *OAuthService) FindOrCreateUser(_ context.Context, ghUser *GitHubUser) (*models.User, error) {
 	githubIDStr := strconv.FormatInt(ghUser.ID, 10)
 	user, err := s.userRepo.GetByGithubID(githubIDStr)
 	if err == nil {
@@ -178,9 +180,9 @@ func (s *OAuthService) FindOrCreateUser(ctx context.Context, ghUser *GitHubUser)
 		user, err = s.userRepo.GetByEmail(ghUser.Email)
 		if err == nil {
 			user.GithubID = &githubIDStr
-			user.Provider = "github"
-			if err := s.userRepo.LinkGithub(user.ID, githubIDStr); err != nil {
-				return nil, fmt.Errorf("failed to link github account: %w", err)
+			user.Provider = providerGitHub
+			if linkErr := s.userRepo.LinkGithub(user.ID, githubIDStr); linkErr != nil {
+				return nil, fmt.Errorf("failed to link github account: %w", linkErr)
 			}
 			return user, nil
 		}
@@ -207,7 +209,7 @@ func (s *OAuthService) FindOrCreateUser(ctx context.Context, ghUser *GitHubUser)
 		Email:    ghUser.Email,
 		Avatar:   &avatar,
 		GithubID: &githubIDStr,
-		Provider: "github",
+		Provider: providerGitHub,
 	}
 
 	if err := s.userRepo.CreateUser(&newUser); err != nil {

@@ -60,21 +60,30 @@ func hashPassword(password string) string {
 	return string(bytes)
 }
 
+const (
+	mimeJPEG        = "image/jpeg"
+	mimePNG         = "image/png"
+	mimeGIF         = "image/gif"
+	mimeAVIF        = "image/avif"
+	mimeWebP        = "image/webp"
+	mimeOctetStream = "application/octet-stream"
+)
+
 func getMimeType(filename string) string {
 	ext := filepath.Ext(filename)
 	switch ext {
 	case ".jpg", ".jpeg":
-		return "image/jpeg"
+		return mimeJPEG
 	case ".png":
-		return "image/png"
+		return mimePNG
 	case ".gif":
-		return "image/gif"
+		return mimeGIF
 	case ".avif":
-		return "image/avif"
+		return mimeAVIF
 	case ".webp":
-		return "image/webp"
+		return mimeWebP
 	default:
-		return "application/octet-stream"
+		return mimeOctetStream
 	}
 }
 
@@ -182,7 +191,13 @@ func seedUsers(db *gorm.DB) []models.User {
 }
 
 func ensureSchema(db *gorm.DB) error {
-	return db.AutoMigrate(&models.User{}, &models.File{}, &models.Post{}, &models.Like{}, &models.Reply{}, &models.Friend{}, &models.Notification{})
+	if err := db.AutoMigrate(
+		&models.User{}, &models.File{}, &models.Post{}, &models.Like{},
+		&models.Reply{}, &models.Friend{}, &models.Notification{},
+	); err != nil {
+		return fmt.Errorf("auto-migrate: %w", err)
+	}
+	return nil
 }
 
 func seedFriendships(db *gorm.DB, users []models.User) {

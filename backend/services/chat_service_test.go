@@ -39,11 +39,11 @@ func (m *mockMessageRepository) PollSince(userID, since string, limit int) ([]mo
 	return cursorSlice(matched, since, limit), nil
 }
 
-func (m *mockMessageRepository) GetByRoomID(roomID, since string, limit int) ([]models.Message, error) {
+func (m *mockMessageRepository) GetByRoomID(_, _ string, _ int) ([]models.Message, error) {
 	return nil, nil
 }
 
-func (m *mockMessageRepository) GetReplies(parentID string) ([]models.Message, error) {
+func (m *mockMessageRepository) GetReplies(_ string) ([]models.Message, error) {
 	return nil, nil
 }
 

@@ -27,7 +27,11 @@ type AuthController struct {
 	rdb          *redis.Client
 }
 
-func NewAuthController(authService *services.AuthService, twoFAService *services.TwoFAService, rdb *redis.Client) *AuthController {
+func NewAuthController(
+	authService *services.AuthService,
+	twoFAService *services.TwoFAService,
+	rdb *redis.Client,
+) *AuthController {
 	return &AuthController{
 		authService:  authService,
 		twoFAService: twoFAService,
@@ -122,8 +126,8 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 	log.Printf("✅ Login success: userID=%s, ip=%s, username=%s", user.ID, c.ClientIP(), user.Username)
 
 	if user.TwoFAEnabled {
-		pendingToken, err := ac.authService.CreatePendingLogin(user.ID, ac.rdb)
-		if err != nil {
+		pendingToken, tokenErr := ac.authService.CreatePendingLogin(user.ID, ac.rdb)
+		if tokenErr != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "could not initiate 2FA flow",
 			})
@@ -221,12 +225,12 @@ func (ac *AuthController) Verify2FA(c *gin.Context) {
 
 	valid, err := ac.twoFAService.ValidateCode(userID, input.Code)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid 2FA code"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": msgInvalid2FACode})
 		return
 	}
 	if !valid {
 		log.Printf("2FA verify failed: userID=%s, ip=%s", userID, c.ClientIP())
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid 2FA code"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": msgInvalid2FACode})
 		return
 	}
 

@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
@@ -87,7 +89,7 @@ func (r *postRepository) Delete(id string) error {
 }
 
 func (r *postRepository) LikePost(userID, postID string) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
 		like := models.Like{
 			ID:     generateUUID(),
 			UserID: userID,
@@ -99,10 +101,14 @@ func (r *postRepository) LikePost(userID, postID string) error {
 		return tx.Model(&models.Post{}).Where("id = ?", postID).
 			UpdateColumn("likes_count", gorm.Expr("likes_count + 1")).Error
 	})
+	if err != nil {
+		return fmt.Errorf("like post: %w", err)
+	}
+	return nil
 }
 
 func (r *postRepository) UnlikePost(userID, postID string) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
 		result := tx.Where("user_id = ? AND post_id = ?", userID, postID).Delete(&models.Like{})
 		if result.Error != nil {
 			return result.Error
@@ -113,6 +119,10 @@ func (r *postRepository) UnlikePost(userID, postID string) error {
 		return tx.Model(&models.Post{}).Where("id = ? AND likes_count > 0", postID).
 			UpdateColumn("likes_count", gorm.Expr("likes_count - 1")).Error
 	})
+	if err != nil {
+		return fmt.Errorf("unlike post: %w", err)
+	}
+	return nil
 }
 
 func (r *postRepository) HasLiked(userID, postID string) (bool, error) {
@@ -124,13 +134,17 @@ func (r *postRepository) HasLiked(userID, postID string) (bool, error) {
 }
 
 func (r *postRepository) CreateComment(comment *models.Reply) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(comment).Error; err != nil {
 			return err
 		}
 		return tx.Model(&models.Post{}).Where("id = ?", comment.PostID).
 			UpdateColumn("comments_count", gorm.Expr("comments_count + 1")).Error
 	})
+	if err != nil {
+		return fmt.Errorf("create comment: %w", err)
+	}
+	return nil
 }
 
 func (r *postRepository) GetCommentsByPostID(postID string) ([]models.Reply, error) {
@@ -165,11 +179,15 @@ func (r *postRepository) DeleteComment(id string) error {
 	if err := r.db.First(&comment, "id = ?", id).Error; err != nil {
 		return err
 	}
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&models.Reply{}, "id = ?", id).Error; err != nil {
 			return err
 		}
 		return tx.Model(&models.Post{}).Where("id = ? AND comments_count > 0", comment.PostID).
 			UpdateColumn("comments_count", gorm.Expr("comments_count - 1")).Error
 	})
+	if err != nil {
+		return fmt.Errorf("delete comment: %w", err)
+	}
+	return nil
 }

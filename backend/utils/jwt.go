@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -25,7 +26,11 @@ func GenerateJWT(userId string, username string) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secret))
+	signed, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", fmt.Errorf("sign jwt: %w", err)
+	}
+	return signed, nil
 }
 
 func ValidateJWT(tokenStr string) (*Claims, error) {
@@ -37,7 +42,7 @@ func ValidateJWT(tokenStr string) (*Claims, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse jwt: %w", err)
 	}
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {

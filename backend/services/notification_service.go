@@ -18,11 +18,16 @@ type NotificationService struct {
 	pubsub *repositories.NotificationPubSub
 }
 
-func NewNotificationService(repo *repositories.NotificationRepositories, pubsub *repositories.NotificationPubSub) *NotificationService {
+func NewNotificationService(
+	repo *repositories.NotificationRepositories,
+	pubsub *repositories.NotificationPubSub,
+) *NotificationService {
 	return &NotificationService{repo: repo, pubsub: pubsub}
 }
 
-func (s *NotificationService) SendNotification(userID, userUsername, actorID, actorUsername, notifType, content string) error {
+func (s *NotificationService) SendNotification(
+	userID, userUsername, actorID, actorUsername, notifType, content string,
+) error {
 	// Use the provided username if available, otherwise fetch from DB.
 	if userUsername == "" {
 		u, err := s.repo.GetUsernameByID(userID)
@@ -74,7 +79,9 @@ func (s *NotificationService) MarkAllRead(userID string) error {
 // 	return s.SendNotification(receiverID, receiverUsername, actorID, actorUsername, "like", content)
 // }
 
-func (s *NotificationService) SendCommentNotification(receiverID string, actorID string, actorUsername string, postID string, commentPreview string) error {
+func (s *NotificationService) SendCommentNotification(
+	receiverID, actorID, actorUsername, _, commentPreview string,
+) error {
 	receiverUsername, err := s.repo.GetUsernameByID(receiverID)
 	if err != nil {
 		log.Printf("Warning could not get the username of receiverID: %v", err)

@@ -35,7 +35,7 @@ func ConnectDB() (*gorm.DB, error) {
 
 	DB, err := gorm.Open(postgres.Open(connString), &gorm.Config{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open database: %w", err)
 	}
 
 	log.Println("Running AutoMigrate…")
@@ -54,7 +54,7 @@ func ConnectDB() (*gorm.DB, error) {
 	)
 	if err != nil {
 		log.Printf("AutoMigrate error: %v\n", err)
-		return nil, err
+		return nil, fmt.Errorf("auto-migrate: %w", err)
 	}
 	log.Println("AutoMigrate completed successfully")
 

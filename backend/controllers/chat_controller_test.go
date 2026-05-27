@@ -25,15 +25,15 @@ type fakeChatService struct {
 	listErr  error
 }
 
-func (f *fakeChatService) Send(senderID string, input models.CreateMessageInput) (*models.MessageResponse, error) {
+func (f *fakeChatService) Send(_ string, _ models.CreateMessageInput) (*models.MessageResponse, error) {
 	return f.sendResp, f.sendErr
 }
 
-func (f *fakeChatService) Poll(userID, since string, limit int) (*models.PollResponse, error) {
+func (f *fakeChatService) Poll(_, _ string, _ int) (*models.PollResponse, error) {
 	return f.pollResp, f.pollErr
 }
 
-func (f *fakeChatService) ListConversation(userID, peerID, since string, limit int) (*models.PollResponse, error) {
+func (f *fakeChatService) ListConversation(_, _, _ string, _ int) (*models.PollResponse, error) {
 	return f.listResp, f.listErr
 }
 

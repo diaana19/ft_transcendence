@@ -43,7 +43,7 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	user, err := uc.userService.GetUser(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": msgUserNotFound})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -78,7 +78,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	user, err := uc.userService.UpdateUser(targetID, input)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": msgUserNotFound})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -107,7 +107,7 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 
 	if err := uc.userService.VerifyPassword(targetID, input.Password); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": msgUserNotFound})
 			return
 		}
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password"})
@@ -116,7 +116,7 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 
 	if err := uc.userService.DeleteUser(targetID); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": msgUserNotFound})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

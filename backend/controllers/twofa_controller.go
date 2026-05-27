@@ -85,7 +85,7 @@ func (tc *TwoFAController) Disable(c *gin.Context) {
 		return
 	}
 	if !valid {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid 2FA code"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": msgInvalid2FACode})
 		return
 	}
 

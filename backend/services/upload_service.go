@@ -56,7 +56,7 @@ func (s *UploadService) ValidateFile(file *multipart.FileHeader) (string, error)
 	if err != nil {
 		return "", errors.New("could not open file")
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 
 	buffer := make([]byte, 512)
 	if _, err := src.Read(buffer); err != nil {

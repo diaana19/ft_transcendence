@@ -42,6 +42,17 @@ linters:
           deny:
             - pkg: sort
               desc: Should be replaced with the slices package
+    goconst:
+      # gin response envelope keys ("error"/"message"/"data"/...) are framework
+      # idiom, not magic constants worth extracting.
+      ignore-string-values:
+        - '^(error|message|data|token|total|unauthorized|Unauthorized)$'
+    wrapcheck:
+      # Only require wrapping for genuinely third-party errors. Errors crossing
+      # our own internal package boundaries (service -> repository, etc.) are
+      # passed through deliberately and re-wrapped where it adds context.
+      ignore-package-globs:
+        - github.com/Transcendence/**
     govet:
       disable:
         - fieldalignment
