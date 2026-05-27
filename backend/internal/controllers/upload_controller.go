@@ -2,11 +2,9 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -54,15 +52,11 @@ func (uc *UploadController) UploadFile(c *gin.Context) {
 	})
 }
 
+// ServeFile serves a stored file. Public files are accessible to anyone (no auth
+// required); friends/private files require an authenticated, authorised user.
 func (uc *UploadController) ServeFile(c *gin.Context) {
-	userIDRaw, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-	userID := userIDRaw.(string)
-
 	fileID := c.Param("id")
+
 	file, err := uc.Service.FileRepo.GetByID(fileID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -73,29 +67,40 @@ func (uc *UploadController) ServeFile(c *gin.Context) {
 		return
 	}
 
+	if _, statErr := os.Stat(file.Path); os.IsNotExist(statErr) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "file missing on disk"})
+		return
+	}
+
+	if file.Visibility == models.FileVisibilityPublic {
+		uc.streamFile(c, file)
+		return
+	}
+
+	userIDRaw, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID := userIDRaw.(string)
+
 	if !uc.canAccess(file, userID) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
 		return
 	}
 
-	// Utiliser le chemin complet depuis la BD
-	realPath := filepath.Join("/root", file.Path)
-
-	fmt.Printf("[ServeFile] Trying real path: %s\n", realPath)
-
-	if _, err := os.Stat(realPath); err == nil {
-		fmt.Printf("[ServeFile] ✅ SUCCESS serving: %s\n", realPath)
-		c.Header("Content-Type", file.MimeType)
-		c.Header("Content-Disposition", `inline; filename="`+file.Filename+`"`)
-		c.File(realPath)
-		return
-	}
-
-	// Fallback si jamais
-	fmt.Printf("[ServeFile] ❌ Still not found at %s\n", realPath)
-	c.JSON(http.StatusNotFound, gin.H{"error": "file not found on disk"})
+	uc.streamFile(c, file)
 }
 
+// streamFile writes the file to the response with inline content headers.
+func (uc *UploadController) streamFile(c *gin.Context, file *models.File) {
+	c.Header("Content-Type", file.MimeType)
+	c.Header("Content-Disposition", `inline; filename="`+file.Filename+`"`)
+	c.File(file.Path)
+}
+
+// canAccess reports whether userID may read file, based on ownership and the
+// file's visibility (public, friends, or private).
 func (uc *UploadController) canAccess(file *models.File, userID string) bool {
 	if file.OwnerID == userID {
 		return true
