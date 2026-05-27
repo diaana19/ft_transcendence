@@ -24,43 +24,43 @@ func NewAuthService(repo repositories.UserRepository) *AuthService {
 	return &AuthService{repo: repo}
 }
 
-func (s *AuthService) CreateAuthUserService(infos *models.User) (*models.UserResponse, error) {
-	if infos.ID == "" {
-		infos.ID = uuid.New().String()
+func (s *AuthService) CreateAuthUserService(user *models.User) (*models.UserResponse, error) {
+	if user.ID == "" {
+		user.ID = uuid.New().String()
 	}
 
-	if _, err := s.repo.GetByEmail(infos.Email); err == nil {
+	if _, err := s.repo.GetByEmail(user.Email); err == nil {
 		return nil, errors.New("user with this email already exists")
 	}
 
-	if _, err := s.repo.GetByUsername(infos.Username); err == nil {
+	if _, err := s.repo.GetByUsername(user.Username); err == nil {
 		return nil, errors.New("user with this username already exists")
 	}
 
-	if infos.Password == nil || *infos.Password == "" {
+	if user.Password == nil || *user.Password == "" {
 		return nil, errors.New("password is required")
 	}
 
-	hashed, err := utils.HashString(*infos.Password)
+	hashed, err := utils.HashString(*user.Password)
 	if err != nil {
 		return nil, err
 	}
-	infos.Password = &hashed
+	user.Password = &hashed
 
-	if infos.Provider == "" {
-		infos.Provider = "local"
+	if user.Provider == "" {
+		user.Provider = "local"
 	}
 
-	err = s.repo.CreateUser(infos)
+	err = s.repo.CreateUser(user)
 	if err != nil {
 		return nil, err
 	}
 
 	response := models.UserResponse{
-		ID:        infos.ID,
-		Username:  infos.Username,
-		Email:     infos.Email,
-		CreatedAt: infos.CreatedAt,
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
 	}
 
 	return &response, nil
@@ -98,12 +98,12 @@ func (s *AuthService) GetUserByID(id string) (*models.User, error) {
 }
 
 func (s *AuthService) CreatePendingLogin(userID string, rdb *redis.Client) (string, error) {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
+	randomBytes := make([]byte, 32)
+	if _, err := rand.Read(randomBytes); err != nil {
 		return "", fmt.Errorf("failed to generate pending token: %w", err)
 	}
 
-	pendingToken := base64.URLEncoding.EncodeToString(bytes)
+	pendingToken := base64.URLEncoding.EncodeToString(randomBytes)
 
 	ctx := context.Background()
 	key := "pending_login:" + pendingToken

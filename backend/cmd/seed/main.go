@@ -56,8 +56,8 @@ var avatarMap = map[string]string{
 }
 
 func hashPassword(password string) string {
-	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	return string(bytes)
+	hashed, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(hashed)
 }
 
 const (

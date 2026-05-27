@@ -60,12 +60,12 @@ func NewOAuthService(repo repositories.UserRepository, rdb *redis.Client, cfg *c
 }
 
 func (s *OAuthService) GenerateState(ctx context.Context) (string, error) {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
+	randomBytes := make([]byte, 32)
+	if _, err := rand.Read(randomBytes); err != nil {
 		return "", fmt.Errorf("failed to generate random state: %w", err)
 	}
 
-	state := base64.URLEncoding.EncodeToString(bytes)
+	state := base64.URLEncoding.EncodeToString(randomBytes)
 	key := "oauth:state:" + state
 	if err := s.redisClient.Set(ctx, key, "1", 10*time.Minute).Err(); err != nil {
 		return "", fmt.Errorf("failed to store state in redis: %w", err)
