@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/Transcendence/models"
+	"ft_transcendence/backend/models"
 )
 
 // fakeChatService lets the controller's error-mapping be tested in isolation.

@@ -8,7 +8,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/Transcendence/models"
+	"ft_transcendence/backend/models"
 )
 
 type NotificationPubSub struct {

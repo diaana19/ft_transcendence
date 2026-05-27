@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/Transcendence/models"
+	"ft_transcendence/backend/models"
 )
 
 func generateUUID() string { return uuid.New().String() }

@@ -15,10 +15,10 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 	"gorm.io/gorm"
 
-	"github.com/Transcendence/config"
-	"github.com/Transcendence/models"
-	"github.com/Transcendence/redis"
-	"github.com/Transcendence/routes"
+	"ft_transcendence/backend/config"
+	"ft_transcendence/backend/models"
+	"ft_transcendence/backend/redis"
+	"ft_transcendence/backend/routes"
 )
 
 func TestMain(m *testing.M) {

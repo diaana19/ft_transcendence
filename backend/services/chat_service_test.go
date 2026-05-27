@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/Transcendence/models"
+	"ft_transcendence/backend/models"
 )
 
 type mockMessageRepository struct {

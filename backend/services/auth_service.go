@@ -11,9 +11,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/Transcendence/models"
-	"github.com/Transcendence/repositories"
-	"github.com/Transcendence/utils"
+	"ft_transcendence/backend/models"
+	"ft_transcendence/backend/repositories"
+	"ft_transcendence/backend/utils"
 )
 
 type AuthService struct {

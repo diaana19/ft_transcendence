@@ -16,11 +16,11 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/Transcendence/models"
-	redispub "github.com/Transcendence/redis"
-	"github.com/Transcendence/repositories"
-	"github.com/Transcendence/services"
-	"github.com/Transcendence/utils"
+	"ft_transcendence/backend/models"
+	redispub "ft_transcendence/backend/redis"
+	"ft_transcendence/backend/repositories"
+	"ft_transcendence/backend/services"
+	"ft_transcendence/backend/utils"
 )
 
 var upgrader = websocket.Upgrader{

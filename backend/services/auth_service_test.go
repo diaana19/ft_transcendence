@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Transcendence/models"
+	"ft_transcendence/backend/models"
 )
 
 func ptrStr(s string) *string {

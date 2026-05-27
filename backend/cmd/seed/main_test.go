@@ -12,9 +12,9 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 	"gorm.io/gorm"
 
-	"github.com/Transcendence/config"
-	"github.com/Transcendence/models"
-	"github.com/Transcendence/utils"
+	"ft_transcendence/backend/config"
+	"ft_transcendence/backend/models"
+	"ft_transcendence/backend/utils"
 )
 
 // TestMain starts a throwaway Postgres so the seeding CLI can be exercised

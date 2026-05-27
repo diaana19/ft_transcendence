@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/Transcendence/repositories"
+	"ft_transcendence/backend/repositories"
 )
 
 type MsgController struct {

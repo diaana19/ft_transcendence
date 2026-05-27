@@ -5,12 +5,12 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
-	"github.com/Transcendence/config"
-	"github.com/Transcendence/controllers"
-	"github.com/Transcendence/middleware"
-	"github.com/Transcendence/repositories"
-	"github.com/Transcendence/services"
-	"github.com/Transcendence/socket"
+	"ft_transcendence/backend/config"
+	"ft_transcendence/backend/controllers"
+	"ft_transcendence/backend/middleware"
+	"ft_transcendence/backend/repositories"
+	"ft_transcendence/backend/services"
+	"ft_transcendence/backend/socket"
 )
 
 func createPostRoutes(api *gin.RouterGroup, rdb *redis.Client, postController *controllers.PostController) {

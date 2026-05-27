@@ -16,9 +16,9 @@ import (
 	"golang.org/x/oauth2/github"
 	"gorm.io/gorm"
 
-	"github.com/Transcendence/config"
-	"github.com/Transcendence/models"
-	"github.com/Transcendence/repositories"
+	"ft_transcendence/backend/config"
+	"ft_transcendence/backend/models"
+	"ft_transcendence/backend/repositories"
 )
 
 type GitHubUser struct {

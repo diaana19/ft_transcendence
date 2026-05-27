@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/Transcendence/models"
+	"ft_transcendence/backend/models"
 )
 
 // mockPostRepo is a stateful in-memory PostRepository used only for the

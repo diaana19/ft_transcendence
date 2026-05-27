@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Transcendence/config"
-	"github.com/Transcendence/repositories"
-	"github.com/Transcendence/services"
+	"ft_transcendence/backend/config"
+	"ft_transcendence/backend/repositories"
+	"ft_transcendence/backend/services"
 )
 
 func TestOAuthLogin_Redirects(t *testing.T) {

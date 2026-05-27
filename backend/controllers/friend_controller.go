@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/Transcendence/models"
-	"github.com/Transcendence/services"
+	"ft_transcendence/backend/models"
+	"ft_transcendence/backend/services"
 )
 
 type FriendController struct {

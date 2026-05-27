@@ -1,4 +1,4 @@
-module github.com/Transcendence
+module ft_transcendence/backend
 
 go 1.25.0
 

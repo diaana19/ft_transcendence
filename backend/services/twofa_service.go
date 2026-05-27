@@ -6,7 +6,7 @@ import (
 
 	"github.com/pquerna/otp/totp"
 
-	"github.com/Transcendence/repositories"
+	"ft_transcendence/backend/repositories"
 )
 
 type SetupResponse struct {

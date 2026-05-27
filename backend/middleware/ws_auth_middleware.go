@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/Transcendence/utils"
+	"ft_transcendence/backend/utils"
 )
 
 func WSAuthMiddleware() gin.HandlerFunc {

@@ -6,7 +6,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/Transcendence/models"
+	"ft_transcendence/backend/models"
 )
 
 func newTestMessageDB(t *testing.T) *gorm.DB {

@@ -5,7 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/Transcendence/models"
+	"ft_transcendence/backend/models"
 )
 
 type mockUserRepository struct {

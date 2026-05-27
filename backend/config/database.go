@@ -8,7 +8,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/Transcendence/models"
+	"ft_transcendence/backend/models"
 )
 
 type DBConfig struct {

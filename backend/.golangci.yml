@@ -52,7 +52,7 @@ linters:
       # our own internal package boundaries (service -> repository, etc.) are
       # passed through deliberately and re-wrapped where it adds context.
       ignore-package-globs:
-        - github.com/Transcendence/**
+        - ft_transcendence/backend/**
     govet:
       disable:
         - fieldalignment
@@ -138,7 +138,11 @@ formatters:
       sections:
         - standard
         - default
-        - prefix(github.com/Transcendence)
+        - prefix(ft_transcendence/backend)
+    gofumpt:
+      # The module path has no dot, so gofumpt can't auto-detect the local
+      # import group; set it explicitly so it agrees with gci's grouping.
+      module-path: ft_transcendence/backend
   exclusions:
     generated: lax
     paths:

@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/Transcendence/models"
-	"github.com/Transcendence/repositories"
+	"ft_transcendence/backend/models"
+	"ft_transcendence/backend/repositories"
 )
 
 type PostService struct {

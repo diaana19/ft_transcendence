@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/Transcendence/config"
-	"github.com/Transcendence/services"
-	"github.com/Transcendence/utils"
+	"ft_transcendence/backend/config"
+	"ft_transcendence/backend/services"
+	"ft_transcendence/backend/utils"
 )
 
 type OAuthController struct {
