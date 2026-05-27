@@ -7,9 +7,6 @@ import (
 )
 
 type Config struct {
-	ApiPort   string
-	DebugMode string
-
 	JWT                string
 	GithubClientID     string
 	GithubClientSecret string
@@ -19,13 +16,11 @@ type Config struct {
 
 func Load() (*Config, error) {
 	conf := &Config{
-		ApiPort:            os.Getenv("API_PORT"),
-		DebugMode:          os.Getenv("GIN_MODE"),
 		JWT:                os.Getenv("JWT_SECRET"),
 		GithubClientID:     os.Getenv("GITHUB_CLIENT_ID"),
 		GithubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
 		GithubRedirectURL:  os.Getenv("GITHUB_REDIRECT_URL"),
-		FrontendURL:        os.Getenv("FRONTEND_URL"),
+		FrontendURL:        os.Getenv("FT_TRANSCENDENCE_URL"),
 	}
 
 	return conf, nil

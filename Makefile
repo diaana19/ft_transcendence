@@ -69,7 +69,7 @@ help:
 up:
 	@echo "Starting stack with $(ENGINE)..."
 	@$(COMPOSE) up -d --build
-	@echo "Up. Ports come from infra/.env (API_PORT, FRONTEND_PORT). 'make ps' to see them, 'make logs' to follow."
+	@echo "Up. App: https://localhost:3000 (self-signed cert). 'make ps' for ports, 'make logs' to follow."
 
 down:
 	@$(COMPOSE) down

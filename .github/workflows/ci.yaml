@@ -23,8 +23,6 @@ env:
   DB_USER: app
   DB_PASSWORD: app
   JWT_SECRET: ci-test-only-secret-0123456789abcdef
-  FRONTEND_URL: http://localhost:3000
-  API_PORT: "8000"
   GIN_MODE: release
 
 jobs:

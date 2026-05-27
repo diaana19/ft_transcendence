@@ -11,8 +11,8 @@
 # Requirements: bash 4+, curl, jq. The backend must be running.
 #
 # Usage:
-#   ./seed.sh                          # against http://localhost:8000
-#   BASE_URL=http://localhost/api ./seed.sh   # e.g. through nginx
+#   ./seed.sh                                  # against the proxy at https://localhost:3000
+#   BASE_URL=https://host:port ./seed.sh       # custom proxy URL (uses -k for self-signed TLS)
 #   SEED_PASSWORD='MyPass123!' ./seed.sh
 #
 # Notes / intentional differences from the Go seeder:
@@ -31,7 +31,7 @@
 
 set -uo pipefail
 
-BASE_URL="${BASE_URL:-http://localhost:8000}"
+BASE_URL="${BASE_URL:-https://localhost:3000}"
 API="${BASE_URL%/}"
 case "$API" in
 */api) ;;            # caller already included the /api prefix
@@ -96,20 +96,20 @@ declare -a post_id post_author
 # post_json PATH JSON [TOKEN] — POST a JSON body, echo the response body.
 post_json() {
 	local path="$1" json="$2" token="${3:-}"
-	local args=(-sS -X POST "$API$path" -H 'Content-Type: application/json' -d "$json")
+	local args=(-sSk -X POST "$API$path" -H 'Content-Type: application/json' -d "$json")
 	[[ -n "$token" ]] && args+=(-H "Authorization: Bearer $token")
 	curl "${args[@]}"
 }
 
 # post_auth PATH TOKEN — POST with no body, just auth; echo response body.
 post_auth() {
-	curl -sS -X POST "$API$1" -H "Authorization: Bearer $2"
+	curl -sSk -X POST "$API$1" -H "Authorization: Bearer $2"
 }
 
 wait_for_api() {
 	echo "Waiting for API at $API ..."
 	for _ in $(seq 1 30); do
-		if curl -sS -o /dev/null "$BASE_URL/health" 2>/dev/null || curl -sS -o /dev/null "$API/posts" 2>/dev/null; then
+		if curl -sSk -o /dev/null "$BASE_URL/health" 2>/dev/null || curl -sSk -o /dev/null "$API/posts" 2>/dev/null; then
 			return 0
 		fi
 		sleep 1
@@ -142,7 +142,7 @@ seed_users() {
 		user_token["$u"]="$token"
 
 		# set display name + bio (register only accepts username/email/password/dob)
-		curl -sS -X PUT "$API/users/$id" -H 'Content-Type: application/json' \
+		curl -sSk -X PUT "$API/users/$id" -H 'Content-Type: application/json' \
 			-H "Authorization: Bearer $token" \
 			-d "$(jq -nc --arg n "${names[$i]}" --arg b "${bios[$i]}" '{name:$n, bio:$b}')" >/dev/null
 		echo "  + $u ($id)"

@@ -67,11 +67,7 @@ func main() {
 
 	routes.SetupRoutes(router, DB, rdb, conf)
 
-	if conf.ApiPort == "" {
-		conf.ApiPort = "8000"
-	}
-
-	if err := router.Run(":" + conf.ApiPort); err != nil {
+	if err := router.Run(":8080"); err != nil {
 		log.Fatal("Server failed to start: ", err)
 	}
 }

@@ -4,8 +4,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.backend
     container_name: backend
-    ports:
-      - "${API_PORT:-8000}:${API_PORT:-8000}"
+    # Internal only — reached through the proxy at /api.
     volumes:
       - ../backend:/app
     env_file:
@@ -38,9 +37,10 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.nginx
     container_name: proxy
+    # Fixed public port. 3000 (not 80/443) because rootless Podman can't bind
+    # privileged ports (<1024); the proxy serves HTTPS on container :443.
     ports:
-      - "${HTTP_PORT:-80}:80"
-      - "${HTTPS_PORT:-443}:443"
+      - "3000:443"
     depends_on:
       - backend
       - frontend
@@ -54,8 +54,6 @@ services:
       POSTGRES_DB: ${DB_NAME}
     env_file:
       - .env
-    ports:
-      - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -67,8 +65,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis
-    ports:
-      - "6380:6379"
     volumes:
       - redis_data:/data
     healthcheck:

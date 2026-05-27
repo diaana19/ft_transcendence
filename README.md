@@ -298,10 +298,10 @@ Environment variables live in `infra/.env`, which is git-ignored. A template is 
 cp infra/env.example infra/.env
 ```
 
-Key variables (see the file for the full list): `API_PORT`, `FRONTEND_PORT`, `JWT_SECRET`,
-`RATE_LIMIT_MAX`, `DB_USER` / `DB_PASSWORD` / `DB_NAME`, and the `GITHUB_CLIENT_ID` /
-`GITHUB_CLIENT_SECRET` / `GITHUB_REDIRECT_URL` trio (fill these to enable GitHub login).
-**Do not commit real secrets.**
+The variables are: `FT_TRANSCENDENCE_URL` (the app's public home URL), `JWT_SECRET`,
+`DB_USER` / `DB_PASSWORD` / `DB_NAME`, and the `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` /
+`GITHUB_REDIRECT_URL` trio (fill these to enable GitHub login). Ports are **fixed** in
+`infra/docker-compose.yml`, not configured here. **Do not commit real secrets.**
 
 ### Run (single command)
 
@@ -325,15 +325,14 @@ This builds the images and starts the **nginx reverse proxy + frontend + backend
 
 | Service | URL |
 |---|---|
-| **App** — via the nginx reverse proxy (HTTPS) | **https://localhost** |
-| Backend API (direct, dev convenience) | http://localhost:8000 |
-| PostgreSQL | localhost:5432 |
-| Redis | localhost:6380 |
+| **Everything** — frontend, API (`/api`), uploads — via the nginx proxy (HTTPS) | **https://localhost:3000** |
+| backend / PostgreSQL / Redis | **not published** — internal only (use `make shell-{backend,postgres,redis}`) |
 
-The proxy uses a **self-signed certificate** in dev, so the browser shows a one-time
-"not secure" warning the first time — click through it (Advanced → proceed). The frontend
-itself is not published to the host; it is reached only through the proxy. HTTP (`:80`)
-redirects to HTTPS (`:443`).
+The proxy is the **only published port** — all access goes through nginx. It's fixed at **3000**
+(set in `infra/docker-compose.yml`) because **rootless Podman can't bind privileged ports < 1024**,
+and serves **HTTPS** there with a **self-signed certificate** (one-time browser "not secure"
+warning — Advanced → proceed). A plain-HTTP request to the port is auto-redirected to HTTPS. The
+backend listens on a fixed internal port **8080** (the proxy's upstream; not exposed to the host).
 
 ### Tests
 
@@ -358,9 +357,11 @@ build if backend coverage drops below 80%**; a golangci-lint job enforces format
 friendships, follows, posts, likes and comments:
 
 ```bash
-./seed/seed.sh                                   # against http://localhost:8000
-BASE_URL=http://localhost/api ./seed/seed.sh     # through nginx
+./seed/seed.sh                                   # via the proxy at https://localhost:3000 (default)
 ```
+
+(`make seed` is the alternative — it runs the Go seeder inside the compose network, so it
+doesn't go through the proxy at all.)
 
 ---
 
