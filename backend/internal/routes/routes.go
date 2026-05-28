@@ -28,7 +28,7 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	registerFriendRoutes(protected, c.Friend)
 	registerChatRoutes(protected, c.Chat, c.Msg)
 	registerNotificationRoutes(protected, c.Notification)
-	registerUploadRoutes(protected, c.Upload)
+	registerUploadRoutes(api, rdb, c.Upload)
 	registerGDPRRoutes(protected, c.GDPR)
 	registerTwoFARoutes(protected, c.TwoFA)
 	registerSearchRoutes(protected, c.Search)
@@ -95,9 +95,16 @@ func registerNotificationRoutes(protected *gin.RouterGroup, c *controllers.Notif
 	protected.PATCH("/notification/read", c.MarkAllRead)
 }
 
-func registerUploadRoutes(protected *gin.RouterGroup, c *controllers.UploadController) {
+// Uploads have mixed visibility. POST /upload requires auth (only logged-in
+// users can write). GET /files/:id is mounted on the public api group with
+// OptionalAuthMiddleware so the controller's visibility check runs first:
+// public files stream without a token, friends/private files still require
+// an authenticated caller.
+func registerUploadRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controllers.UploadController) {
+	api.GET("/files/:id", middleware.OptionalAuthMiddleware(), c.ServeFile)
+
+	protected := api.Group("", middleware.AuthMiddleware(rdb))
 	protected.POST("/upload", c.UploadFile)
-	protected.GET("/files/:id", c.ServeFile)
 }
 
 func registerGDPRRoutes(protected *gin.RouterGroup, c *controllers.GDPRController) {

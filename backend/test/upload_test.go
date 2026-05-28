@@ -164,15 +164,6 @@ func TestServeFile_NotFound(t *testing.T) {
 	}
 }
 
-func TestServeFile_RequiresAuth(t *testing.T) {
-	router, _ := SetupTestEnv()
-
-	w := authedRequest(t, router, "GET", "/api/files/some-id", "", "")
-	if w.Code != http.StatusUnauthorized {
-		t.Fatalf("serve without token: expected 401, got %d", w.Code)
-	}
-}
-
 // For an existing public file, access is always granted; the file is not on the
 // serving disk path in the test environment, so the handler reports 404 from disk
 // rather than 403 — confirming canAccess returned true.
@@ -230,5 +221,44 @@ func TestServeFile_FriendsVisibility(t *testing.T) {
 	w = authedRequest(t, router, "GET", "/api/files/"+fileID, friend.Token, "")
 	if w.Code == http.StatusForbidden {
 		t.Fatalf("friends-only file to accepted friend should be granted, got 403")
+	}
+}
+
+// anonRequest makes a GET without an Authorization header — used to verify
+// that ServeFile lets public files through to unauthenticated callers.
+func anonRequest(t *testing.T, router *gin.Engine, path string) *httptest.ResponseRecorder {
+	t.Helper()
+	req, _ := http.NewRequest("GET", path, nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	return w
+}
+
+func TestServeFile_PublicAllowsAnonymous(t *testing.T) {
+	t.Cleanup(func() { os.RemoveAll("./uploads") })
+	router, _ := SetupTestEnv()
+	owner := registerAndLogin(t, router, "srv_pub_anon_o", "srv_pub_anon_o@test.com", "StrongPass123!")
+	fileID := uploadAndGetID(t, router, owner.Token, "public")
+
+	w := anonRequest(t, router, "/api/files/"+fileID)
+	if w.Code == http.StatusUnauthorized {
+		t.Fatalf("public file should be reachable without auth, got 401 - body: %s", w.Body.String())
+	}
+}
+
+func TestServeFile_NonPublicRejectsAnonymous(t *testing.T) {
+	t.Cleanup(func() { os.RemoveAll("./uploads") })
+	router, _ := SetupTestEnv()
+	owner := registerAndLogin(t, router, "srv_anon_rej_o", "srv_anon_rej_o@test.com", "StrongPass123!")
+
+	cases := map[string]string{
+		"private": uploadAndGetID(t, router, owner.Token, "private"),
+		"friends": uploadAndGetID(t, router, owner.Token, "friends"),
+	}
+	for label, id := range cases {
+		w := anonRequest(t, router, "/api/files/"+id)
+		if w.Code != http.StatusUnauthorized {
+			t.Fatalf("%s file to anonymous: expected 401, got %d - body: %s", label, w.Code, w.Body.String())
+		}
 	}
 }
