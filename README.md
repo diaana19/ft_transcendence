@@ -191,6 +191,26 @@ Attribution is derived from Git history (commit topics and per-file authorship);
 | Tests, CI & code quality | ~81% backend coverage, CI coverage gate, golangci-lint, project layout | **lepereir** |
 | Infra & seed | Docker Compose, nginx, DB seeding (Go + curl scripts) | luluzuri, lepereir |
 
+
+| Feature                     | Description                                                            | Main contributor(s)   |
+| --------------------------- | ---------------------------------------------------------------------- | --------------------- |
+| Registration & login        | Email/password with bcrypt hashing, input validation (FE + BE)         | Lucas · Diana         |
+| JWT auth + refresh + logout | Access/refresh tokens, Redis-assisted session/invalidation             | Lucas · Valentin      |
+| Two-Factor Auth (TOTP)      | Setup / enable / disable / verify, with authenticator QR               | Lucas                 |
+| GitHub OAuth 2.0            | OAuth login + callback, account linking                                | Valentin · Lucas      |
+| Profiles                    | View/edit profile, avatar + wallpaper, follower/following counts       | Leonardo              |
+| Friends & follows           | Request/accept/reject/remove friends; follow/unfollow; lists           | Lucas · Valentin      |
+| Posts                       | Create/read/update/delete posts with image attachments                 | Lucas · Diana · Rosse |
+| Likes & comments            | Toggle likes; threaded comments CRUD                                   | Lucas · Rosse         |
+| Real-time chat              | WebSocket DMs & rooms, history, threaded replies, attachments          | Valentin              |
+| Notifications               | In-app notifications for social actions; mark-all-read                 | Valentin              |
+| Search                      | Users / posts / messages with filters, sorting, pagination             | Valentin              |
+| File upload & management    | Multi-type uploads, validation, visibility/ACL, serving                | Lucas · Diana         |
+| GDPR                        | Data export + account deletion                                         | Diana                 |
+| PWA                         | Installable + offline service worker                                   | Rosse                 |
+| Tests, CI & code quality    | ~81% backend coverage, CI coverage gate, golangci-lint, project layout | Valentin · Lucas · Leonardo      |
+| Infra & seed                | Docker Compose, nginx, DB seeding (Go + curl scripts)                  | Lucas · Valentin      |
+
 ---
 
 ## Modules
