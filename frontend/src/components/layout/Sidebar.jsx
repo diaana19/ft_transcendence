@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import { useAuth } from "../../hooks/useAuth"
 import {
   HomeIcon,
@@ -7,12 +7,18 @@ import {
   QuestionMarkCircleIcon,
   EnvelopeIcon,
   BellIcon,
-  EllipsisVerticalIcon
+  ArrowRightOnRectangleIcon
 } from "@heroicons/react/24/outline"
 
 export default function Sidebar() {
 
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login', { replace: true })
+  }
 
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-2 rounded-xl transition font-medium
@@ -86,10 +92,18 @@ export default function Sidebar() {
       <div className="absolute bottom-6 left-0 w-full px-4">
         <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
           <p className="text-xs text-gray-400">Logged in as @{user.username} </p>
-          <p className="text-sm text-gray-900 font-medium truncate">
+          <p className="text-sm text-gray-900 font-medium truncate mb-2">
             {user.email}
           </p>
-          <EllipsisVerticalIcon className="w-5 h-5 text-gray-400" />
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm
+                       text-gray-600 hover:text-red-600 hover:bg-red-50 transition border border-gray-200"
+          >
+            <ArrowRightOnRectangleIcon className="w-4 h-4" />
+            <span>Log out</span>
+          </button>
         </div>
       </div> )}
 

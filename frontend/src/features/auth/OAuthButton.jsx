@@ -1,7 +1,11 @@
 function OAuthButton() {
 
   const handleGithubLogin = () => {
-    window.location.href = "http://localhost:8080/oauth/login"
+    // Relative path so the browser hits the same origin (the edge proxy on
+    // https://localhost:3000 in dev). The backend will redirect to GitHub
+    // and back to /api/auth/oauth/github/callback, which sets the auth_token
+    // cookie and redirects to "/".
+    window.location.href = "/api/auth/oauth/github/login"
   }
 
   return (

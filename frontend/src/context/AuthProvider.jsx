@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect } from 'react'
+import api from '../services/axiosInstance'
 
 export const AuthContext = createContext()
 
@@ -8,10 +9,28 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true)
 
 
-    const logout = () => {
+    // clearLocalSession wipes the in-memory + localStorage state. Used by
+    // recovery paths (token expired, malformed JWT) where calling the backend
+    // would just bounce a 401 — there is no useful token to blacklist.
+    const clearLocalSession = () => {
         localStorage.removeItem('token')
         setToken(null)
         setUser(null)
+    }
+
+    // logout is the user-facing exit. Best-effort POST to /api/auth/logout
+    // so the backend can blacklist the JWT in Redis AND clear the auth_token
+    // cookie (the latter is critical for the OAuth path — without it the
+    // cookie survives, /api/auth/me succeeds on next mount, and the user
+    // appears to be logged back in immediately). The local cleanup runs
+    // unconditionally so a network failure still drops the SPA out.
+    const logout = async () => {
+        try {
+            await api.post('/api/auth/logout')
+        } catch {
+            // best-effort: network or 401 (already invalid) — fall through
+        }
+        clearLocalSession()
     }
 
     const decodeToken = (token) => {
@@ -29,19 +48,42 @@ export function AuthProvider({ children }) {
                 const payload = decodeToken(storedToken)
 
                 if (isExpired(payload.exp)) {
-                    logout()
+                    clearLocalSession()
                 } else {
                     setToken(storedToken)
                     setUser({ userId: payload.userId,
                         username: payload.username
                      })
                 }
+                setLoading(false)
+                return
             } catch {
-                logout()
+                clearLocalSession()
             }
         }
 
-        setLoading(false)
+        // No (valid) localStorage token. The OAuth callback only sets an
+        // HttpOnly auth_token cookie, so we probe /api/auth/me to recover
+        // the session — axiosInstance has withCredentials: true so the
+        // cookie travels with this request.
+        let cancelled = false
+        api.get('/api/auth/me')
+            .then((res) => {
+                if (cancelled) return
+                const u = res.data?.user
+                if (u) {
+                    setUser({
+                        userId: u.id,
+                        username: u.username,
+                        email: u.email,
+                        avatar: u.avatar,
+                    })
+                }
+            })
+            .catch(() => { /* not logged in — fall through */ })
+            .finally(() => { if (!cancelled) setLoading(false) })
+
+        return () => { cancelled = true }
     }, [])
 
     const loginUser = (data) => {
@@ -63,7 +105,7 @@ export function AuthProvider({ children }) {
 
         } catch (err) {
             console.error('Login failed:', err.message)
-            logout()
+            clearLocalSession()
         }
     }
 

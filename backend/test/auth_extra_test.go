@@ -169,3 +169,40 @@ func TestLogout_MissingToken(t *testing.T) {
 		t.Fatalf("logout with invalid token: expected 401, got %d", w.Code)
 	}
 }
+
+// TestAuthMe verifies /api/auth/me returns the authenticated user via JWT
+// (and, by extension, via the auth_token cookie set by the OAuth callback —
+// AuthMiddleware accepts both transports). Used by the SPA on mount to
+// recover an OAuth-only session where JS can't read the HttpOnly cookie.
+func TestAuthMe(t *testing.T) {
+	router, _ := SetupTestEnv()
+	u := registerAndLogin(t, router, "authme", "authme@test.com", "StrongPass123!")
+
+	w := authedRequest(t, router, "GET", "/api/auth/me", u.Token, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d - body: %s", w.Code, w.Body.String())
+	}
+	var resp struct {
+		User struct {
+			ID       string `json:"id"`
+			Username string `json:"username"`
+		} `json:"user"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.User.ID != u.ID {
+		t.Fatalf("expected user.id=%s, got %s", u.ID, resp.User.ID)
+	}
+	if resp.User.Username != "authme" {
+		t.Fatalf("expected user.username=authme, got %q", resp.User.Username)
+	}
+}
+
+func TestAuthMe_RequiresAuth(t *testing.T) {
+	router, _ := SetupTestEnv()
+	w := authedRequest(t, router, "GET", "/api/auth/me", "", "")
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 without token, got %d - body: %s", w.Code, w.Body.String())
+	}
+}

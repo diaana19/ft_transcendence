@@ -11,6 +11,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import api from '../../services/axiosInstance'
 import FriendsList from './FriendsList'
 import FollowButton from "../../components/common/FollowButton";
 import PostCard from '../posts/PostCard';
@@ -18,12 +19,11 @@ import { getPostsByAuthor } from '../posts/postService'
 
 export default function Profile() {
   console.log('PROFILE START')
-	const { user: authUser, token, logout } = useAuth();
+	const { user: authUser, logout } = useAuth();
   console.log('====================')
   console.log('AFTER USER AURTH , PROFILE RENDER')
   console.log('authUser:', authUser)
-  console.log('token:', token)
- 
+
 	const { id } = useParams();
    console.log('params id:', id)
   console.log('AFTER useParams')
@@ -76,20 +76,7 @@ export default function Profile() {
 	try {
 	setLoading(true);
 
-    console.log('FETCH USER START')
-    console.log('userId:', userId)
-    console.log('token:', token)
-
-	const res = await fetch(`/api/users/${userId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log('RESPONSE:', res)
-    console.log('STATUS:', res.status)
-    console.log('OK:', res.ok)
-
-	const data = await res.json();
-  console.log('USUARIO:', data)
-
+	const { data } = await api.get(`/api/users/${userId}`);
 	setUser(data);
 	setForm(data);
 	} catch (err) {
@@ -126,17 +113,7 @@ export default function Profile() {
 	*/
 	const handleUpdate = async () => {
 	try {
-		const res = await fetch(`/api/users/${userId}`, {
-		method: "PUT",
-		headers: {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${token}`
-		},
-		body: JSON.stringify(form),
-		});
-
-		const updatedUser = await res.json();
-
+		const { data: updatedUser } = await api.put(`/api/users/${userId}`, form);
 		setUser({ ...user, ...updatedUser });
 		setShowEdit(false);
 	} catch (err) {
@@ -153,11 +130,8 @@ export default function Profile() {
 	*/
 	const handleDelete = async () => {
 		try {
-			await fetch(`/api/users/${userId}`, {
-			method: "DELETE",
-			headers: { Authorization: `Bearer ${token}` },
-			});
-			logout();
+			await api.delete(`/api/users/${userId}`);
+			await logout();
 			navigate("/login");
 		} catch (err) {
 			console.error(err);
@@ -306,12 +280,7 @@ return (
                     // POST — sube la imagen
                     const formData = new FormData()
                     formData.append('file', file)
-                    const res = await fetch('/api/upload', {
-                      method: 'POST',
-                      headers: { Authorization: `Bearer ${token}` },
-                      body: formData
-                    })
-                    const data = await res.json()
+                    const { data } = await api.post('/api/upload', formData)
                     // Guarda en form para que el Save lo mande con PUT
                     setForm(prev => ({ ...prev, wallpaper: data.url }))
                   } catch (err) {
@@ -352,12 +321,7 @@ return (
                         // POST — sube la imagen
                         const formData = new FormData()
                         formData.append('file', file)
-                        const res = await fetch('/api/upload', {
-                          method: 'POST',
-                          headers: { Authorization: `Bearer ${token}` },
-                          body: formData
-                        })
-                        const data = await res.json()
+                        const { data } = await api.post('/api/upload', formData)
                         // Guarda en form — el Save manda todo con PUT
                         setForm(prev => ({ ...prev, avatar: data.url }))
                       } catch (err) {

@@ -59,6 +59,7 @@ func registerWebSocketRoutes(api *gin.RouterGroup, c *socket.ChatHandler) {
 
 func registerProtectedAuthRoutes(protected *gin.RouterGroup, c *controllers.AuthController) {
 	protected.POST("/auth/logout", c.LogoutUser)
+	protected.GET("/auth/me", c.Me)
 }
 
 func registerUserRoutes(protected *gin.RouterGroup, c *controllers.UserController) {

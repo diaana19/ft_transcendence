@@ -14,6 +14,11 @@ import (
 )
 
 func TestOAuthLogin_Redirects(t *testing.T) {
+	// OAuthService.IsConfigured short-circuits when client_id or client_secret
+	// is empty, so the test must supply non-empty values to exercise the real
+	// happy path. t.Setenv auto-restores the original value when the test ends.
+	t.Setenv("GITHUB_CLIENT_ID", "test-client-id")
+	t.Setenv("GITHUB_CLIENT_SECRET", "test-client-secret")
 	router, _ := SetupTestEnv()
 
 	req, _ := http.NewRequest("GET", "/api/auth/oauth/github/login", nil)
@@ -29,6 +34,28 @@ func TestOAuthLogin_Redirects(t *testing.T) {
 	}
 	if !strings.Contains(loc, "state=") {
 		t.Fatalf("authorize URL must carry a state param, got %q", loc)
+	}
+}
+
+// TestOAuthLogin_NotConfigured covers the fail-fast guard: when the GitHub
+// credentials are not set, /api/auth/oauth/github/login redirects to the SPA
+// login page with an error query param rather than handing the browser a
+// github.com URL with client_id= empty (which renders as a 404 on GitHub).
+func TestOAuthLogin_NotConfigured(t *testing.T) {
+	t.Setenv("GITHUB_CLIENT_ID", "")
+	t.Setenv("GITHUB_CLIENT_SECRET", "")
+	router, _ := SetupTestEnv()
+
+	req, _ := http.NewRequest("GET", "/api/auth/oauth/github/login", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusTemporaryRedirect {
+		t.Fatalf("expected 307, got %d", w.Code)
+	}
+	loc := w.Header().Get("Location")
+	if !strings.Contains(loc, "error=oauth_not_configured") {
+		t.Fatalf("expected redirect with oauth_not_configured error, got %q", loc)
 	}
 }
 
