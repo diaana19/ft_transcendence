@@ -211,13 +211,14 @@ func (r *postRepository) SearchByPost(
 
 	query := r.db.WithContext(ctx).
 		Model(&models.Post{}).
-		Where("content ILIKE ?", "%"+q+"%")
+		Where("content ILIKE ?", escapeLike(q))
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	if err := query.
+		Preload("Author").
 		Order(sort + " " + order).
 		Limit(limit).
 		Offset(offset).

@@ -101,7 +101,7 @@ func (r *messageRepository) SearchByContent(
 	query := r.db.WithContext(ctx).
 		Model(&models.Message{}).
 		Where("(sender_id = ? OR recipient_id = ?)", userID, userID).
-		Where("content ILIKE ?", "%"+q+"%")
+		Where("content ILIKE ?", escapeLike(q))
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err

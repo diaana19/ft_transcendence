@@ -172,7 +172,7 @@ func (r *userRepository) SearchByUsername(
 	var users []models.User
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&users).Where("username ILIKE ?", "%"+q+"%")
+	query := r.db.WithContext(ctx).Model(&users).Where("username ILIKE ?", escapeLike(q))
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
