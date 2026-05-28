@@ -55,16 +55,29 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user_id", claims.UserId)
+		c.Set("user_id", claims.Subject)
 		c.Set("username", claims.Username)
 		c.Next()
 	}
 }
 
-func OptionalAuthMiddleware() gin.HandlerFunc {
+// OptionalAuthMiddleware accepts requests with or without a token. When a
+// token is present it is validated through the same blacklist + signature
+// pipeline as AuthMiddleware — so a logged-out user (whose JWT was just
+// blacklisted) does not get personalized treatment on public endpoints like
+// GET /api/posts. Invalid or revoked tokens silently fall through to the
+// anonymous path rather than returning 401, because the caller did not ask
+// for auth.
+func OptionalAuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)
 		if token == "" {
+			c.Next()
+			return
+		}
+
+		ctx := context.Background()
+		if exists, err := rdb.Exists(ctx, "blacklist:"+token).Result(); err == nil && exists > 0 {
 			c.Next()
 			return
 		}
@@ -75,7 +88,8 @@ func OptionalAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user_id", claims.UserId)
+		c.Set("user_id", claims.Subject)
+		c.Set("username", claims.Username)
 		c.Next()
 	}
 }

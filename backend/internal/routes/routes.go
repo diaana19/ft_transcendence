@@ -102,7 +102,7 @@ func registerNotificationRoutes(protected *gin.RouterGroup, c *controllers.Notif
 // public files stream without a token, friends/private files still require
 // an authenticated caller.
 func registerUploadRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controllers.UploadController) {
-	api.GET("/files/:id", middleware.OptionalAuthMiddleware(), c.ServeFile)
+	api.GET("/files/:id", middleware.OptionalAuthMiddleware(rdb), c.ServeFile)
 
 	protected := api.Group("", middleware.AuthMiddleware(rdb))
 	protected.POST("/upload", c.UploadFile)
@@ -131,9 +131,9 @@ func registerGamificationRoutes(protected *gin.RouterGroup, c *controllers.Gamif
 // auth, mutations require it. Kept self-contained because of that quirk.
 func registerPostRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controllers.PostController) {
 	posts := api.Group("/posts")
-	posts.GET("", middleware.OptionalAuthMiddleware(), c.GetPosts)
-	posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(), c.GetPostsByUser)
-	posts.GET("/:id", middleware.OptionalAuthMiddleware(), c.GetPost)
+	posts.GET("", middleware.OptionalAuthMiddleware(rdb), c.GetPosts)
+	posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(rdb), c.GetPostsByUser)
+	posts.GET("/:id", middleware.OptionalAuthMiddleware(rdb), c.GetPost)
 	posts.GET("/:id/comments", c.GetComments)
 
 	protected := posts.Group("", middleware.AuthMiddleware(rdb))

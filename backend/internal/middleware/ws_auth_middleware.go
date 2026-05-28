@@ -27,7 +27,7 @@ func WSAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user_id", claims.UserId)
+		c.Set("user_id", claims.Subject)
 		c.Set("username", claims.Username)
 		c.Next()
 	}

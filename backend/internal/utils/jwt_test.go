@@ -8,9 +8,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// testSecret is at least jwtMinSecretLen (32) bytes so loadSecret accepts it.
+const testSecret = "test-secret-key-for-unit-tests-min-32-bytes"
+
 func setupJWTSecret(t *testing.T) {
 	t.Helper()
-	os.Setenv("JWT_SECRET", "test-secret-key-for-unit-tests")
+	os.Setenv("JWT_SECRET", testSecret)
 	t.Cleanup(func() {
 		os.Unsetenv("JWT_SECRET")
 	})
@@ -46,8 +49,11 @@ func TestValidateJWT_ValidToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if claims.UserId != "user-123" {
-		t.Errorf("expected userId 'user-123', got '%s'", claims.UserId)
+	if claims.Subject != "user-123" {
+		t.Errorf("expected sub 'user-123', got '%s'", claims.Subject)
+	}
+	if claims.Issuer != JWTIssuer {
+		t.Errorf("expected iss %q, got %q", JWTIssuer, claims.Issuer)
 	}
 }
 
@@ -56,8 +62,9 @@ func TestValidateJWT_ExpiredToken(t *testing.T) {
 	secret := os.Getenv("JWT_SECRET")
 
 	claims := Claims{
-		UserId: "user-123",
 		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "user-123",
+			Issuer:    JWTIssuer,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-1 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-2 * time.Hour)),
 		},
@@ -75,18 +82,42 @@ func TestValidateJWT_InvalidSignature(t *testing.T) {
 	setupJWTSecret(t)
 
 	claims := Claims{
-		UserId: "user-123",
 		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "user-123",
+			Issuer:    JWTIssuer,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, _ := token.SignedString([]byte("wrong-secret"))
+	tokenStr, _ := token.SignedString([]byte("another-secret-also-at-least-32-bytes-long-ok"))
 
 	_, err := ValidateJWT(tokenStr)
 	if err == nil {
 		t.Fatal("token with wrong signature should fail validation")
+	}
+}
+
+// TestValidateJWT_WrongIssuer ensures that a token signed with the right
+// secret but a different issuer is rejected — defends against accidental
+// cross-service token reuse.
+func TestValidateJWT_WrongIssuer(t *testing.T) {
+	setupJWTSecret(t)
+	secret := os.Getenv("JWT_SECRET")
+
+	claims := Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "user-123",
+			Issuer:    "some-other-service",
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenStr, _ := token.SignedString([]byte(secret))
+
+	if _, err := ValidateJWT(tokenStr); err == nil {
+		t.Fatal("token with wrong issuer should fail validation")
 	}
 }
 
@@ -108,6 +139,31 @@ func TestValidateJWT_EmptyToken(t *testing.T) {
 	}
 }
 
+// TestLoadSecret_EmptyEnvFailsFast guards against the silent fail-open where
+// an unset JWT_SECRET would otherwise sign / verify with []byte("") and
+// accept any forged token.
+func TestLoadSecret_EmptyEnvFailsFast(t *testing.T) {
+	os.Unsetenv("JWT_SECRET")
+
+	if _, err := GenerateJWT("x", "x"); err == nil {
+		t.Fatal("GenerateJWT must refuse an empty JWT_SECRET")
+	}
+	if _, err := ValidateJWT("anything"); err == nil {
+		t.Fatal("ValidateJWT must refuse an empty JWT_SECRET")
+	}
+}
+
+// TestLoadSecret_ShortEnvFailsFast covers the under-32-byte case. HS256 keys
+// shorter than the hash output are weak; refuse them outright.
+func TestLoadSecret_ShortEnvFailsFast(t *testing.T) {
+	os.Setenv("JWT_SECRET", "too-short")
+	t.Cleanup(func() { os.Unsetenv("JWT_SECRET") })
+
+	if _, err := GenerateJWT("x", "x"); err == nil {
+		t.Fatal("GenerateJWT must refuse an under-32-byte JWT_SECRET")
+	}
+}
+
 func TestRefreshToken_FreshToken_ReturnsSameToken(t *testing.T) {
 	setupJWTSecret(t)
 
@@ -126,8 +182,9 @@ func TestRefreshToken_NearExpiry_ReturnsNewToken(t *testing.T) {
 	secret := os.Getenv("JWT_SECRET")
 
 	claims := Claims{
-		UserId: "user-123",
 		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "user-123",
+			Issuer:    JWTIssuer,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-23*time.Hour - 30*time.Minute)),
 		},
@@ -147,8 +204,8 @@ func TestRefreshToken_NearExpiry_ReturnsNewToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("refreshed token should be valid: %v", err)
 	}
-	if newClaims.UserId != "user-123" {
-		t.Error("refreshed token should preserve userId")
+	if newClaims.Subject != "user-123" {
+		t.Error("refreshed token should preserve sub")
 	}
 }
 
@@ -157,8 +214,9 @@ func TestRefreshToken_ExpiredToken_ReturnsError(t *testing.T) {
 	secret := os.Getenv("JWT_SECRET")
 
 	claims := Claims{
-		UserId: "user-123",
 		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "user-123",
+			Issuer:    JWTIssuer,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-1 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-25 * time.Hour)),
 		},

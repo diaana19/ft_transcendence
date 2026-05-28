@@ -34,8 +34,11 @@ export function AuthProvider({ children }) {
     }
 
     const decodeToken = (token) => {
+        // Backend now puts the user id in the standard `sub` claim. Old
+        // tokens issued before the switch carried a custom `user_id` field;
+        // honour both so a refresh during the rollout doesn't kick users out.
         const payload = JSON.parse(atob(token.split('.')[1]))
-        return { userId: payload.user_id, exp: payload.exp }
+        return { userId: payload.sub ?? payload.user_id, exp: payload.exp }
     }
 
     const isExpired = (exp) => exp * 1000 < Date.now()
