@@ -215,9 +215,9 @@ status**, since only fully functional modules count at evaluation:
 |---|---|---|---|---|---|
 | Use a framework for frontend **and** backend | Web | 2 | ✅ | React (Vite) frontend + Gin (Go) backend | whole team |
 | Real-time features via WebSockets | Web | 2 | 🟧 | `gorilla/websocket` hub with broadcast, connect/disconnect handling, Redis pub/sub; chat UI not yet wired | vali |
-| User interaction (chat + profile + friends) | Web | 2 | 🟧 | Profiles & friends done end-to-end; chat backend complete, chat UI pending | luluzuri, vali, rmarcas- |
+| User interaction (chat + profile + friends) | Web | 2 | 🟧 | Profiles & friends done end-to-end; chat backend complete, chat UI pending | vali, dirituay |
 | Public API (rate-limit, docs, ≥5 CRUD endpoints) | Web | 2 | 🟧 | 30+ REST endpoints (GET/POST/PUT/DELETE), per-IP token-bucket rate limiting, Swagger + Postman docs. _Auth is JWT bearer rather than a separate API key._ | luluzuri, lepereir |
-| Standard user management | User Mgmt | 2 | 🟧 | Profile edit, avatar (with default), friends, profile page. _Online-status indicator not yet implemented._ | luluzuri, rmarcas- |
+| Standard user management | User Mgmt | 2 | 🟧 | Profile edit, avatar (with default), friends, profile page. _Online-status indicator not yet implemented._ | lepereir , rmarcas- |
 
 **Major subtotal: 10 pts**
 
@@ -228,13 +228,14 @@ status**, since only fully functional modules count at evaluation:
 | ORM | Web | 1 | ✅ | GORM with auto-migration, relations, soft deletes | luluzuri |
 | Notification system | Web | 1 | 🟧 | Notifications for friend requests/likes/messages/replies; basic UI + mark-all-read | rmarcas-, vali |
 | Advanced search (filters/sort/pagination) | Web | 1 | 🟧 | `/api/search` over users/posts/messages, e2e-tested; search UI pending | vali, lepereir |
-| File upload & management | Web | 1 | ✅ | Multi-type uploads, client+server validation, visibility/ACL, delete, serving | luluzuri, lepereir |
+| File upload & management | Web | 1 | ✅ | Multi-type uploads, client+server validation, visibility/ACL, delete, serving | luluzuri |
 | Progressive Web App (PWA) | Web | 1 | ✅ | `vite-plugin-pwa`, manifest, Workbox service worker, installable + offline | rmarcas- |
 | OAuth 2.0 (GitHub) | User Mgmt | 1 | ✅ | OAuth login + callback, account linking | vali, luluzuri |
-| Two-Factor Authentication (TOTP) | User Mgmt | 1 | ✅ | RFC-6238 TOTP setup/enable/disable/verify with authenticator apps | luluzuri, vali |
-| GDPR compliance | Data & Analytics | 1 | 🟧 | Data export + account deletion with confirmation; confirmation emails pending | lepereir |
-| Multiple languages (i18n) | Accessibility & i18n | 1 | ⬜ | Planned: `react-i18next`, 3 languages + UI language switcher, all user-facing text translatable | rmarcas-, dirituay |
+| Two-Factor Authentication (TOTP) | User Mgmt | 1 | ✅ | RFC-6238 TOTP setup/enable/disable/verify with authenticator apps | luluzuri |
+| GDPR compliance | Data & Analytics | 1 | 🟧 | Data export + account deletion with confirmation; confirmation emails pending | dirituay |
+| Multiple languages (i18n) | Accessibility & i18n | 1 | ⬜ | Planned: `react-i18next`, 3 languages + UI language switcher, all user-facing text translatable | dirituay |
 | Custom-made design system | UX UI  | 1 | ⬜ | Planned: design system with reusable components, including a proper color palette, typography, and icons (minimum: 10 reusable components). | dirituay |
+| Sypport for aditional browsers | Accessibility  | 1 | ✅ |Full compatibility with at least 2 additional browsers (Firefox, Safari, Edge, etc.). | rmarcas- |
 
 **Minor subtotal: 10 pts**
 
