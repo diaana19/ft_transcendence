@@ -172,27 +172,8 @@ users ───────────────┐
 Attribution is derived from Git history (commit topics and per-file authorship); see
 [Individual Contributions](#individual-contributions).
 
-| Feature | Description | Main contributor(s) |
-|---|---|---|
-| Registration & login | Email/password with bcrypt hashing, input validation (FE + BE) | luluzuri, dirituay, rmarcas- |
-| JWT auth + refresh + logout | Access/refresh tokens, Redis-assisted session/invalidation | luluzuri, vali |
-| Two-Factor Auth (TOTP) | Setup / enable / disable / verify, with authenticator QR | luluzuri, vali (BE) · rmarcas-, dirituay (UI) |
-| GitHub OAuth 2.0 | OAuth login + callback, account linking | vali, luluzuri |
-| Profiles | View/edit profile, avatar + wallpaper, follower/following counts | rmarcas-, luluzuri |
-| Friends & follows | Request/accept/reject/remove friends; follow/unfollow; lists | luluzuri, vali (BE) · rmarcas- (UI) |
-| Posts | Create/read/update/delete posts with image attachments | luluzuri, rmarcas-, dirituay |
-| Likes & comments | Toggle likes; threaded comments CRUD | rmarcas-, luluzuri, vali |
-| Real-time chat | WebSocket DMs & rooms, history, threaded replies, attachments | **vali** (backend) |
-| Notifications | In-app notifications for social actions; mark-all-read | rmarcas-, vali |
-| Search | Users / posts / messages with filters, sorting, pagination | vali (BE) · lepereir (wiring + e2e tests) |
-| File upload & management | Multi-type uploads, validation, visibility/ACL, serving | luluzuri, lepereir |
-| GDPR | Data export + account deletion | lepereir |
-| PWA | Installable + offline service worker | rmarcas- |
-| Tests, CI & code quality | ~81% backend coverage, CI coverage gate, golangci-lint, project layout | **lepereir** |
-| Infra & seed | Docker Compose, nginx, DB seeding (Go + curl scripts) | luluzuri, lepereir |
 
-
-| Feature                     | Description                                                            | Main contributor(s)   |
+| Feature                     | Description                                                            | Contributor(s)        |
 | --------------------------- | ---------------------------------------------------------------------- | --------------------- |
 | Registration & login        | Email/password with bcrypt hashing, input validation (FE + BE)         | Lucas · Diana         |
 | JWT auth + refresh + logout | Access/refresh tokens, Redis-assisted session/invalidation             | Lucas · Valentin      |
