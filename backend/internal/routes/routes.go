@@ -32,6 +32,7 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	registerGDPRRoutes(protected, c.GDPR)
 	registerTwoFARoutes(protected, c.TwoFA)
 	registerSearchRoutes(protected, c.Search)
+	registerGamificationRoutes(protected, c.Gamification)
 }
 
 // /auth/{register,login,refresh,2fa/verify} — public, rate-limited per IP.
@@ -112,6 +113,10 @@ func registerTwoFARoutes(protected *gin.RouterGroup, c *controllers.TwoFAControl
 
 func registerSearchRoutes(protected *gin.RouterGroup, c *controllers.SearchController) {
 	protected.GET("/search", c.Search)
+}
+
+func registerGamificationRoutes(protected *gin.RouterGroup, c *controllers.GamificationController) {
+	protected.GET("/users/:id/gamification", c.Get)
 }
 
 // Posts have mixed visibility: list / single / comments are public with optional
