@@ -3,144 +3,132 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 
-	"ft_transcendence/backend/internal/config"
 	"ft_transcendence/backend/internal/controllers"
 	"ft_transcendence/backend/internal/middleware"
-	"ft_transcendence/backend/internal/repositories"
-	"ft_transcendence/backend/internal/services"
 	"ft_transcendence/backend/internal/socket"
 )
 
-func createPostRoutes(api *gin.RouterGroup, rdb *redis.Client, postController *controllers.PostController) {
-	posts := api.Group("/posts")
-	{
-		posts.GET("", middleware.OptionalAuthMiddleware(), postController.GetPosts)
-		posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(), postController.GetPostsByUser)
-		posts.GET("/:id", middleware.OptionalAuthMiddleware(), postController.GetPost)
-		posts.GET("/:id/comments", postController.GetComments)
+// SetupRoutes registers every HTTP and WebSocket endpoint under /api. The
+// route tree is broken up by feature so this function reads as a manifest;
+// the per-feature register* helpers below own the path details. rdb is passed
+// for the middlewares that need direct Redis access (rate limit, auth session
+// lookups).
+func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
+	api := router.Group("/api")
 
-		protected := posts.Group("")
-		protected.Use(middleware.AuthMiddleware(rdb))
-		{
-			protected.POST("", postController.CreatePost)
-			protected.PUT("/:id", postController.UpdatePost)
-			protected.DELETE("/:id", postController.DeletePost)
+	registerPublicAuthRoutes(api, c.Auth, rdb)
+	registerOAuthRoutes(api, c.OAuth)
+	registerWebSocketRoutes(api, c.ChatWS)
+	registerPostRoutes(api, rdb, c.Post)
 
-			protected.POST("/:id/like", postController.ToggleLike)
-
-			protected.POST("/:id/comments", postController.CreateComment)
-			protected.PUT("/:id/comments/:commentId", postController.UpdateComment)
-			protected.DELETE("/:id/comments/:commentId", postController.DeleteComment)
-		}
-	}
+	protected := api.Group("", middleware.AuthMiddleware(rdb))
+	registerProtectedAuthRoutes(protected, c.Auth)
+	registerUserRoutes(protected, c.User)
+	registerFriendRoutes(protected, c.Friend)
+	registerChatRoutes(protected, c.Chat, c.Msg)
+	registerNotificationRoutes(protected, c.Notification)
+	registerUploadRoutes(protected, c.Upload)
+	registerGDPRRoutes(protected, c.GDPR)
+	registerTwoFARoutes(protected, c.TwoFA)
+	registerSearchRoutes(protected, c.Search)
 }
 
-func SetupRoutes(router *gin.Engine, pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) {
-	notifRepo := repositories.NewNotificationRepositories(pdb)
-	notifPubSub := repositories.NewNotificationPubSub(rdb)
-	notifService := services.NewNotificationService(notifRepo, notifPubSub)
-	notifController := controllers.NewNotificationController(notifService)
+// /auth/{register,login,refresh,2fa/verify} — public, rate-limited per IP.
+func registerPublicAuthRoutes(api *gin.RouterGroup, c *controllers.AuthController, rdb *redis.Client) {
+	auth := api.Group("/auth", middleware.RateLimitMiddleware(rdb))
+	auth.POST("/register", c.RegisterUser)
+	auth.POST("/login", c.LoginUser)
+	auth.POST("/refresh", c.RefreshToken)
+	auth.POST("/2fa/verify", c.Verify2FA)
+}
 
-	msgRepo := repositories.NewMessageRepository(pdb)
-	msgController := controllers.NewMsgController(msgRepo)
+// GitHub OAuth — public login surface, currently not rate-limited.
+func registerOAuthRoutes(api *gin.RouterGroup, c *controllers.OAuthController) {
+	oauth := api.Group("/auth/oauth/github")
+	oauth.GET("/login", c.OAuthLogin)
+	oauth.GET("/callback", c.OAuthCallback)
+}
 
-	userRepo := repositories.NewUserRepository(pdb)
-	authService := services.NewAuthService(userRepo)
-	twoFAService := services.NewTwoFAService(userRepo)
-	authController := controllers.NewAuthController(authService, twoFAService, rdb)
-	twoFAController := controllers.NewTwoFAController(twoFAService)
+// WebSocket chat — auth happens inside WSAuthMiddleware (reads token from a
+// query param because browsers can't set Authorization on a WS handshake).
+func registerWebSocketRoutes(api *gin.RouterGroup, c *socket.ChatHandler) {
+	api.GET("/ws/chat", middleware.WSAuthMiddleware(), c.HandleWS)
+}
 
-	postRepo := repositories.NewPostRepository(pdb)
-	postService := services.NewPostService(postRepo)
+func registerProtectedAuthRoutes(protected *gin.RouterGroup, c *controllers.AuthController) {
+	protected.POST("/auth/logout", c.LogoutUser)
+}
 
-	userService := services.NewUserService(userRepo)
-	friendService := &services.FriendService{DB: pdb}
-	friendController := &controllers.FriendController{
-		Service:             friendService,
-		NotificationService: notifService,
-	}
-	userController := controllers.NewUserController(userService, friendService)
+func registerUserRoutes(protected *gin.RouterGroup, c *controllers.UserController) {
+	protected.GET("/users", c.GetUsers)
+	protected.GET("/users/:id", c.GetUser)
+	protected.PUT("/users/:id", c.UpdateUser)
+	protected.DELETE("/users/:id", c.DeleteUser)
+}
 
-	fileRepo := repositories.NewFileRepository(pdb)
-	uploadService := services.NewUploadService(fileRepo)
-	uploadController := &controllers.UploadController{
-		Service:       uploadService,
-		FriendService: friendService,
-	}
+func registerFriendRoutes(protected *gin.RouterGroup, c *controllers.FriendController) {
+	protected.POST("/friends/request/:id", c.SendFriendRequest)
+	protected.POST("/friends/accept/:id", c.AcceptFriend)
+	protected.POST("/friends/reject/:id", c.RejectFriendRequest)
+	protected.DELETE("/friends/:id", c.RemoveFriend)
+	protected.POST("/friends/follow/:id", c.FollowUser)
+	protected.DELETE("/friends/follow/:id", c.UnfollowUser)
+	protected.GET("/users/:id/followers", c.GetFollowers)
+	protected.GET("/users/:id/following", c.GetFollowing)
+	protected.GET("/users/:id/friends", c.GetFriends)
+}
 
-	postController := controllers.NewPostController(postService, notifService, uploadService)
-	gdprService := services.NewGDPRService(pdb)
-	gdprController := controllers.NewGDPRController(gdprService)
+// Chat — REST fallback (used when the WebSocket is unavailable) plus the read
+// endpoints for room history and message replies.
+func registerChatRoutes(protected *gin.RouterGroup, c *controllers.ChatController, m *controllers.MsgController) {
+	protected.GET("/rooms/:roomId/messages", m.GetRoomMsg)
+	protected.GET("/messages/:messageId/replies", m.GetReplies)
+	protected.POST("/chat/messages", c.SendMessage)
+	protected.GET("/chat/messages", c.ListConversation)
+	protected.GET("/chat/poll", c.Poll)
+}
 
-	wsManager := socket.NewWSManager()
-	chatHandler := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo, fileRepo)
+func registerNotificationRoutes(protected *gin.RouterGroup, c *controllers.NotificationController) {
+	protected.GET("/notification", c.GetUnread)
+	protected.PATCH("/notification/read", c.MarkAllRead)
+}
 
-	chatService := services.NewChatService(msgRepo, userRepo)
-	chatController := controllers.NewChatController(chatService)
+func registerUploadRoutes(protected *gin.RouterGroup, c *controllers.UploadController) {
+	protected.POST("/upload", c.UploadFile)
+	protected.GET("/files/:id", c.ServeFile)
+}
 
-	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
-	oauthController := controllers.NewOAuthController(oauthService, cfg)
+func registerGDPRRoutes(protected *gin.RouterGroup, c *controllers.GDPRController) {
+	protected.GET("/gdpr/export", c.ExportUserData)
+	protected.DELETE("/gdpr/delete", c.DeleteUserData)
+}
 
-	searchService := services.NewSearchService(userRepo, msgRepo, postRepo)
-	searchController := controllers.NewSearchController(searchService)
+func registerTwoFARoutes(protected *gin.RouterGroup, c *controllers.TwoFAController) {
+	protected.POST("/2fa/setup", c.Setup)
+	protected.POST("/2fa/enable", c.Enable)
+	protected.POST("/2fa/disable", c.Disable)
+}
 
-	api := router.Group("/api")
-	{
-		api.POST("/auth/2fa/verify", middleware.RateLimitMiddleware(rdb), authController.Verify2FA)
-		api.POST("/auth/register", middleware.RateLimitMiddleware(rdb), authController.RegisterUser)
-		api.POST("/auth/login", middleware.RateLimitMiddleware(rdb), authController.LoginUser)
-		api.POST("/auth/refresh", middleware.RateLimitMiddleware(rdb), authController.RefreshToken)
-		api.GET("/ws/chat", middleware.WSAuthMiddleware(), chatHandler.HandleWS)
+func registerSearchRoutes(protected *gin.RouterGroup, c *controllers.SearchController) {
+	protected.GET("/search", c.Search)
+}
 
-		api.GET("/auth/oauth/github/login", oauthController.OAuthLogin)
-		api.GET("/auth/oauth/github/callback", oauthController.OAuthCallback)
+// Posts have mixed visibility: list / single / comments are public with optional
+// auth, mutations require it. Kept self-contained because of that quirk.
+func registerPostRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controllers.PostController) {
+	posts := api.Group("/posts")
+	posts.GET("", middleware.OptionalAuthMiddleware(), c.GetPosts)
+	posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(), c.GetPostsByUser)
+	posts.GET("/:id", middleware.OptionalAuthMiddleware(), c.GetPost)
+	posts.GET("/:id/comments", c.GetComments)
 
-		protected := api.Group("/")
-		protected.Use(middleware.AuthMiddleware(rdb))
-		{
-			protected.POST("/auth/logout", authController.LogoutUser)
-			protected.GET("users", userController.GetUsers)
-			protected.GET("users/:id", userController.GetUser)
-			protected.PUT("users/:id", userController.UpdateUser)
-			protected.DELETE("users/:id", userController.DeleteUser)
-
-			protected.POST("friends/request/:id", friendController.SendFriendRequest)
-			protected.POST("friends/accept/:id", friendController.AcceptFriend)
-			protected.POST("friends/reject/:id", friendController.RejectFriendRequest)
-			protected.DELETE("friends/:id", friendController.RemoveFriend)
-
-			// Room message history — served by the WebSocket primary path
-			protected.GET("rooms/:roomId/messages", msgController.GetRoomMsg)
-			protected.GET("messages/:messageId/replies", msgController.GetReplies)
-
-			// Poll/DM fallback — used when WebSocket is unavailable
-			protected.POST("chat/messages", chatController.SendMessage)
-			protected.GET("chat/messages", chatController.ListConversation)
-			protected.GET("chat/poll", chatController.Poll)
-			protected.POST("friends/follow/:id", friendController.FollowUser)
-			protected.DELETE("friends/follow/:id", friendController.UnfollowUser)
-
-			protected.GET("users/:id/followers", friendController.GetFollowers)
-			protected.GET("users/:id/following", friendController.GetFollowing)
-			protected.GET("users/:id/friends", friendController.GetFriends)
-
-			protected.GET("notification", notifController.GetUnread)
-			protected.PATCH("notification/read", notifController.MarkAllRead)
-
-			protected.POST("upload", uploadController.UploadFile)
-			protected.GET("/files/:id", uploadController.ServeFile)
-			protected.GET("gdpr/export", gdprController.ExportUserData)
-			protected.DELETE("gdpr/delete", gdprController.DeleteUserData)
-
-			protected.POST("/2fa/setup", twoFAController.Setup)
-			protected.POST("/2fa/enable", twoFAController.Enable)
-			protected.POST("/2fa/disable", twoFAController.Disable)
-
-			protected.GET("search", searchController.Search)
-		}
-
-		createPostRoutes(api, rdb, postController)
-	}
+	protected := posts.Group("", middleware.AuthMiddleware(rdb))
+	protected.POST("", c.CreatePost)
+	protected.PUT("/:id", c.UpdatePost)
+	protected.DELETE("/:id", c.DeletePost)
+	protected.POST("/:id/like", c.ToggleLike)
+	protected.POST("/:id/comments", c.CreateComment)
+	protected.PUT("/:id/comments/:commentId", c.UpdateComment)
+	protected.DELETE("/:id/comments/:commentId", c.DeleteComment)
 }

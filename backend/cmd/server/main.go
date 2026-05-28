@@ -64,7 +64,8 @@ func main() {
 		c.JSON(200, gin.H{"status": "OK"})
 	})
 
-	routes.SetupRoutes(router, pdb, rdb, conf)
+	ctrl := routes.Wire(pdb, rdb, conf)
+	routes.SetupRoutes(router, ctrl, rdb)
 
 	if err := router.Run(":8080"); err != nil {
 		log.Fatal("Server failed to start: ", err)

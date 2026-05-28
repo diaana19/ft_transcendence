@@ -140,7 +140,8 @@ func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 	db.Exec("TRUNCATE TABLE posts, likes, replies, reposts, notifications, friends RESTART IDENTITY CASCADE")
 
 	router := gin.Default()
-	routes.SetupRoutes(router, db, rdb, cfg)
+	ctrl := routes.Wire(db, rdb, cfg)
+	routes.SetupRoutes(router, ctrl, rdb)
 
 	return router, db
 }
