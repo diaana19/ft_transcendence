@@ -5,6 +5,8 @@ import RequireAuth from '../components/common/RequireAuth'
 import PostPage from '../features/posts/PostPage.jsx'
 import RegisterForm from '../features/auth/RegisterForm.jsx'
 import LoginForm from '../features/auth/LoginForm.jsx'
+import TwoFAVerify from '../features/auth/TwoFAVerify.jsx'
+import TwoFASetup from '../features/auth/TwoFASetup.jsx'
 import Profile from '../features/user/Profile.jsx'
 import Feed from '../features/posts/Feed'
 import NotificationsPage from '../components/notifications/Notification.jsx'
@@ -20,6 +22,10 @@ function App() {
 
                 <Route path="/register" element={<RegisterForm />} />
                 <Route path="/login" element={<LoginForm />} />
+                {/* Login second-factor step. Reached via LoginForm's redirect
+                    after a 200 with {needs_2fa, pending_token}. Public so the
+                    not-yet-authenticated user can complete login. */}
+                <Route path="/login/2fa" element={<TwoFAVerify />} />
 
                 {/* PRIVATE */}
                 <Route
@@ -33,6 +39,8 @@ function App() {
                     <Route path="/profile/:id" element={<Profile />} />
                     <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/post/:id" element={<PostPage />} />
+                    {/* Enroll a TOTP factor on the current account. */}
+                    <Route path="/2fa/setup" element={<TwoFASetup />} />
                 </Route>
 
             </Routes>

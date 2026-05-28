@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 import { setupTwoFA, enableTwoFA } from './authService'
 
 function TwoFASetup() {
@@ -67,10 +68,12 @@ function TwoFASetup() {
                             Scan this QR with Google Authenticator
                         </p>
 
-                        <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}`}
-                            alt="QR Code"
-                        />
+                        {/*
+                          * Render the otpauth:// URL client-side. Sending the
+                          * URL to a third-party QR service (e.g. qrserver.com)
+                          * would leak the TOTP secret embedded in it.
+                          */}
+                        <QRCodeSVG value={qrCode} size={200} includeMargin={true} />
                     </div>
 
                     <div>
