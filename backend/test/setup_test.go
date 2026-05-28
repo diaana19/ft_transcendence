@@ -17,7 +17,6 @@ import (
 
 	"ft_transcendence/backend/internal/config"
 	"ft_transcendence/backend/internal/models"
-	"ft_transcendence/backend/internal/redis"
 	"ft_transcendence/backend/internal/routes"
 )
 
@@ -100,8 +99,8 @@ func TestMain(m *testing.M) {
 
 // sharedDB and sharedRDB are initialised once and reused across every test.
 // Tests run serially, so a single connection pool avoids exhausting Postgres'
-// connection limit (each config.ConnectDB call would otherwise open a pool that
-// is never closed).
+// connection limit (each cfg.Postgres.Connect call would otherwise open a pool
+// that is never closed).
 var (
 	sharedDB  *gorm.DB
 	sharedRDB *goredis.Client
@@ -116,16 +115,16 @@ func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 	}
 
 	if sharedDB == nil {
-		db, err := config.ConnectDB()
+		db, err := cfg.Postgres.Connect()
 		if err != nil {
-			panic(fmt.Errorf("connect test db: %w", err))
+			panic(fmt.Errorf("connect test postgres: %w", err))
 		}
 		sharedDB = db
 	}
 	db := sharedDB
 
 	if sharedRDB == nil {
-		rdb, err := redis.InitRedis()
+		rdb, err := cfg.Redis.Connect()
 		if err != nil {
 			panic(err)
 		}

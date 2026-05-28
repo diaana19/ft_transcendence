@@ -14,12 +14,17 @@ services:
       DB_PORT: "5432"
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      DEBUG_REDIS: "false"
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
   frontend:
     build:
@@ -30,7 +35,8 @@ services:
     expose:
       - "80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   proxy:
     build:
@@ -42,8 +48,10 @@ services:
     ports:
       - "3000:443"
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
 
   db:
     image: postgres:15

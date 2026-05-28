@@ -37,33 +37,33 @@ func createPostRoutes(api *gin.RouterGroup, rdb *redis.Client, postController *c
 	}
 }
 
-func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config.Config) {
-	notifRepo := repositories.NewNotificationRepositories(DB)
+func SetupRoutes(router *gin.Engine, pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) {
+	notifRepo := repositories.NewNotificationRepositories(pdb)
 	notifPubSub := repositories.NewNotificationPubSub(rdb)
 	notifService := services.NewNotificationService(notifRepo, notifPubSub)
 	notifController := controllers.NewNotificationController(notifService)
 
-	msgRepo := repositories.NewMessageRepository(DB)
+	msgRepo := repositories.NewMessageRepository(pdb)
 	msgController := controllers.NewMsgController(msgRepo)
 
-	userRepo := repositories.NewUserRepository(DB)
+	userRepo := repositories.NewUserRepository(pdb)
 	authService := services.NewAuthService(userRepo)
 	twoFAService := services.NewTwoFAService(userRepo)
 	authController := controllers.NewAuthController(authService, twoFAService, rdb)
 	twoFAController := controllers.NewTwoFAController(twoFAService)
 
-	postRepo := repositories.NewPostRepository(DB)
+	postRepo := repositories.NewPostRepository(pdb)
 	postService := services.NewPostService(postRepo)
 
 	userService := services.NewUserService(userRepo)
-	friendService := &services.FriendService{DB: DB}
+	friendService := &services.FriendService{DB: pdb}
 	friendController := &controllers.FriendController{
 		Service:             friendService,
 		NotificationService: notifService,
 	}
 	userController := controllers.NewUserController(userService, friendService)
 
-	fileRepo := repositories.NewFileRepository(DB)
+	fileRepo := repositories.NewFileRepository(pdb)
 	uploadService := services.NewUploadService(fileRepo)
 	uploadController := &controllers.UploadController{
 		Service:       uploadService,
@@ -71,7 +71,7 @@ func SetupRoutes(router *gin.Engine, DB *gorm.DB, rdb *redis.Client, cfg *config
 	}
 
 	postController := controllers.NewPostController(postService, notifService, uploadService)
-	gdprService := services.NewGDPRService(DB)
+	gdprService := services.NewGDPRService(pdb)
 	gdprController := controllers.NewGDPRController(gdprService)
 
 	wsManager := socket.NewWSManager()

@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
-	"os"
+	"net/url"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -11,26 +11,12 @@ import (
 	"ft_transcendence/backend/internal/models"
 )
 
-type DBConfig struct {
-	DatabaseName     string
-	DatabaseHost     string
-	DatabasePort     string
-	DatabaseUser     string
-	DatabasePassword string
-}
-
-func ConnectDB() (*gorm.DB, error) {
-	conf := &DBConfig{
-		DatabaseName:     os.Getenv("DB_NAME"),
-		DatabaseHost:     os.Getenv("DB_HOST"),
-		DatabasePort:     os.Getenv("DB_PORT"),
-		DatabaseUser:     os.Getenv("DB_USER"),
-		DatabasePassword: os.Getenv("DB_PASSWORD"),
-	}
-
+func (pg *Postgres) Connect() (*gorm.DB, error) {
 	connString := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		conf.DatabaseHost, conf.DatabasePort, conf.DatabaseUser, conf.DatabasePassword, conf.DatabaseName,
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		url.QueryEscape(pg.User),
+		url.QueryEscape(pg.Password),
+		pg.Host, pg.Port, pg.Name,
 	)
 
 	DB, err := gorm.Open(postgres.Open(connString), &gorm.Config{})
@@ -39,7 +25,7 @@ func ConnectDB() (*gorm.DB, error) {
 	}
 
 	log.Println("Running AutoMigrate…")
-	err = DB.AutoMigrate(
+	if err := DB.AutoMigrate(
 		&models.User{},
 		&models.Friend{},
 		&models.Post{},
@@ -51,9 +37,7 @@ func ConnectDB() (*gorm.DB, error) {
 		&models.Notification{},
 		&models.File{},
 		&models.FileAccess{},
-	)
-	if err != nil {
-		log.Printf("AutoMigrate error: %v\n", err)
+	); err != nil {
 		return nil, fmt.Errorf("auto-migrate: %w", err)
 	}
 	log.Println("AutoMigrate completed successfully")

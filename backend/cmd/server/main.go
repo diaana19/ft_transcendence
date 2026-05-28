@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"log"
-	"os"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -18,9 +18,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	DB, dberr := config.ConnectDB()
-	if dberr != nil {
-		log.Fatal(dberr)
+
+	pdb, err := conf.Postgres.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rdb, err := conf.Redis.Connect()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	router := gin.Default()
@@ -28,44 +34,37 @@ func main() {
 
 	router.Use(cors.New(cors.Config{
 		AllowOriginFunc:  func(_ string) bool { return true },
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Cookie"},
-		ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With", "X-CSRF-Token"},
+		ExposeHeaders:    []string{"X-Request-Id", "X-RateLimit-Remaining", "Location"},
 		AllowCredentials: true,
 	}))
 
-	router.OPTIONS("/*path", func(c *gin.Context) {
-		c.Status(204)
-	})
-
-	rdb, err := redis.InitRedis()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if os.Getenv("DEBUG_REDIS") == "true" {
-		ctx := context.Background()
-		redis.Subscribe(ctx, rdb, "test-channel", func(message string) {
-			log.Printf("Handler received: %s", message)
-		})
-		if err := redis.Publish(rdb, "test-channel", "Redis pub/sub is working"); err != nil {
-			log.Printf("Publish error: %v\n", err)
-		}
-	}
-
-	router.GET("/", func(ctx *gin.Context) {
+	api := router.Group("/api")
+	api.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
 			"message": "Backend API is running",
 			"status":  "success",
 		})
 	})
 
-	router.GET("/health", func(c *gin.Context) {
+	api.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status": "OK",
 		})
 	})
 
-	routes.SetupRoutes(router, DB, rdb, conf)
+	api.GET("/health/redis", func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+		defer cancel()
+		if err := redis.RoundTrip(ctx, rdb, "health", "ping"); err != nil {
+			c.JSON(503, gin.H{"status": "fail", "error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"status": "OK"})
+	})
+
+	routes.SetupRoutes(router, pdb, rdb, conf)
 
 	if err := router.Run(":8080"); err != nil {
 		log.Fatal("Server failed to start: ", err)

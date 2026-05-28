@@ -65,9 +65,13 @@ func envOr(key, fallback string) string {
 
 func connect(t *testing.T) *gorm.DB {
 	t.Helper()
-	db, err := config.ConnectDB()
+	cfg, err := config.Load()
 	if err != nil {
-		t.Fatalf("connect db: %v", err)
+		t.Fatalf("load config: %v", err)
+	}
+	db, err := cfg.Postgres.Connect()
+	if err != nil {
+		t.Fatalf("connect postgres: %v", err)
 	}
 	if err := ensureSchema(db); err != nil {
 		t.Fatalf("ensure schema: %v", err)

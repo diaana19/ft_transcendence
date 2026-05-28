@@ -1,16 +1,15 @@
-package redis
+package config
 
 import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/redis/go-redis/v9"
 )
 
-func InitRedis() (*redis.Client, error) {
-	addr := fmt.Sprintf("%s:%s", os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT"))
+func (r *Redis) Connect() (*redis.Client, error) {
+	addr := fmt.Sprintf("%s:%s", r.Host, r.Port)
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr: addr,

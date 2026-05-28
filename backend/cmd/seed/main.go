@@ -422,7 +422,11 @@ func seedNotifications(db *gorm.DB, users []models.User) {
 }
 
 func main() {
-	db, err := config.ConnectDB()
+	cfg, err := config.Load()
+	if err != nil {
+		panic(err)
+	}
+	db, err := cfg.Postgres.Connect()
 	if err != nil {
 		panic(err)
 	}
