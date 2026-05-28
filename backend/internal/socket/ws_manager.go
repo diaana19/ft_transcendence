@@ -40,9 +40,9 @@ func (m *WSManager) UnregisterClient(client *Client) {
 	defer m.mu.Unlock()
 
 	for roomID, room := range m.rooms {
-		if _, ok := room[roomID]; ok {
+		if _, ok := room[client.ID]; ok {
 			delete(room, client.ID)
-			log.Printf("Client %s has left the room [%s\n]", client.ID, roomID)
+			log.Printf("Client %s has left the room [%s]\n", client.ID, roomID)
 			if len(room) == 0 {
 				delete(m.rooms, roomID)
 			}
@@ -70,39 +70,54 @@ func (m *WSManager) LeaveRoom(client *Client, roomID string) {
 
 	if room, ok := m.rooms[roomID]; ok {
 		delete(room, client.ID)
-		log.Printf("Client %s has left the room [%s\n]", client.Username, roomID)
+		log.Printf("Client %s has left the room [%s]\n", client.Username, roomID)
 		if len(room) == 0 {
 			delete(m.rooms, roomID)
 		}
 	}
 }
 
-func safeSend(ch chan []byte, msg []byte) {
+// safeSend writes msg to ch without blocking. Returns true on enqueue,
+// false if the buffer is full or the channel has been closed. Recover guards
+// the send-on-closed-channel panic so callers can keep iterating other clients.
+func safeSend(ch chan []byte, msg []byte) (delivered bool) {
 	defer func() {
 		if r := recover(); r != nil {
+			delivered = false
 			log.Printf("safeSend: channel was closed, dropping message\n")
 		}
 	}()
 	select {
 	case ch <- msg:
+		return true
 	default:
 		log.Printf("safeSend: buffer full, dropping message\n")
+		return false
 	}
 }
 
+// BroadcastToRoom fans message out to every client in roomID except senderID.
+// The room snapshot is taken under RLock and the actual sends happen after the
+// lock is released, so a slow consumer can never block Register/Unregister/
+// Join/Leave on the manager.
 func (m *WSManager) BroadcastToRoom(roomID string, message []byte, senderID string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
+	m.mu.RLock()
 	room, ok := m.rooms[roomID]
 	if !ok {
+		m.mu.RUnlock()
 		return
 	}
-	for _, client := range room {
-		if client.ID == senderID {
+	clients := make([]*Client, 0, len(room))
+	for _, c := range room {
+		if c.ID == senderID {
 			continue
 		}
-		safeSend(client.Send, message)
+		clients = append(clients, c)
+	}
+	m.mu.RUnlock()
+
+	for _, c := range clients {
+		safeSend(c.Send, message)
 	}
 }
 

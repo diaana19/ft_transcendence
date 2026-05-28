@@ -55,7 +55,7 @@ func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 	searchService := services.NewSearchService(userRepo, msgRepo, postRepo)
 
 	wsManager := socket.NewWSManager()
-	chatWS := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo, fileRepo)
+	chatWS := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo, fileRepo, cfg.FrontendURL)
 
 	return &Controllers{
 		Auth:         controllers.NewAuthController(authService, twoFAService, rdb),

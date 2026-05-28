@@ -20,16 +20,7 @@ import (
 	redispub "ft_transcendence/backend/internal/redis"
 	"ft_transcendence/backend/internal/repositories"
 	"ft_transcendence/backend/internal/services"
-	"ft_transcendence/backend/internal/utils"
 )
-
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		origin := r.Header.Get("Origin")
-		allowed := []string{"http://localhost:3000", "http://localhost", "null", ""}
-		return slices.Contains(allowed, origin)
-	},
-}
 
 type ChatHandler struct {
 	manager             *WSManager
@@ -37,6 +28,7 @@ type ChatHandler struct {
 	notificationService *services.NotificationService
 	msgRepo             repositories.MessageRepository
 	fileRepo            repositories.FileRepository
+	upgrader            websocket.Upgrader
 	subscribedRooms     map[string]bool
 	subscribedMu        sync.Mutex
 }
@@ -57,20 +49,31 @@ type OutgoingMessage struct {
 	RoomID   string          `json:"room_id,omitempty"`
 }
 
+// NewChatHandler builds a ChatHandler whose WebSocket upgrader accepts
+// connections from frontendURL (the SPA's public origin) and from clients
+// that omit the Origin header (non-browser tools, smoke tests). "null" is
+// also allowed for sandboxed iframes and file:// origins during local dev.
 func NewChatHandler(
 	manager *WSManager,
 	rdb *redis.Client,
 	notifService *services.NotificationService,
 	msgRepo repositories.MessageRepository,
 	fileRepo repositories.FileRepository,
+	frontendURL string,
 ) *ChatHandler {
+	allowed := []string{frontendURL, "null", ""}
 	return &ChatHandler{
 		manager:             manager,
 		rdb:                 rdb,
 		notificationService: notifService,
 		msgRepo:             msgRepo,
 		fileRepo:            fileRepo,
-		subscribedRooms:     make(map[string]bool),
+		upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return slices.Contains(allowed, r.Header.Get("Origin"))
+			},
+		},
+		subscribedRooms: make(map[string]bool),
 	}
 }
 
@@ -79,43 +82,33 @@ func (h *ChatHandler) sendPendingNotifications(client *Client) {
 	if err != nil || len(notifs) == 0 {
 		return
 	}
+	allDelivered := true
 	for _, n := range notifs {
 		payload, err := json.Marshal(map[string]any{
 			"type":         "notification",
 			"notification": n,
 		})
 		if err != nil {
+			allDelivered = false
 			continue
 		}
-		safeSend(client.Send, payload)
+		if !safeSend(client.Send, payload) {
+			allDelivered = false
+		}
 	}
-	_ = h.notificationService.MarkAllRead(client.ID)
+	// Only flag the backlog as read if every notification actually reached the
+	// client's send buffer. If anything dropped, leave them unread so they
+	// resurface on next connect rather than disappearing silently.
+	if allDelivered {
+		_ = h.notificationService.MarkAllRead(client.ID)
+	}
 }
 
 func (h *ChatHandler) HandleWS(c *gin.Context) {
-	var userID string
-	var username string
-	if id, exists := c.Get("user_id"); exists {
-		userID = id.(string)
-		if u, ok := c.Get("username"); ok {
-			username = u.(string)
-		}
-	} else {
-		token := c.Query("token")
-		if token == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
-		claims, err := utils.ValidateJWT(token)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
-			return
-		}
-		userID = claims.UserId
-		username = claims.Username
-	}
+	userID := c.GetString("user_id")
+	username := c.GetString("username")
 
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Printf("WebSocket upgrade error: %v\n", err)
 		return
@@ -131,8 +124,10 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 	h.manager.RegisterClient(client)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	// LIFO: cancel fires first so the notifications subscriber goroutine starts
+	// winding down before UnregisterClient closes client.Send.
 	defer h.manager.UnregisterClient(client)
+	defer cancel()
 
 	log.Printf("[WS] Client connected username=%q userID=%s , subscribing to notifications:%s",
 		client.Username, client.ID, client.ID)
@@ -241,6 +236,11 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		return
 	}
 
+	msgType := "room"
+	if strings.HasPrefix(incoming.RoomID, "dm:") {
+		msgType = "dm"
+	}
+
 	msg := models.Message{
 		ID:        id.String(),
 		CreatedAt: time.Now(),
@@ -250,7 +250,7 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		Content:   incoming.Content,
 		ParentID:  incoming.ParentID,
 		FileID:    incoming.FileID,
-		Type:      "dm",
+		Type:      msgType,
 	}
 
 	if err := h.msgRepo.Create(&msg); err != nil {
