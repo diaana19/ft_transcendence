@@ -234,7 +234,7 @@ status**, since only fully functional modules count at evaluation:
 | Two-Factor Authentication (TOTP) | User Mgmt | 1 | ✅ | RFC-6238 TOTP setup/enable/disable/verify with authenticator apps | luluzuri, vali |
 | GDPR compliance | Data & Analytics | 1 | 🟧 | Data export + account deletion with confirmation; confirmation emails pending | lepereir |
 | Multiple languages (i18n) | Accessibility & i18n | 1 | ⬜ | Planned: `react-i18next`, 3 languages + UI language switcher, all user-facing text translatable | rmarcas-, dirituay |
-| Data export / import | Data & Analytics | 1 | ⬜ | Planned: extend the GDPR export with **import** + multiple formats (JSON/CSV/XML) and validation | lepereir |
+| Custom-made design system | UX UI  | 1 | ⬜ | Planned: design system with reusable components, including a proper color palette, typography, and icons (minimum: 10 reusable components). | dirituay |
 
 **Minor subtotal: 10 pts**
 
