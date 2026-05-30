@@ -12,6 +12,7 @@ import Feed from '../features/posts/Feed'
 import NotificationsPage from '../components/notifications/Notification.jsx'
 import ChatRoom from '../features/chat/ChatRoom'
 import MessagesList from '../features/chat/MessagesList'
+import HelpCenter from '../features/help/HelpCenter.jsx'
 
 function App() {
     return (
@@ -20,6 +21,7 @@ function App() {
                 {/* PUBLIC */}
                 <Route element={<Layout />}>
                     <Route path="/" element={<Feed />} />
+					<Route path="/help" element={<HelpCenter />} />
                 </Route>
 
                 <Route path="/register" element={<RegisterForm />} />
