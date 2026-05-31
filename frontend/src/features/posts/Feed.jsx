@@ -59,12 +59,12 @@ function Feed() {
 
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-2xl mx-auto space-y-4 mt-6 ">
 
       {/* Composer */}
         {user?.userId && (
           <CreatePost onPostCreated={fetchPosts} user={user} />
-        
+
       )}
       {/* Posts */}
       {fetching ? (

@@ -16,301 +16,304 @@ import FriendsList from './FriendsList'
 import FollowButton from "../../components/common/FollowButton";
 import PostCard from '../posts/PostCard';
 import { getPostsByAuthor } from '../posts/postService'
+import { sendFriendRequest } from '../../features/user/userService'
 
 export default function Profile() {
-  console.log('PROFILE START')
-	const { user: authUser, logout } = useAuth();
-  console.log('====================')
-  console.log('AFTER USER AURTH , PROFILE RENDER')
-  console.log('authUser:', authUser)
-
-	const { id } = useParams();
-   console.log('params id:', id)
-  console.log('AFTER useParams')
+  const { user: authUser, logout } = useAuth();
+  const { id } = useParams();
   const userId = id || authUser?.userId;
-  console.log('AFTER userId', userId)
-  console.log('computed userId:', userId)
-	const navigate = useNavigate();
-  console.log('AFTER useNavigate')
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("posts");
 
-	const [user, setUser] = useState({
-	name: "",
-	email: "",
-	bio: "",
-	});
-  console.log('AFTER user state')
-	const [loading, setLoading] = useState(false);
-  console.log('AFTER loading state')
-	const [showEdit, setShowEdit] = useState(false);
-  console.log('AFTER show edit state')
-	const [showDelete, setShowDelete] = useState(false);
-  console.log('AFTER show delete state')
-	const [form, setForm] = useState(user);
-  console.log('AFTER setForm state')
+  const [user, setUser] = useState({ name: "", email: "", bio: "" });
+  const [loading, setLoading] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [form, setForm] = useState(user);
   const [posts, setPosts] = useState([]);
-  console.log('AFTER setPost state')
   const [loadingPosts, setLoadingPosts] = useState(false);
-  console.log('AFTER setlloading state')
   const [isFollowing, setIsFollowing] = useState(false);
-  console.log('AFTER setfollow state')
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [friendRequested, setFriendRequested] = useState(false)
+  const [isFriend, setIsFriend] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
 
-	useEffect(() => {
-  console.log('USE EFFECT RUN')
-  console.log('userId inside effect:', userId)
-	if (userId) {
-	fetchUser();
-  fetchUserPosts();
-	}
-	}, [userId]);
+  useEffect(() => {
+    if (userId) {
+      fetchUser();
+      fetchUserPosts();
+    }
+  }, [userId]);
 
-	/*
-	** Fetches user data from the API and updates local state
-	** params:
-	**   none (uses userId from route params)
-	** returns:
-	**   Promise<void>
-	*/
-	const fetchUser = async () => {
-	try {
-	setLoading(true);
+  const fetchUser = async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get(`/api/users/${userId}`);
+      setUser(data);
+      setForm(data);
 
-	const { data } = await api.get(`/api/users/${userId}`);
-	setUser(data);
-	setForm(data);
-	} catch (err) {
-	console.error(err);
-	} finally {
-	setLoading(false);
-	}
-	};
+      if (authUser?.userId !== userId) {
+        const followers = await api.get(`/api/users/${userId}/followers`)
+        const isAlreadyFollowing = (followers.data?.data || followers.data || [])
+          .some(f => f.id === authUser?.userId)
+        setIsFollowing(isAlreadyFollowing)
 
-	/*
-	** Fetches user posts from the API and updates local state
-	** params:
-	**   none (uses userId from route params)
-	*/
+        const friends = await api.get(`/api/users/${userId}/friends`)
+        const isAlreadyFriend = (friends.data?.data || friends.data || [])
+          .some(f => f.id === authUser?.userId)
+        setIsFriend(isAlreadyFriend)
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchUserPosts = async () => {
-  try {
-    setLoadingPosts(true)
-    const data = await getPostsByAuthor(userId)
-    setPosts(data)
-  } catch (err) {
-    console.error(err)
-  } finally {
-    setLoadingPosts(false)
+    try {
+      setLoadingPosts(true)
+      const data = await getPostsByAuthor(userId)
+      setPosts(data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoadingPosts(false)
+    }
   }
-}
 
-	/*
-	** Updates user profile data on the server
-	** params:
-	**   none (uses form state and userId from route params)
-	** returns:
-	**   Promise<void>
-	*/
-	const handleUpdate = async () => {
-	try {
-		const { data: updatedUser } = await api.put(`/api/users/${userId}`, form);
-		setUser({ ...user, ...updatedUser });
-		setShowEdit(false);
-	} catch (err) {
-		console.error(err);
-	}
-	};
+  const handleUpdate = async () => {
+    try {
+      const { data: updatedUser } = await api.put(`/api/users/${userId}`, form);
+      setUser({ ...user, ...updatedUser });
+      setShowEdit(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-	/*
-	** Deletes the user account from the server
-	** params:
-	**   none (uses userId from route params)
-	** returns:
-	**   Promise<void>
-	*/
-	const handleDelete = async () => {
-		try {
-			await api.delete(`/api/users/${userId}`);
-			await logout();
-			navigate("/login");
-		} catch (err) {
-			console.error(err);
-		}
-	};
+  const handleDelete = async () => {
+    try {
+      await api.delete(`/api/users/${userId}`, {
+        data: { password: deletePassword }
+      })
+      await logout()
+      navigate("/login")
+    } catch (err) {
+      console.error(err)
+    }
+  };
 
-	if (loading) return <p>Cargando perfil...</p>;
-console.log('BEFORE RETURN')
-return (
-  
-  <div className="min-h-screen bg-white">
-    {console.log('RENDER MAIN DIV')}
-    {/* Banner */}
-    <div className="h-48 w-full overflow-hidden bg-blue-500" >
-    {user.wallpaper && (
-      <img src={user.wallpaper} alt="banner" className="w-full h-full object-cover" />
-    )}
-    </div>
-    {/* Card */}
-    <div className="border-b border-gray-200">
-      <div className="relative px-4">
+  const handleFriendRequest = async () => {
+    try {
+      await sendFriendRequest(userId)
+      setFriendRequested(true)
+    } catch (err) {
+      console.error('Error sending friend request:', err)
+    }
+  }
 
-        {/* Avatar */}
-        <div className="absolute -top-16">
-          <div className="relative w-32 h-32">
-            <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-300 overflow-hidden">
-              {user.avatar
-                ? <img src={user.avatar || '/default-avatar.jpg'} alt="avatar"  className="w-full h-full object-cover"
+  if (loading) return <p>Loading profile...</p>;
+
+  return (
+    <div className="min-h-screen bg-transparent">
+      {/* Banner */}
+      <div className="h-56 w-full overflow-hidden" style={{ background: 'linear-gradient(120deg, #fde8f0 0%, #ede8fd 50%, #e8f0fd 100%)' }}>
+        {user.wallpaper && (
+          <img src={user.wallpaper} alt="banner" className="w-full h-full object-cover" />
+        )}
+      </div>
+
+      {/* Card */}
+      <div className="border-b border-gray-200">
+        <div className="relative px-4">
+
+          {/* Avatar */}
+          <div className="absolute -top-16">
+            <div className="relative w-32 h-32">
+              <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-300 overflow-hidden">
+                {user.avatar
+                  ? <img src={user.avatar || '/default-avatar.jpg'} alt="avatar" className="w-full h-full object-cover"
                     onError={(e) => { e.target.src = '/default-avatar.jpg' }} />
-                : <div className="w-full h-full bg-gray-300" />
-              }
+                  : <div className="w-full h-full bg-gray-300" />
+                }
+              </div>
+            </div>
+          </div>
+
+          {/* Botones top-right */}
+          <div className="flex justify-end pt-3 pb-2 gap-2 flex-wrap">
+            {authUser?.userId === userId ? (
+              <>
+                <button
+                  onClick={() => setShowEdit(true)}
+                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors hover:bg-[#ede8fd]"
+                  style={{ border: '1px solid #ede8fd', color: '#534ab7', background: 'white' }}
+                >
+                  Edit profile
+                </button>
+                <button
+                  onClick={() => setShowDelete(true)}
+                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors"
+                  style={{ border: '1px solid #fde8f0', color: '#d4537e', background: 'white' }}
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => navigate('/settings')}
+                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors hover:bg-[#ede8fd]"
+                  style={{ border: '1px solid #ede8fd', color: '#534ab7', background: 'white' }}
+                >
+                  Settings
+                </button>
+              </>
+            ) : (
+              <div className="flex gap-2">
+                <FollowButton onFollow={fetchUser} targetId={userId} isFollowing={isFollowing} />
+                <button
+                  onClick={handleFriendRequest}
+                  disabled={friendRequested || isFriend}
+                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors hover:bg-[#faf8f5]"
+                  style={{ border: '1px solid #ede8fd', color: '#534ab7', background: 'white' }}
+                >
+                  {isFriend ? 'Friends ✓' : friendRequested ? 'Requested' : 'Add friend'}
+                </button>
+                <button
+                  onClick={() => navigate(`/messages/${id}`)}
+                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors hover:bg-[#faf8f5]"
+                  style={{ border: '1px solid #ede8fd', color: '#534ab7', background: 'white' }}
+                >
+                  Message
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Info */}
+          <div className="mt-12 pb-3">
+            <h2 className="text-xl font-bold" style={{ color: '#2c2c2a' }}>{user.name || 'No name'}</h2>
+            <p className="text-sm" style={{ color: '#afa9ec' }}>@{user.email}</p>
+            {user.bio && (
+              <p className="mt-2 text-sm" style={{ color: '#5f5e5a', borderLeft: '2px solid #a78bfa', paddingLeft: '8px' }}>
+                {user.bio}
+              </p>
+            )}
+            <div className="flex gap-4 mt-3">
+              <span className="text-sm cursor-pointer hover:underline">
+                <strong style={{ color: '#534ab7' }}>{user.following_count ?? 0} </strong>
+                <span className="ml-1" style={{ color: '#b4b2a9' }}>Following</span>
+              </span>
+              <span className="text-sm cursor-pointer hover:underline">
+                <strong className="text-black">{user.followers_count ?? 0}</strong>
+                <span className="text-gray-500 ml-1">Followers</span>
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Botones top-right */}
-        <div className="flex justify-end pt-3 pb-2 gap-2">
-          {authUser?.userId === userId ? (
-            <>
-              <button
-                onClick={() => setShowEdit(true)}
-                className="border border-gray-300 px-4 py-1.5 rounded-full text-sm font-bold hover:bg-gray-100 transition-colors"
-              >
-                Edit profile
-              </button>
-              <button
-                onClick={() => setShowDelete(true)}
-                className="border border-red-300 px-4 py-1.5 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
-              >
-                Delete
-              </button>
-            </>
-          ) : (
-            <FollowButton onFollow={fetchUser} targetId={userId} isFollowing={isFollowing} />
-          )}
-        </div>
-
-        {/* Info — empieza después del avatar */}
-        <div className="mt-16 pb-3">
-          <h2 className="text-xl font-bold text-black">{user.name || 'No name'}</h2>
-          <p className="text-gray-500 text-sm">@{user.email}</p>
-          {user.bio && <p className="mt-2 text-sm text-gray-800">{user.bio}</p>}
-
-          {/* Contadores */}
-          <div className="flex gap-4 mt-3">
-            <span className="text-sm cursor-pointer hover:underline">
-              <strong className="text-black">{user.following_count ?? 0}</strong>
-              <span className="text-gray-500 ml-1">Following</span>
-            </span>
-            <span className="text-sm cursor-pointer hover:underline">
-              <strong className="text-black">{user.followers_count ?? 0}</strong>
-              <span className="text-gray-500 ml-1">Followers</span>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Posts tab */}
-      <div className="flex border-b border-gray-200">
-        <div className="flex-1 text-center py-4 text-sm font-bold border-b-2 border-blue-400 text-black cursor-pointer">
-          Posts
-        </div>
-      </div>
-    </div>
-
-    {/* Posts list */}
-    <div>
-      {loadingPosts ? (
-        <p className="text-center py-8 text-gray-400">Loading posts...</p>
-      ) : posts.length === 0 ? (
-        <p className="text-center py-8 text-gray-400">No posts yet</p>
-      ) : (
-        posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            currentUserId={authUser?.userId}
-            onDelete={(id) => setPosts(posts.filter(p => p.id !== id))}
-            onUpdate={(updated) => setPosts(posts.map(p => p.id === updated.id ? updated : p))}
-          />
-        ))
-      )}
-    </div>
-
-    {/* Modal Edit */}
-    {showEdit && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        {/* Overlay */}
-      <div className="absolute inset-0 " onClick={() => setShowEdit(false)} />
-
-    {/* Modal*/}
-      <div className="relative z-10 bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
-
-          {/* Header */}
-          <div className="flex items-center gap-4 px-4 py-3 border-b border-gray-200">
-            <button onClick={() => setShowEdit(false)} className="hover:bg-gray-100 rounded-full p-2 text-sm">✕</button>
-            <h3 className="text-lg font-bold flex-1">Edit profile</h3>
+        {/* Posts tab */}
+        <div className="flex border-b" style={{ borderColor: '#ede8fd' }}>
+          {['posts', 'replies', 'media'].map(tab => (
             <button
-              onClick={handleUpdate}
-              className="bg-black text-white text-sm font-bold px-4 py-1.5 rounded-full hover:bg-gray-800"
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="flex-1 text-center py-4 text-sm font-semibold capitalize transition-colors"
+              style={{
+                color: activeTab === tab ? '#534ab7' : '#b4b2a9',
+                borderBottom: activeTab === tab ? '2px solid #534ab7' : '2px solid transparent',
+                background: 'transparent'
+              }}
             >
-              Save
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
-          </div>
+          ))}
+        </div>
+      </div>
 
-          {/* Banner clickable */}
-          <div className="relative h-32 bg-blue-500 ">
-            {form.wallpaper
-              ? <img src={form.wallpaper} alt="banner" className="w-full h-full object-cover" />
-              : null
-            }
-            <label className="absolute inset-0 flex items-center justify-center  bg-black/10 cursor-pointer hover:bg-opacity-40 transition-all">
-              {uploadingBanner
-                ? <span className="text-white text-xs">Uploading...</span>
-                : <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
-                    <path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/>
-                    <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
-                  </svg>
-              }
-              <input type="file" accept="image/*" className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files[0]
-                  if (!file) return
-                  setUploadingBanner(true)
-                  try {
-                    // POST — sube la imagen
-                    const formData = new FormData()
-                    formData.append('file', file)
-                    const { data } = await api.post('/api/upload', formData)
-                    // Guarda en form para que el Save lo mande con PUT
-                    setForm(prev => ({ ...prev, wallpaper: data.url }))
-                  } catch (err) {
-                    console.error(err)
-                  } finally {
-                    setUploadingBanner(false)
-                  }
-                }}
+      {/* Posts list */}
+      <div className="mt-6">
+        {activeTab === 'posts' && (
+          loadingPosts ? (
+            <p className="text-center py-8" style={{ color: '#b4b2a9' }}>Loading posts...</p>
+          ) : posts.length === 0 ? (
+            <p className="text-center py-8" style={{ color: '#b4b2a9' }}>No posts yet</p>
+          ) : (
+            posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                currentUserId={authUser?.userId}
+                onDelete={(id) => setPosts(posts.filter(p => p.id !== id))}
+                onUpdate={(updated) => setPosts(posts.map(p => p.id === updated.id ? updated : p))}
               />
-            </label>
-          </div>
+            ))
+          )
+        )}
+        {activeTab === 'replies' && (
+          <p className="text-center py-8" style={{ color: '#b4b2a9' }}>No replies yet</p>
+        )}
+        {activeTab === 'media' && (
+          <p className="text-center py-8" style={{ color: '#b4b2a9' }}>No media yet</p>
+        )}
+      </div>
 
-          {/* Avatar clickable */}
-          <div className="px-4">
-            <div className="relative -mt-10 mb-4 w-20 h-20">
-              <div className="w-20 h-20 rounded-full border-4 border-white bg-gray-300 overflow-hidden">
-                <img
-                  src={form.avatar || '/default-avatar.jpg'}
-                  alt="avatar"
-                  className="w-full h-full object-cover"
-                  onError={(e) => { e.target.src = '/default-avatar.jpg' }}
+      {/* Modal Edit */}
+      {showEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(237, 232, 253, 0.4)', backdropFilter: 'blur(4px)' }}>
+          <div className="absolute inset-0" onClick={() => setShowEdit(false)} />
+          <div className="relative z-10 bg-white rounded-2xl w-full max-w-lg overflow-hidden" style={{ border: '2px solid #ede8fd', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+            <div className="flex items-center gap-4 px-4 py-3 border-b" style={{ borderColor: '#ede8fd' }}>
+              <button onClick={() => setShowEdit(false)} className="rounded-full p-2 text-sm transition-colors hover:bg-[#faf8f5]" style={{ color: '#534ab7' }}>✕</button>
+              <h3 className="text-lg font-bold flex-1" style={{ color: '#2c2c2a' }}>Edit profile</h3>
+              <button onClick={handleUpdate} className="text-sm font-bold px-4 py-1.5 rounded-full transition-colors" style={{ background: '#534ab7', color: 'white', border: 'none' }}>
+                Save
+              </button>
+            </div>
+
+            <div className="relative h-32" style={{ background: 'linear-gradient(120deg, #fde8f0 0%, #ede8fd 50%, #e8f0fd 100%)' }}>
+              {form.wallpaper && <img src={form.wallpaper} alt="banner" className="w-full h-full object-cover" />}
+              <label className="absolute inset-0 flex items-center justify-center bg-black/10 cursor-pointer hover:bg-opacity-40 transition-all">
+                {uploadingBanner
+                  ? <span className="text-white text-xs">Uploading...</span>
+                  : <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
+                    <path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z" />
+                    <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" />
+                  </svg>
+                }
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files[0]
+                    if (!file) return
+                    setUploadingBanner(true)
+                    try {
+                      const formData = new FormData()
+                      formData.append('file', file)
+                      const { data } = await api.post('/api/upload', formData)
+                      setForm(prev => ({ ...prev, wallpaper: data.url }))
+                    } catch (err) {
+                      console.error(err)
+                    } finally {
+                      setUploadingBanner(false)
+                    }
+                  }}
                 />
-              </div>
-                <label className="absolute inset-0 flex items-center justify-center  bg-black/10 rounded-full cursor-pointer hover:bg-opacity-50 transition-all">
+              </label>
+            </div>
+
+            <div className="px-4">
+              <div className="relative -mt-10 mb-4 w-20 h-20">
+                <div className="w-20 h-20 rounded-full border-4 border-white bg-gray-300 overflow-hidden">
+                  <img src={form.avatar || '/default-avatar.jpg'} alt="avatar" className="w-full h-full object-cover"
+                    onError={(e) => { e.target.src = '/default-avatar.jpg' }} />
+                </div>
+                <label className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-full cursor-pointer hover:bg-opacity-50 transition-all">
                   {uploadingAvatar
                     ? <span className="text-white text-xs">...</span>
                     : <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                        <path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/>
-                        <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
-                      </svg>
+                      <path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z" />
+                      <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" />
+                    </svg>
                   }
                   <input type="file" accept="image/*" className="hidden"
                     onChange={async (e) => {
@@ -318,11 +321,9 @@ return (
                       if (!file) return
                       setUploadingAvatar(true)
                       try {
-                        // POST — sube la imagen
                         const formData = new FormData()
                         formData.append('file', file)
                         const { data } = await api.post('/api/upload', formData)
-                        // Guarda en form — el Save manda todo con PUT
                         setForm(prev => ({ ...prev, avatar: data.url }))
                       } catch (err) {
                         console.error(err)
@@ -332,52 +333,48 @@ return (
                     }}
                   />
                 </label>
+              </div>
+
+              <input className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-400"
+                placeholder="Name" type="text" value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <input className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-400"
+                placeholder="Email" type="email" value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 text-sm focus:outline-none focus:border-blue-400 resize-none"
+                placeholder="Bio" rows={3} value={form.bio}
+                onChange={(e) => setForm({ ...form, bio: e.target.value })} />
             </div>
-
-            {/* Campos */}
-            <input
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-400"
-              placeholder="Name"
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-            <input
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-400"
-              placeholder="Email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <textarea
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 text-sm focus:outline-none focus:border-blue-400 resize-none"
-              placeholder="Bio"
-              rows={3}
-              value={form.bio}
-              onChange={(e) => setForm({ ...form, bio: e.target.value })}
-            />
           </div>
         </div>
-      </div>
-    )}
+      )}
 
-    {/* Modal Delete */}
-    {showDelete && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div className="bg-white p-6 rounded-2xl w-80 shadow-xl">
-          <h3 className="text-lg font-bold mb-2">Delete account</h3>
-          <p className="text-gray-500 text-sm mb-4">This action is permanent and cannot be undone.</p>
-          <div className="flex justify-end gap-2">
-            <button onClick={() => setShowDelete(false)} className="px-4 py-2 rounded-full border border-gray-300 text-sm font-semibold hover:bg-gray-100">
-              Cancel
-            </button>
-            <button onClick={handleDelete} className="px-4 py-2 rounded-full bg-red-500 text-white text-sm font-bold hover:bg-red-600">
-              Yes, delete
-            </button>
+      {/* Modal Delete */}
+      {showDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(237, 232, 253, 0.4)', backdropFilter: 'blur(4px)' }}>
+          <div className="absolute inset-0" onClick={() => setShowDelete(false)} />
+          <div className="relative z-10 bg-white p-6 rounded-2xl w-80" style={{ border: '2px solid #ede8fd', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
+            <h3 className="text-lg font-bold mb-2" style={{ color: '#2c2c2a' }}>Delete account</h3>
+            <p className="text-sm mb-4" style={{ color: '#b4b2a9' }}>This action is permanent and cannot be undone.</p>
+            <input
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="Enter your password"
+              className="w-full rounded-lg px-3 py-2 mb-4 text-sm focus:outline-none"
+              style={{ border: '1px solid #ede8fd' }}
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setShowDelete(false)} className="px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#faf8f5] transition-colors" style={{ border: '1px solid #ede8fd', color: '#534ab7' }}>
+                Cancel
+              </button>
+              <button onClick={handleDelete} className="px-4 py-2 rounded-full text-sm font-bold transition-colors" style={{ background: '#d4537e', color: 'white', border: 'none' }}>
+                Yes, delete
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </div>
-)
+      )}
+    </div>
+  )
 }
