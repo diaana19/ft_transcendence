@@ -14,6 +14,7 @@ import ChatRoom from '../features/chat/ChatRoom'
 import MessagesList from '../features/chat/MessagesList'
 import CookiesBanner from '../components/common/CookiesBanner'
 import { CursorArrowRippleIcon } from '@heroicons/react/16/solid'
+import HelpCenter from '../features/help/HelpCenter.jsx'
 
 function App() {
     return (
@@ -23,6 +24,7 @@ function App() {
                 {/* PUBLIC */}
                 <Route element={<Layout />}>
                     <Route path="/" element={<Feed />} />
+					<Route path="/help" element={<HelpCenter />} />
                 </Route>
                 <Route path="/register" element={<RegisterForm />} />
                 <Route path="/login" element={<LoginForm />} />

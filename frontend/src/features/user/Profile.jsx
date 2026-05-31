@@ -23,6 +23,7 @@ export default function Profile() {
   const { id } = useParams();
   const userId = id || authUser?.userId;
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("posts");
 
   const [user, setUser] = useState({ name: "", email: "", bio: "" });
   const [loading, setLoading] = useState(false);
@@ -148,9 +149,9 @@ export default function Profile() {
   if (loading) return <p>Loading profile...</p>;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-transparent">
       {/* Banner */}
-      <div className="h-48 w-full overflow-hidden bg-blue-500">
+      <div className="h-56 w-full overflow-hidden " style={{ background: 'linear-gradient(120deg, #fde8f0 0%, #ede8fd 50%, #e8f0fd 100%)' }}>
         {user.wallpaper && (
           <img src={user.wallpaper} alt="banner" className="w-full h-full object-cover" />
         )}
@@ -179,13 +180,16 @@ export default function Profile() {
               <>
                 <button
                   onClick={() => setShowEdit(true)}
-                  className="border border-gray-300 px-4 py-1.5 rounded-full text-sm font-bold hover:bg-gray-100 transition-colors"
+                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors hover:bg-[#ede8fd]"
+					style={{ border: '1px solid #ede8fd', color: '#534ab7', background: 'white' }}
                 >
                   Edit profile
                 </button>
                 <button
                   onClick={() => setShowDelete(true)}
-                  className="border border-red-300 px-4 py-1.5 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
+                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors"
+					style={{ border: '1px solid #fde8f0', color: '#d4537e', background: 'white' }}
+
                 >
                   Delete
                 </button>
@@ -196,13 +200,15 @@ export default function Profile() {
                 <button
                   onClick={handleFriendRequest}
                   disabled={friendRequested || isFriend}
-                  className="border border-gray-300 px-4 py-1.5 rounded-full text-sm font-bold hover:bg-gray-100 transition-colors disabled:opacity-50"
+                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors hover:bg-[#faf8f5]"
+					style={{ border: '1px solid #ede8fd', color: '#534ab7', background: 'white' }}
                 >
                   {isFriend ? 'Friends ✓' : friendRequested ? 'Requested' : 'Add friend'}
                 </button>
                 <button
                   onClick={() => navigate(`/messages/${id}`)}
-                  className="border border-gray-300 px-4 py-1.5 rounded-full text-sm font-bold hover:bg-gray-100 transition-colors"
+                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors hover:bg-[#faf8f5]"
+					style={{ border: '1px solid #ede8fd', color: '#534ab7', background: 'white' }}
                 >
                   Message
                 </button>
@@ -211,15 +217,17 @@ export default function Profile() {
           </div>
 
           {/* Info */}
-          <div className="mt-16 pb-3">
-            <h2 className="text-xl font-bold text-black">{user.name || 'No name'}</h2>
-            <p className="text-gray-500 text-sm">@{user.email}</p>
-            {user.bio && <p className="mt-2 text-sm text-gray-800">{user.bio}</p>}
+          <div className="mt-12 pb-3">
+            <h2 className="text-xl font-bold" style={{ color: '#2c2c2a' }}>{user.name || 'No name'}</h2>
+            <p className="text-sm" style={{ color: '#afa9ec' }}>@{user.email}</p>
+			{user.bio && (
+			<p className="mt-2 text-sm" style={{ color: '#5f5e5a', borderLeft: '2px solid #a78bfa', paddingLeft: '8px' }}>
+				{user.bio}</p>)}
 
             <div className="flex gap-4 mt-3">
               <span className="text-sm cursor-pointer hover:underline">
-                <strong className="text-black">{user.following_count ?? 0}</strong>
-                <span className="text-gray-500 ml-1">Following</span>
+                <strong style={{ color: '#534ab7' }}>{user.following_count ?? 0} </strong>
+                <span className="ml-1" style={{ color: '#b4b2a9' }}>Following</span>
               </span>
               <span className="text-sm cursor-pointer hover:underline">
                 <strong className="text-black">{user.followers_count ?? 0}</strong>
@@ -230,46 +238,66 @@ export default function Profile() {
         </div>
 
         {/* Posts tab */}
-        <div className="flex border-b border-gray-200">
-          <div className="flex-1 text-center py-4 text-sm font-bold border-b-2 border-blue-400 text-black cursor-pointer">
-            Posts
-          </div>
-        </div>
-      </div>
+        <div className="flex border-b" style={{ borderColor :'#ede8fd' }}>
+			{['posts', 'replies', 'media'].map(tab => (
+				<button
+				key={tab}
+				onClick={() => setActiveTab(tab)}
+				className="flex-1 text-center py-4 text-sm font-semibold capitalize transition-colors"
+				style={{
+					color: activeTab === tab ? '#534ab7' : '#b4b2a9',
+					borderBottom: activeTab === tab ? '2px solid #534ab7' : '2px solid transparent',
+					background: 'transparent'
+				}}
+				>
+				{tab.charAt(0).toUpperCase() + tab.slice(1)}
+				</button>
+			))}
+		</div> </div>
 
       {/* Posts list */}
-      <div>
-        {loadingPosts ? (
-          <p className="text-center py-8 text-gray-400">Loading posts...</p>
-        ) : posts.length === 0 ? (
-          <p className="text-center py-8 text-gray-400">No posts yet</p>
-        ) : (
-          posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              currentUserId={authUser?.userId}
-              onDelete={(id) => setPosts(posts.filter(p => p.id !== id))}
-              onUpdate={(updated) => setPosts(posts.map(p => p.id === updated.id ? updated : p))}
-            />
-          ))
-        )}
-      </div>
+		<div className="mt-6" >
+		{activeTab === 'posts' && (
+			loadingPosts ? (
+			<p className="text-center py-8" style={{ color: '#b4b2a9' }}>Loading posts...</p>
+			) : posts.length === 0 ? (
+			<p className="text-center py-8" style={{ color: '#b4b2a9' }}>No posts yet</p>
+			) : (
+			posts.map((post) => (
+				<PostCard
+				key={post.id}
+				post={post}
+				currentUserId={authUser?.userId}
+				onDelete={(id) => setPosts(posts.filter(p => p.id !== id))}
+				onUpdate={(updated) => setPosts(posts.map(p => p.id === updated.id ? updated : p))}
+				/>
+			))
+			)
+		)}
+		{activeTab === 'replies' && (
+			<p className="text-center py-8" style={{ color: '#b4b2a9' }}>No replies yet</p>
+		)}
+		{activeTab === 'media' && (
+			<p className="text-center py-8" style={{ color: '#b4b2a9' }}>No media yet</p>
+		)}
+		</div>
 
       {/* Modal Edit */}
       {showEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center"  style={{ background: 'rgba(237, 232, 253, 0.4)', backdropFilter: 'blur(4px)' }} >
           <div className="absolute inset-0" onClick={() => setShowEdit(false)} />
-          <div className="relative z-10 bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
-            <div className="flex items-center gap-4 px-4 py-3 border-b border-gray-200">
-              <button onClick={() => setShowEdit(false)} className="hover:bg-gray-100 rounded-full p-2 text-sm">✕</button>
-              <h3 className="text-lg font-bold flex-1">Edit profile</h3>
-              <button onClick={handleUpdate} className="bg-black text-white text-sm font-bold px-4 py-1.5 rounded-full hover:bg-gray-800">
+		{/*This is Card modal*/}
+          <div className="relative z-10 bg-white rounded-2xl w-full max-w-lg overflow-hidden" style={{ border: '2px solid #ede8fd', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }} >
+
+            <div className="flex items-center gap-4 px-4 py-3 border-b" style={{ borderColor: '#ede8fd' }} >
+              <button onClick={() => setShowEdit(false)} className="rounded-full p-2 text-sm transition-colors hover:bg-[#faf8f5]" style={{ color: '#534ab7' }} >✕</button>
+              <h3 className="text-lg font-bold flex-1" style={{ color: '#2c2c2a' }} >Edit profile</h3>
+              <button onClick={handleUpdate} className="text-sm font-bold px-4 py-1.5 rounded-full transition-colors" style={{ background: '#534ab7', color: 'white', border: 'none' }} >
                 Save
               </button>
             </div>
 
-            <div className="relative h-32 bg-blue-500">
+            <div className="relative h-32"  style={{ background: 'linear-gradient(120deg, #fde8f0 0%, #ede8fd 50%, #e8f0fd 100%)' }} >
               {form.wallpaper && <img src={form.wallpaper} alt="banner" className="w-full h-full object-cover" />}
               <label className="absolute inset-0 flex items-center justify-center bg-black/10 cursor-pointer hover:bg-opacity-40 transition-all">
                 {uploadingBanner
