@@ -53,11 +53,13 @@ export default function Sidebar() {
             <SparklesIcon className="w-5 h-5" />
             <span>Comunities</span>
           </NavLink>
-          <NotificationBell />
-          <NavLink to="/messages" className={linkClass}>
-            <EnvelopeIcon className="w-5 h-5" />
-            <span>Messages</span>
-          </NavLink>
+          {user?.userId && <NotificationBell />}
+          {user?.userId && (
+            <NavLink to="/messages" className={linkClass}>
+              <EnvelopeIcon className="w-5 h-5" />
+              <span>Messages</span>
+            </NavLink>
+          )}
           <NavLink to="/help" className={linkClass}>
             <QuestionMarkCircleIcon className="w-5 h-5" />
             <span>Help</span>
@@ -91,12 +93,16 @@ export default function Sidebar() {
         <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center p-2 ${isActive ? 'text-blue-400' : 'text-gray-500'}`}>
           <UserIcon className="w-6 h-6" />
         </NavLink>
-        <NavLink to="/notifications" className={({ isActive }) => `flex flex-col items-center p-2 ${isActive ? 'text-blue-400' : 'text-gray-500'}`}>
-          <BellIcon className="w-6 h-6" />
-        </NavLink>
-        <NavLink to="/messages" className={({ isActive }) => `flex flex-col items-center p-2 ${isActive ? 'text-blue-400' : 'text-gray-500'}`}>
-          <EnvelopeIcon className="w-6 h-6" />
-        </NavLink>
+        {user?.userId && (
+          <NavLink to="/notifications" className={({ isActive }) => `flex flex-col items-center p-2 ${isActive ? 'text-blue-400' : 'text-gray-500'}`}>
+            <BellIcon className="w-6 h-6" />
+          </NavLink>
+        )}
+        {user?.userId && (
+          <NavLink to="/messages" className={({ isActive }) => `flex flex-col items-center p-2 ${isActive ? 'text-blue-400' : 'text-gray-500'}`}>
+            <EnvelopeIcon className="w-6 h-6" />
+          </NavLink>
+        )}
       </nav>
     </>
   )
