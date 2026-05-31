@@ -35,7 +35,7 @@ func (fc *FriendController) SendFriendRequest(c *gin.Context) {
 	log.Printf("[FriendRequest] sender userID=%s username=%q -> target userID=%s", userID, userUsername, targetID)
 	_ = fc.NotificationService.SendNotification(
 		targetID,
-		userUsername.(string),
+		"",
 		userID.(string),
 		userUsername.(string),
 		"friend_request",
@@ -50,11 +50,24 @@ func (fc *FriendController) AcceptFriend(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
+	userUsername, exists := c.Get("username")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
 	requesterID := c.Param("id")
 	if err := fc.Service.AcceptRequest(userID.(string), requesterID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	_ = fc.NotificationService.SendNotification(
+		requesterID,
+		"",
+		userID.(string),
+		userUsername.(string),
+		"friend_accept",
+		userUsername.(string)+" accepted your friend request",
+	)
 	c.JSON(http.StatusOK, gin.H{"message": "friend request accepted"})
 }
 

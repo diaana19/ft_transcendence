@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom"
 import { useAuth } from "../../hooks/useAuth"
+import NotificationBell from "../notifications/NotificationBell"
 import {
   HomeIcon,
   UserIcon,
@@ -73,6 +74,7 @@ export default function Sidebar() {
         <NavLink to="/notifications" className={linkClass}>
           <BellIcon className="w-5 h-5" />
           <span>Notifications</span>
+          <NotificationBell />
         </NavLink>
 
         <NavLink to="/messages" className={linkClass}>
