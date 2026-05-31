@@ -12,43 +12,40 @@ import Feed from '../features/posts/Feed'
 import NotificationsPage from '../components/notifications/Notification.jsx'
 import ChatRoom from '../features/chat/ChatRoom'
 import MessagesList from '../features/chat/MessagesList'
+import CookiesBanner from '../components/common/CookiesBanner'
+import { CursorArrowRippleIcon } from '@heroicons/react/16/solid'
 
 function App() {
     return (
+        <>
+            <CookiesBanner />
             <Routes>
-
                 {/* PUBLIC */}
                 <Route element={<Layout />}>
                     <Route path="/" element={<Feed />} />
                 </Route>
-
                 <Route path="/register" element={<RegisterForm />} />
                 <Route path="/login" element={<LoginForm />} />
-                {/* Login second-factor step. Reached via LoginForm's redirect
-                    after a 200 with {needs_2fa, pending_token}. Public so the
-                    not-yet-authenticated user can complete login. */}
                 <Route path="/login/2fa" element={<TwoFAVerify />} />
 
                 {/* PRIVATE */}
                 <Route
                     element={
-                    <RequireAuth>
-                        <Layout />
-                    </RequireAuth>
+                        <RequireAuth>
+                            <Layout />
+                        </RequireAuth>
                     }
                 >
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/:id" element={<Profile />} />
                     <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/post/:id" element={<PostPage />} />
-                    {/* Enroll a TOTP factor on the current account. */}
                     <Route path="/2fa/setup" element={<TwoFASetup />} />
                     <Route path="/messages" element={<MessagesList />} />
                     <Route path="/messages/:peerId" element={<ChatRoom />} />
                 </Route>
-
             </Routes>
+        </>
     )
 }
-
 export default App

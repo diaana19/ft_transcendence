@@ -36,7 +36,8 @@ function Modal({
 		<div className="fixed inset-0 z-50 flex items-center justify-center">
 			{/* Overlay */}
 			<div
-				className="absolute inset-0 bg-black bg-opacity-40"
+				className="absolute inset-0 backdrop-blur-sm"
+				style={{ background: 'linear-gradient(135deg, #faf5ff80 10%, #eef2ff80 60%, #f5f7fb80 100%)' }}
 				onClick={onClose}
 			/>
 
