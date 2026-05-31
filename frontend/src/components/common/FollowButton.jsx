@@ -1,40 +1,54 @@
 import { useState } from 'react'
-import { followUser } from '../../features/user/userService'
+import { followUser, unfollowUser } from '../../features/user/userService'
 
 function FollowButton({ targetId, isFollowing: initialIsFollowing, onFollow }) {
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
-  const [loading, setLoading]         = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
-  const handleFollow = async () => {
+  const handleClick = async () => {
     setLoading(true)
     try {
-      await followUser(targetId)
-      setIsFollowing(true)
+      if (isFollowing) {
+        await unfollowUser(targetId)
+        setIsFollowing(false)
+      } else {
+        await followUser(targetId)
+        setIsFollowing(true)
+      }
       onFollow?.()
     } catch (err) {
-      console.error('Error following user:', err)
+      console.error('Error toggling follow:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  
   if (isFollowing) {
     return (
       <button
-        disabled
-        className="px-4 py-1.5 rounded-full border border-gray-300 text-gray-500 text-sm font-semibold"
+        onClick={handleClick}
+        disabled={loading}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors disabled:opacity-50"
+        style={{
+          border: hovered ? '1px solid #fde8f0' : '1px solid #ede8fd',
+          color: hovered ? '#d4537e' : '#534ab7',
+          background: 'white'
+        }}
       >
-        Following
+        {loading ? '...' : hovered ? 'Unfollow' : 'Following ✓'}
       </button>
     )
   }
 
   return (
     <button
-      onClick={handleFollow}
+      onClick={handleClick}
       disabled={loading}
-      className="px-4 py-1.5 rounded-full bg-black text-white text-sm font-bold hover:bg-gray-800 disabled:opacity-50 transition-colors"
+      className="px-4 py-1.5 rounded-full text-sm font-bold transition-colors disabled:opacity-50"
+      style={{ background: '#534ab7', color: 'white', border: 'none' }}
     >
       {loading ? '...' : 'Follow'}
     </button>

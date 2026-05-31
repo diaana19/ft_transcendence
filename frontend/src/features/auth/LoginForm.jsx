@@ -40,7 +40,12 @@ function LoginForm() {
       loginUser(data)
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong')
+      const errMsg = err.response?.data?.error || 'Something went wrong'
+      if (errMsg.includes('credential') || errMsg.includes('invalid')) {
+        setError('Incorrect username or password. Please try again.')
+      } else {
+        setError(errMsg)
+      }
     } finally {
       setLoading(false)
     }
@@ -73,13 +78,7 @@ function LoginForm() {
             onChange={handleChange}
             placeholder="Password"
           />
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            loading={loading}
-          >
+          <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
             Log in
           </Button>
 

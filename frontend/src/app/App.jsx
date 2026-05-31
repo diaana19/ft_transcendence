@@ -14,6 +14,7 @@ import MessagesList from '../features/chat/MessagesList'
 import CookiesBanner from '../components/common/CookiesBanner'
 import HelpCenter from '../features/help/HelpCenter.jsx'
 import SettingsPage from '../features/settings/SettingsPage.jsx'
+import MessagesPage from '../features/chat/MessagesPage'
 
 function App() {
     return (
@@ -42,8 +43,8 @@ function App() {
                     <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/post/:id" element={<PostPage />} />
                     <Route path="/2fa/setup" element={<TwoFASetup />} />
-                    <Route path="/messages" element={<MessagesList />} />
-                    <Route path="/messages/:peerId" element={<ChatRoom />} />
+                    <Route path="/messages" element={<MessagesPage />} />
+                    <Route path="/messages/:peerId" element={<MessagesPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                 </Route>
             </Routes>
