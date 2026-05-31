@@ -29,7 +29,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Sidebar desktop — oculta en móvil */}
-      <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-gray-200 px-4 py-6">
+      <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-transparent px-4 py-6">
         {/* Logo */}
         <div className="mb-8 px-2 flex items-center gap-3">
           <img src="/logo.png" alt="Synk logo" className="w-10 h-10 object-contain" />
