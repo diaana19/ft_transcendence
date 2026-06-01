@@ -3,7 +3,6 @@ import { QRCodeSVG } from 'qrcode.react'
 import { setupTwoFA, enableTwoFA } from './authService'
 
 function TwoFASetup() {
-
     const [qrCode, setQrCode] = useState(null)
     const [secret, setSecret] = useState('')
     const [code, setCode] = useState('')
@@ -15,12 +14,9 @@ function TwoFASetup() {
         try {
             setLoading(true)
             setError(null)
-
             const data = await setupTwoFA()
-
             setQrCode(data.qr_code_url)
             setSecret(data.secret)
-
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to setup 2FA')
         } finally {
@@ -32,11 +28,8 @@ function TwoFASetup() {
         try {
             setLoading(true)
             setError(null)
-
             await enableTwoFA(code)
-
             setSuccess(true)
-
         } catch (err) {
             setError(err.response?.data?.error || 'Invalid code')
         } finally {
@@ -45,76 +38,83 @@ function TwoFASetup() {
     }
 
     return (
-        <div className="max-w-md mx-auto mt-10 p-6 border rounded-xl">
+        <div className="max-w-2xl mx-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
+                <h1 className="text-xl font-bold">Two-Factor Authentication</h1>
+            </div>
 
-            <h1 className="text-2xl font-bold mb-4">
-                Two-Factor Authentication
-            </h1>
-
-            {!qrCode && (
-                <button
-                    onClick={handleSetup}
-                    className="bg-blue-500 text-white px-4 py-2 rounded"
-                >
-                    Enable 2FA
-                </button>
-            )}
-
-            {qrCode && !success && (
-                <div className="space-y-4">
-
-                    <div>
-                        <p className="mb-2">
-                            Scan this QR with Google Authenticator
+            <div className="px-4 py-6">
+                {!qrCode && !success && (
+                    <div className="border border-gray-200 rounded-2xl p-6">
+                        <h2 className="text-base font-bold text-gray-900 mb-1">Enable 2FA</h2>
+                        <p className="text-sm text-gray-500 mb-4">
+                            Add an extra layer of security to your account using Google Authenticator or any TOTP app.
                         </p>
-
-                        {/*
-                          * Render the otpauth:// URL client-side. Sending the
-                          * URL to a third-party QR service (e.g. qrserver.com)
-                          * would leak the TOTP secret embedded in it.
-                          */}
-                        <QRCodeSVG value={qrCode} size={200} includeMargin={true} />
+                        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+                        <button
+                            onClick={handleSetup}
+                            disabled={loading}
+                            className="px-4 py-1.5 rounded-full text-sm font-bold transition-colors disabled:opacity-50"
+                            style={{ background: '#534ab7', color: 'white' }}
+                        >
+                            {loading ? 'Loading...' : 'Setup 2FA'}
+                        </button>
                     </div>
+                )}
 
-                    <div>
-                        <p className="text-sm text-gray-500">
-                            Secret:
+                {qrCode && !success && (
+                    <div className="border border-gray-200 rounded-2xl p-6 space-y-4">
+                        <div>
+                            <p className="text-sm font-medium text-gray-900 mb-3">
+                                Scan this QR code with Google Authenticator
+                            </p>
+                            <div className="flex justify-center p-4 bg-gray-50 rounded-xl">
+                                <QRCodeSVG value={qrCode} size={180} includeMargin={true} />
+                            </div>
+                        </div>
+
+                        <div>
+                            <p className="text-xs text-gray-400 mb-1">Secret key</p>
+                            <code className="block bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 break-all">
+                                {secret}
+                            </code>
+                        </div>
+
+                        <input
+                            type="text"
+                            placeholder="Enter 6-digit code"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                            style={{ borderColor: '#ede8fd' }}
+                        />
+
+                        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+                        <button
+                            onClick={handleEnable}
+                            disabled={loading || code.length !== 6}
+                            className="w-full py-2 rounded-full text-sm font-bold transition-colors disabled:opacity-50"
+                            style={{ background: '#534ab7', color: 'white' }}
+                        >
+                            {loading ? 'Verifying...' : 'Verify & Enable'}
+                        </button>
+                    </div>
+                )}
+
+                {success && (
+                    <div className="border border-gray-200 rounded-2xl p-6 text-center">
+                        <p className="text-2xl mb-2">✅</p>
+                        <p className="text-base font-bold" style={{ color: '#534ab7' }}>
+                            2FA enabled successfully!
                         </p>
-
-                        <code className="bg-gray-100 p-2 rounded block">
-                            {secret}
-                        </code>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Your account is now protected with two-factor authentication.
+                        </p>
                     </div>
-
-                    <input
-                        type="text"
-                        placeholder="Enter 6-digit code"
-                        value={code}
-                        onChange={(e) => setCode(e.target.value)}
-                        className="w-full border p-2 rounded"
-                    />
-
-                    <button
-                        onClick={handleEnable}
-                        disabled={loading}
-                        className="w-full bg-green-500 text-white py-2 rounded"
-                    >
-                        Verify & Enable
-                    </button>
-                </div>
-            )}
-
-            {success && (
-                <div className="text-green-600 font-semibold">
-                    2FA enabled successfully
-                </div>
-            )}
-
-            {error && (
-                <div className="text-red-500 mt-4">
-                    {error}
-                </div>
-            )}
+                )}
+            </div>
         </div>
     )
 }

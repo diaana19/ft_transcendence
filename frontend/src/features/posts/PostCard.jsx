@@ -6,6 +6,7 @@
 ** - Handle post editing and deletion
 ** - Show edit/delete buttons only to post author
 ** - Handle like/unlike toggle
+** - Show login modal if user is not authenticated
 */
 
 import { useState } from 'react'
@@ -13,14 +14,18 @@ import { deletePost, updatePost } from './postService.js'
 import { Pencil, Trash2, MessageCircle, Heart } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import axiosInstance from '../../services/axiosInstance'
+import LoginModal from '../../components/common/LoginModal'
+import { useAuth } from '../../hooks/useAuth'
 
 function PostCard({ post, onDelete, onUpdate, currentUserId }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(post.content)
   const [loading, setLoading] = useState(false)
   const [liked, setLiked] = useState(post.liked || false)
   const [likesCount, setLikesCount] = useState(post.likes_count || 0)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const handleDelete = async () => {
     setLoading(true)
@@ -48,6 +53,10 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
   }
 
   const handleLike = async () => {
+    if (!user) {
+      setShowLoginModal(true)
+      return
+    }
     try {
       const res = await axiosInstance.post(`/api/posts/${post.id}/like`)
       setLiked(res.data.liked)
@@ -55,6 +64,14 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
     } catch (err) {
       console.error('Error liking post:', err)
     }
+  }
+
+  const handleComment = () => {
+    if (!user) {
+      setShowLoginModal(true)
+      return
+    }
+    navigate(`/post/${post.id}`)
   }
 
   return (
@@ -122,7 +139,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
 
           <div className="flex gap-6 mt-3 text-gray-500 text-sm">
             <span
-              onClick={() => navigate(`/post/${post.id}`)}
+              onClick={handleComment}
               className="flex items-center gap-1 cursor-pointer hover:text-blue-400"
             >
               <MessageCircle size={16} />{post.comments_count}
@@ -150,6 +167,11 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
           </div>
         </div>
       </div>
+
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </div>
   )
 }

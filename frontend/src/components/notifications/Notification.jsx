@@ -16,10 +16,26 @@ import { acceptFriendRequest } from '../../features/user/userService'
 import { useState } from 'react'
 
 function getNotifIcon(type) {
-  if (type === 'like') return <Heart size={16} className="text-red-400" />
-  if (type === 'comment') return <MessageCircle size={16} className="text-blue-400" />
-  if (type === 'friend_request') return <UserPlus size={16} className="text-green-400" />
-  return <Bell size={16} className="text-gray-400" />
+  if (type === 'like') return (
+    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#fde8f0' }}>
+      <Heart size={14} style={{ color: '#d4537e' }} />
+    </div>
+  )
+  if (type === 'comment') return (
+    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#e8f0fd' }}>
+      <MessageCircle size={14} style={{ color: '#534ab7' }} />
+    </div>
+  )
+  if (type === 'friend_request') return (
+    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#f0fde8' }}>
+      <UserPlus size={14} style={{ color: '#4a7b34' }} />
+    </div>
+  )
+  return (
+    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#ede8fd' }}>
+      <Bell size={14} style={{ color: '#534ab7' }} />
+    </div>
+  )
 }
 
 function NotificationsPage() {
@@ -40,7 +56,7 @@ function NotificationsPage() {
     try {
       await acceptFriendRequest(notif.actor_id)
       setAccepted(prev => ({ ...prev, [notif.id]: true }))
-      await markAllRead() 
+      await markAllRead()
     } catch (err) {
       console.error('Error accepting friend request:', err)
     }
@@ -49,12 +65,13 @@ function NotificationsPage() {
   return (
     <div className="max-w-2xl mx-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Notifications</h1>
+      <div className="sticky top-0 bg-white px-4 py-3 z-10 flex items-center justify-between" style={{ borderBottom: '1px solid #ede8fd' }}>
+        <h1 className="text-xl font-bold" style={{ color: '#2c2c2a' }}>Notifications</h1>
         {notifications.length > 0 && (
           <button
             onClick={markAllRead}
-            className="text-sm text-blue-500 hover:underline"
+            className="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+            style={{ background: '#ede8fd', color: '#534ab7' }}
           >
             Mark all read
           </button>
@@ -63,33 +80,46 @@ function NotificationsPage() {
 
       {/* List */}
       {notifications.length === 0 ? (
-        <p className="text-center text-gray-400 py-8 text-sm">No notifications</p>
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: '#ede8fd' }}>
+            <Bell size={28} style={{ color: '#534ab7' }} />
+          </div>
+          <p className="text-base font-medium" style={{ color: '#534ab7' }}>No notifications yet</p>
+          <p className="text-sm mt-1" style={{ color: '#afa9ec' }}>We'll notify you when something happens</p>
+        </div>
       ) : (
         notifications.map((notif) => (
           <div
             key={notif.id}
             onClick={() => handleClick(notif)}
-            className={`flex items-start gap-3 border-b border-gray-200 px-4 py-4 hover:bg-gray-50 transition-colors cursor-pointer ${notif.read ? 'bg-white' : 'bg-blue-50'
-              }`}
+            className="flex items-start gap-3 px-4 py-4 cursor-pointer transition-colors"
+            style={{
+              borderBottom: '1px solid #ede8fd',
+              background: notif.read ? 'white' : 'rgba(237, 232, 253, 0.3)',
+            }}
           >
-            <div className="mt-1">
+            <div className="mt-1 flex-shrink-0">
               {getNotifIcon(notif.type)}
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-900">{notif.content}</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-sm" style={{ color: '#2c2c2a' }}>{notif.content}</p>
+              <p className="text-xs mt-1" style={{ color: '#afa9ec' }}>
                 {new Date(notif.created_at).toLocaleString()}
               </p>
               {notif.type === 'friend_request' && (
                 <button
                   onClick={(e) => handleAccept(e, notif)}
                   disabled={accepted[notif.id]}
-                  className="mt-2 px-3 py-1 bg-blue-400 hover:bg-blue-500 text-white text-xs font-bold rounded-full disabled:opacity-50 transition-colors"
+                  className="mt-2 px-3 py-1 text-xs font-bold rounded-full disabled:opacity-50 transition-colors"
+                  style={{ background: '#534ab7', color: 'white' }}
                 >
                   {accepted[notif.id] ? 'Accepted ✓' : 'Accept'}
                 </button>
               )}
             </div>
+            {!notif.read && (
+              <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ background: '#534ab7' }} />
+            )}
           </div>
         ))
       )}
