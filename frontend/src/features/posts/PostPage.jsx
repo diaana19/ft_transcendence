@@ -48,14 +48,14 @@ export default function PostPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto border-x border-gray-200 min-h-screen bg-white">
-      
+    <div className="w-full mx-auto min-h-screen bg-transparent" style={{ borderLeft: '0.5px solid #ede8fd', borderRight: '0.5px solid #ede8fd' }} >
+
       {/* POST */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex gap-3">
-          
+      <div className="p-4" >
+        <div className="rounded-2xl p-4" style={{ background: 'white', border: '0.5px solid #ede8fd' }}>
+
           {/* Avatar */}
-          <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center text-white font-bold flex-shrink-0">
+          <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center font-bold flex-shrink-0" style={{ background: '#ede8fd', color: '#534ab7' }}>
             {post.author?.avatar ? (
               <img
                 src={post.author.avatar}
@@ -70,20 +70,20 @@ export default function PostPage() {
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h2 className="font-bold text-sm">
+              <h2 className="font-semibold text-sm" style={{ color: '#2c2c2a' }}>
                 {post.author?.username}
               </h2>
 
-              <span className="text-gray-500 text-sm">
+              <span className="text-sm" style={{ color: '#afa9ec' }}>
                 @{post.author?.username}
               </span>
             </div>
 
-            <p className="mt-2 text-[15px] text-gray-900 whitespace-pre-wrap">
+            <p className="mt-2 text-[15px] whitespace-pre-wrap" style={{ color: '#2c2c2a' }}>
               {post.content}
             </p>
             {post.media_url && (
-            <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200">
+            <div className="mt-3 overflow-hidden rounded-2xl " style={{ border: '0.5px solid #ede8fd' }}>
               {post.media_url.match(/\.(mp4|webm|ogg)$/i) ? (
                 <video
                   src={post.media_url}
@@ -103,6 +103,8 @@ export default function PostPage() {
         </div>
       </div>
 
+	<div className="px-4 pb-2 pt-4" style={{ borderBottom: '0.5px solid #ede8fd' }} />
+
       {/* COMMENT FORM */}
       <CommentForm
         postId={id}
@@ -110,38 +112,43 @@ export default function PostPage() {
       />
 
       {/* COMMENTS */}
-      <div>
-        {comments.map((comment) => (
+      <div className="px-4 pt-4">
+        {comments.map((comment,index) => (
           <div
-            key={comment._id}
-            className="flex gap-3 p-4 border-b border-gray-200"
+            key={comment.id}
+            className="flex gap-3 mb-3"
           >
             {/* Avatar */}
-           <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center text-white font-bold flex-shrink-0">
-            {comment.author?.avatar ? (
-              <img
-                src={comment.author.avatar}
-                alt={comment.author.username}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span>
-                {comment.author?.username?.charAt(0).toUpperCase() || 'U'}
-              </span>
-            )}
-          </div>
-            <div className="flex-1">
+			<div className="flex flex-col items-center">
+				<div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold flex-shrink-0">
+					{comment.author?.avatar ? (
+					<img
+						src={comment.author.avatar}
+						alt={comment.author.username}
+						className="w-full h-full object-cover"
+					/>
+					) : (
+					<span>
+						{comment.author?.username?.charAt(0).toUpperCase() || 'U'}
+					</span>
+					)}
+				</div>
+				{index < comments.length - 1 && (
+				<div className="w-px flex-1 mt-1" style={{ background: '#ede8fd', minHeight: '16px' }} />
+				)}
+			</div>
+            <div className="flex-1 rounded-xl px-3 py-2 mb-1" style={{ background: 'white', border: '0.5px solid #f0ebfe' }} >
               <div className="flex items-center gap-2">
-                <span className="font-bold text-sm">
+                <span className="font-semibold text-xs" style={{ color: '#2c2c2a' }}>
                   {comment.author?.username}
                 </span>
 
-                <span className="text-gray-500 text-sm">
+                <span className="text-xs" style={{ color: '#afa9ec' }}>
                   @{comment.author?.username}
                 </span>
               </div>
 
-              <p className="text-sm text-gray-900 mt-1 whitespace-pre-wrap">
+              <p className="text-sm mt-1 whitespace-pre-wrap" style={{ color: '#5f5e5a' }}>
                 {comment.content}
               </p>
             </div>

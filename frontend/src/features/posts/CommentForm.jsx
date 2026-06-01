@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import axiosInstance from '../../services/axiosInstance'
+import { PhotoIcon } from "@heroicons/react/24/outline"
 
 function CommentForm({ postId, onCommentAdded }) {
   const { user } = useAuth()
@@ -8,13 +9,14 @@ function CommentForm({ postId, onCommentAdded }) {
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState(null)
 
+
   const handleSubmit = async () => {
     if (!content.trim()) return
     setLoading(true)
     setError(null)
     try {
       const res = await axiosInstance.post(`/api/posts/${postId}/comments`, { content })
-      onCommentAdded(res.data) 
+      onCommentAdded(res.data)
       setContent('')
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong')
@@ -22,12 +24,23 @@ function CommentForm({ postId, onCommentAdded }) {
       setLoading(false)
     }
   }
+	const handleFileChange = (e) => {
+	const selectedFile = e.target.files[0]
+	if (selectedFile && selectedFile.size > 20 * 1024 * 1024) {
+		setError('File too large. Maximum size is 20MB')
+		setFile(null)
+		return
+		}
+		setFile(selectedFile)
+		console.log('Selected file:', selectedFile.name, 'size:', selectedFile.size)
+		setError(null)
+	}
 
   return (
-    <div className="flex gap-3 px-4 py-3 border-b border-gray-200">
+    <div className="flex gap-3 px-4 py-3" style={{ borderBottom: '0.5px solid #ede8fd' }}>
       {/* Avatar */}
-      
-      <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center text-white font-bold flex-shrink-0">
+
+      <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-semibold flex-shrink-0" style={{ background: '#ede8fd', color: '#534ab7', fontSize: '11px' }}>
         {user?.avatar ? (
           <img
             src={user.avatar}
@@ -41,26 +54,37 @@ function CommentForm({ postId, onCommentAdded }) {
         )}
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 rounded-xl px-3 py-2" style={{ background: 'white', border: '0.5px solid #ede8fd' }}>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Post your reply"
+          placeholder="Post your reply..."
           maxLength={280}
           rows={2}
-          className="w-full text-black placeholder-gray-500 focus:outline-none resize-none text-sm"
+          className="w-full focus:outline-none resize-none text-sm bg-transparent placeholder-[#b4b2a9]" style={{ color: '#2c2c2a' }}
         />
 
         {error && (
-          <p className="text-red-500 text-xs mb-1">{error}</p>
+          <p className="text-xs mb-1" style={{ color: '#d4537e' }} >{error}</p>
         )}
 
         <div className="flex justify-between items-center mt-1">
-          <span className="text-xs text-gray-400">{content.length}/280</span>
+          <span className="text-xs" style={{ color: '#b4b2a9' }}>{content.length}/280</span>
+			<div className="flex gap-3 text-blue-400">
+				<label className="cursor-pointer hover:text-blue-500 flex items-center gap-2 text-gray-500 transition">
+				<PhotoIcon className="w-5 h-5" />
+				<input
+					type="file"
+					accept="image/*,video/*"
+					onChange={handleFileChange}
+					className="hidden"
+				/>
+				</label>
+			</div>
           <button
             onClick={handleSubmit}
             disabled={loading || !content.trim()}
-            className="bg-blue-400 hover:bg-blue-500 text-white text-sm font-bold px-4 py-1.5 rounded-full disabled:opacity-50 transition-colors"
+            className="text-sm font-semibold px-4 py-1 rounded-full transition-colors disabled:opacity-50 hover:bg-[#3c3489]" style={{ background: '#534ab7', color: 'white', border: 'none' }}
           >
             {loading ? 'Replying...' : 'Reply'}
           </button>
