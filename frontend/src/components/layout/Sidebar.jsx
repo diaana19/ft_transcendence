@@ -49,7 +49,7 @@ export default function Sidebar() {
             <UserIcon className="w-5 h-5" />
             <span>Profile</span>
           </NavLink>
-          <NavLink to="/comunities" className={linkClass}>
+          <NavLink to="/badge" className={linkClass}>
             <SparklesIcon className="w-5 h-5" />
             <span>Comunities</span>
           </NavLink>

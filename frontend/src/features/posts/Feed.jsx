@@ -59,7 +59,7 @@ function Feed() {
 
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 mt-6 ">
+    <div className="w-full mx-auto space-y-4 mt-6 ">
 
       {/* Composer */}
         {user?.userId && (
