@@ -5,6 +5,7 @@
 ** - Render registration form with all required fields
 ** - Handle form submission and account creation
 ** - Navigate to login on success
+** - Show specific error messages from backend
 */
 
 import { useState } from 'react'
@@ -28,6 +29,23 @@ function RegisterForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
+  const parseError = (errMsg) => {
+    if (errMsg.includes('Password') || errMsg.includes('password')) {
+      return 'Password must be at least 8 characters and contain uppercase, lowercase and a number'
+    } else if (errMsg.includes('Username') || errMsg.includes('username')) {
+      return 'Username is required and must be valid'
+    } else if (errMsg.includes('Email') || errMsg.includes('email')) {
+      return 'Please enter a valid email address'
+    } else if (errMsg.includes('older than 13')) {
+      return 'You must be older than 13 to register'
+    } else if (errMsg.includes('already')) {
+      return 'Username or email already exists'
+    } else if (errMsg.includes('date')) {
+      return 'Please enter a valid date of birth (YYYY-MM-DD)'
+    }
+    return errMsg
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -41,7 +59,8 @@ function RegisterForm() {
       )
       navigate('/login')
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong')
+      const errMsg = err.response?.data?.error || 'Something went wrong'
+      setError(parseError(errMsg))
     } finally {
       setLoading(false)
     }
@@ -50,17 +69,13 @@ function RegisterForm() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center">
       <div className="flex w-full max-w-4xl">
-
         <div className="hidden lg:flex flex-1 items-center justify-center">
           <img src="/logo.png" className="w-77 h-77 object-contain mb-1 rounded" />
         </div>
-
         <div className="flex-1 flex flex-col justify-center px-8 py-12">
-
           <div className="lg:hidden mb-8">
             <img src="/logo.png" className="w-10 h-10 object-cover mb-6 rounded" />
           </div>
-
           <h1 className="text-black text-3xl font-bold mb-8">Create your account</h1>
 
           {error && (

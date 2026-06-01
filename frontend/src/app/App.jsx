@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import RequireAuth from '../components/common/RequireAuth'
-
 import PostPage from '../features/posts/PostPage.jsx'
 import RegisterForm from '../features/auth/RegisterForm.jsx'
 import LoginForm from '../features/auth/LoginForm.jsx'
@@ -13,8 +12,9 @@ import NotificationsPage from '../components/notifications/Notification.jsx'
 import ChatRoom from '../features/chat/ChatRoom'
 import MessagesList from '../features/chat/MessagesList'
 import CookiesBanner from '../components/common/CookiesBanner'
-import { CursorArrowRippleIcon } from '@heroicons/react/16/solid'
 import HelpCenter from '../features/help/HelpCenter.jsx'
+import SettingsPage from '../features/settings/SettingsPage.jsx'
+import MessagesPage from '../features/chat/MessagesPage'
 
 function App() {
     return (
@@ -24,7 +24,7 @@ function App() {
                 {/* PUBLIC */}
                 <Route element={<Layout />}>
                     <Route path="/" element={<Feed />} />
-					<Route path="/help" element={<HelpCenter />} />
+                    <Route path="/help" element={<HelpCenter />} />
                 </Route>
                 <Route path="/register" element={<RegisterForm />} />
                 <Route path="/login" element={<LoginForm />} />
@@ -43,11 +43,13 @@ function App() {
                     <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/post/:id" element={<PostPage />} />
                     <Route path="/2fa/setup" element={<TwoFASetup />} />
-                    <Route path="/messages" element={<MessagesList />} />
-                    <Route path="/messages/:peerId" element={<ChatRoom />} />
+                    <Route path="/messages" element={<MessagesPage />} />
+                    <Route path="/messages/:peerId" element={<MessagesPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
                 </Route>
             </Routes>
         </>
     )
 }
+
 export default App
