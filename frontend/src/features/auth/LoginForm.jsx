@@ -60,11 +60,11 @@ function LoginForm() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
           <Input
-            type="email"
+            type="text"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="Phone, email or username"
+            placeholder="Email or username"
           />
           <Input
             type="password"
