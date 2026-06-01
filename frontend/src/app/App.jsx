@@ -10,6 +10,8 @@ import TwoFASetup from '../features/auth/TwoFASetup.jsx'
 import Profile from '../features/user/Profile.jsx'
 import Feed from '../features/posts/Feed'
 import NotificationsPage from '../components/notifications/Notification.jsx'
+import ChatRoom from '../features/chat/ChatRoom'
+import MessagesList from '../features/chat/MessagesList'
 
 function App() {
     return (
@@ -41,6 +43,8 @@ function App() {
                     <Route path="/post/:id" element={<PostPage />} />
                     {/* Enroll a TOTP factor on the current account. */}
                     <Route path="/2fa/setup" element={<TwoFASetup />} />
+                    <Route path="/messages" element={<MessagesList />} />
+                    <Route path="/messages/:peerId" element={<ChatRoom />} />
                 </Route>
 
             </Routes>
@@ -48,5 +52,3 @@ function App() {
 }
 
 export default App
-
-

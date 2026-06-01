@@ -26,7 +26,7 @@ export const sendFriendRequest = async (targetId) => {
 }
 
 export const acceptFriendRequest = async (requesterId) => {
-  const res = await axiosInstance.put(`/api/friends/accept/${requesterId}`)
+  const res = await axiosInstance.post(`/api/friends/accept/${requesterId}`)
   return res.data
 }
 
