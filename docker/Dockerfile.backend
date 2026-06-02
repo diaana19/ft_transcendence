@@ -7,6 +7,10 @@ RUN go mod download
 
 COPY backend/ .
 
+# Generate the OpenAPI spec (backend/docs) on every image build. The spec is a
+# build artifact (git-ignored), so it is regenerated here rather than committed.
+RUN go tool swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal
+
 RUN go build -o server ./cmd/server/main.go
 
 FROM alpine:latest

@@ -18,6 +18,18 @@ type UploadController struct {
 	FriendService *services.FriendService
 }
 
+// UploadFile godoc
+// @Summary  Upload a file
+// @Tags     uploads
+// @Security BearerAuth
+// @Accept   multipart/form-data
+// @Produce  json
+// @Param    file       formData file   true  "file to upload"
+// @Param    visibility query    string false "file visibility (public, friends, private)" default(public)
+// @Success  200 {object} map[string]interface{}
+// @Failure  400 {object} map[string]string
+// @Failure  401 {object} map[string]string
+// @Router   /upload [post]
 func (uc *UploadController) UploadFile(c *gin.Context) {
 	userIDRaw, exists := c.Get("user_id")
 	if !exists {
@@ -52,8 +64,18 @@ func (uc *UploadController) UploadFile(c *gin.Context) {
 	})
 }
 
-// ServeFile serves a stored file. Public files are accessible to anyone (no auth
-// required); friends/private files require an authenticated, authorised user.
+// ServeFile godoc
+// @Summary  Serve a stored file
+// @Description Public files are accessible to anyone; friends/private files require an authenticated, authorised user.
+// @Tags     uploads
+// @Produce  octet-stream
+// @Param    id path string true "file ID"
+// @Success  200 {file} binary
+// @Failure  401 {object} map[string]string
+// @Failure  403 {object} map[string]string
+// @Failure  404 {object} map[string]string
+// @Failure  500 {object} map[string]string
+// @Router   /files/{id} [get]
 func (uc *UploadController) ServeFile(c *gin.Context) {
 	fileID := c.Param("id")
 

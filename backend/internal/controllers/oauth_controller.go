@@ -23,6 +23,14 @@ func NewOAuthController(service *services.OAuthService, cfg *config.Config) *OAu
 	}
 }
 
+// OAuthLogin godoc
+// @Summary   Start GitHub OAuth login
+// @Description Redirect the user to GitHub's authorization page to begin the OAuth flow
+// @Tags      oauth
+// @Produce   json
+// @Success   307 "Redirect to GitHub authorization URL"
+// @Failure   500 {object} map[string]string
+// @Router    /auth/oauth/github/login [get]
 func (oc *OAuthController) OAuthLogin(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -46,6 +54,16 @@ func (oc *OAuthController) OAuthLogin(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
+// OAuthCallback godoc
+// @Summary   Handle GitHub OAuth callback
+// @Description Validate state, exchange the code for a token, resolve the user, set the auth cookie, and redirect to the frontend
+// @Tags      oauth
+// @Produce   json
+// @Param     code  query string true  "Authorization code returned by GitHub"
+// @Param     state query string false "Anti-CSRF state token"
+// @Success   307 "Redirect to the frontend application"
+// @Failure   500 {object} map[string]string
+// @Router    /auth/oauth/github/callback [get]
 func (oc *OAuthController) OAuthCallback(c *gin.Context) {
 	ctx := c.Request.Context()
 

@@ -669,3 +669,8 @@ tmp/
 coverage/
 *.coverprofile
 htmlcov/
+
+# Generated OpenAPI spec (regenerated on every build via `make swagger` / Docker)
+backend/docs/docs.go
+backend/docs/swagger.json
+backend/docs/swagger.yaml

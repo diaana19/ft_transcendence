@@ -24,6 +24,14 @@ func NewUserController(userService *services.UserService, friendService *service
 	return &UserController{userService: userService, friendService: friendService}
 }
 
+// GetUsers godoc
+// @Summary   List all users
+// @Tags      users
+// @Security  BearerAuth
+// @Produce   json
+// @Success   200 {array}  models.UserResponse
+// @Failure   500 {object} map[string]string
+// @Router    /users [get]
 func (uc *UserController) GetUsers(c *gin.Context) {
 	users, err := uc.userService.GetUsers()
 	if err != nil {
@@ -38,6 +46,16 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, responses)
 }
 
+// GetUser godoc
+// @Summary   Get a user by id
+// @Tags      users
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "user id"
+// @Success   200 {object} models.UserResponse
+// @Failure   404 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /users/{id} [get]
 func (uc *UserController) GetUser(c *gin.Context) {
 	id := c.Param("id")
 	user, err := uc.userService.GetUser(id)
@@ -57,6 +75,21 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// UpdateUser godoc
+// @Summary   Update a user's profile
+// @Tags      users
+// @Security  BearerAuth
+// @Accept    json
+// @Produce   json
+// @Param     id   path string                 true "user id"
+// @Param     body body models.UpdateUserInput true "fields to update"
+// @Success   200 {object} models.UserResponse
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Failure   403 {object} map[string]string
+// @Failure   404 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /users/{id} [put]
 func (uc *UserController) UpdateUser(c *gin.Context) {
 	targetID := c.Param("id")
 	currentUserID, exists := c.Get("user_id")
@@ -87,6 +120,21 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user.ToResponse())
 }
 
+// DeleteUser godoc
+// @Summary   Delete a user's account
+// @Tags      users
+// @Security  BearerAuth
+// @Accept    json
+// @Produce   json
+// @Param     id   path string             true "user id"
+// @Param     body body DeleteAccountInput true "password confirmation"
+// @Success   200 {object} map[string]string
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Failure   403 {object} map[string]string
+// @Failure   404 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /users/{id} [delete]
 func (uc *UserController) DeleteUser(c *gin.Context) {
 	targetID := c.Param("id")
 	currentUserID, exists := c.Get("user_id")

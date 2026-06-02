@@ -7,12 +7,23 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"ft_transcendence/backend/internal/config"
 	"ft_transcendence/backend/internal/redis"
 	"ft_transcendence/backend/internal/routes"
+
+	_ "ft_transcendence/backend/docs" // generated OpenAPI spec (run `make swagger`)
 )
 
+// @title                       ft_transcendence API
+// @version                     1.0
+// @description                 Backend API for ft_transcendence (Pong + social platform).
+// @BasePath                    /api
+// @securityDefinitions.apikey  BearerAuth
+// @in                          header
+// @name                        Authorization
 func main() {
 	conf, err := config.Load()
 	if err != nil {
@@ -48,6 +59,12 @@ func main() {
 		})
 	})
 
+	// Health godoc
+	// @Summary  Liveness probe
+	// @Tags     health
+	// @Produce  json
+	// @Success  200  {object}  map[string]string
+	// @Router   /health [get]
 	api.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status": "OK",
@@ -66,6 +83,14 @@ func main() {
 
 	ctrl := routes.Wire(pdb, rdb, conf)
 	routes.SetupRoutes(router, ctrl, rdb)
+
+	// Swagger UI, reachable through the nginx `/swagger/` proxy entry (the backend
+	// has no public port of its own). Reachable at <proxy>/swagger/index.html.
+	// Spec built by `make swagger`.
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(
+		swaggerFiles.Handler,
+		ginSwagger.URL("/swagger/doc.json"),
+	))
 
 	if err := router.Run(":8080"); err != nil {
 		log.Fatal("Server failed to start: ", err)

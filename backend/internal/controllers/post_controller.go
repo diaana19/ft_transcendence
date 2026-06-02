@@ -48,6 +48,15 @@ func respondOwnedResourceError(c *gin.Context, err error, notFoundMsg string) {
 	}
 }
 
+// GetPosts godoc
+// @Summary   List posts (paginated)
+// @Tags      posts
+// @Produce   json
+// @Param     page  query int false "page number (default 1)"
+// @Param     limit query int false "items per page (default 10)"
+// @Success   200 {object} map[string]interface{}
+// @Failure   500 {object} map[string]string
+// @Router    /posts [get]
 func (pc *PostController) GetPosts(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
@@ -77,6 +86,15 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 	})
 }
 
+// GetPost godoc
+// @Summary   Get a single post by id
+// @Tags      posts
+// @Produce   json
+// @Param     id path string true "post id"
+// @Success   200 {object} models.PostResponse
+// @Failure   404 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /posts/{id} [get]
 func (pc *PostController) GetPost(c *gin.Context) {
 	id := c.Param("id")
 	post, err := pc.postService.GetPost(id)
@@ -98,6 +116,14 @@ func (pc *PostController) GetPost(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// GetPostsByUser godoc
+// @Summary   List posts authored by a user
+// @Tags      posts
+// @Produce   json
+// @Param     userId path string true "user id"
+// @Success   200 {object} map[string]interface{}
+// @Failure   500 {object} map[string]string
+// @Router    /posts/user/{userId} [get]
 func (pc *PostController) GetPostsByUser(c *gin.Context) {
 	userID := c.Param("userId")
 
@@ -121,6 +147,17 @@ func (pc *PostController) GetPostsByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses})
 }
 
+// CreatePost godoc
+// @Summary   Create a new post
+// @Tags      posts
+// @Security  BearerAuth
+// @Accept    json
+// @Produce   json
+// @Param     body body object true "post content and optional media_url"
+// @Success   201 {object} models.PostResponse
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Router    /posts [post]
 func (pc *PostController) CreatePost(c *gin.Context) {
 	var req struct {
 		Content  string  `json:"content" binding:"required"`
@@ -174,6 +211,21 @@ func (pc *PostController) CreatePost(c *gin.Context) {
 	c.JSON(http.StatusCreated, post.ToResponse())
 }
 
+// UpdatePost godoc
+// @Summary   Update a post
+// @Tags      posts
+// @Security  BearerAuth
+// @Accept    json
+// @Produce   json
+// @Param     id   path string                  true "post id"
+// @Param     body body models.UpdatePostInput true "post fields to update"
+// @Success   200 {object} models.PostResponse
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Failure   403 {object} map[string]string
+// @Failure   404 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /posts/{id} [put]
 func (pc *PostController) UpdatePost(c *gin.Context) {
 	id := c.Param("id")
 	var input models.UpdatePostInput
@@ -197,6 +249,18 @@ func (pc *PostController) UpdatePost(c *gin.Context) {
 	c.JSON(http.StatusOK, post.ToResponse())
 }
 
+// DeletePost godoc
+// @Summary   Delete a post
+// @Tags      posts
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "post id"
+// @Success   200 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Failure   403 {object} map[string]string
+// @Failure   404 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /posts/{id} [delete]
 func (pc *PostController) DeletePost(c *gin.Context) {
 	id := c.Param("id")
 
@@ -215,6 +279,17 @@ func (pc *PostController) DeletePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Post deleted"})
 }
 
+// ToggleLike godoc
+// @Summary   Like or unlike a post
+// @Tags      posts
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "post id"
+// @Success   200 {object} models.LikeResponse
+// @Failure   401 {object} map[string]string
+// @Failure   404 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /posts/{id}/like [post]
 func (pc *PostController) ToggleLike(c *gin.Context) {
 	postID := c.Param("id")
 
@@ -253,6 +328,15 @@ func (pc *PostController) ToggleLike(c *gin.Context) {
 	})
 }
 
+// GetComments godoc
+// @Summary   List comments for a post
+// @Tags      posts
+// @Produce   json
+// @Param     id path string true "post id"
+// @Success   200 {object} map[string]interface{}
+// @Failure   404 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /posts/{id}/comments [get]
 func (pc *PostController) GetComments(c *gin.Context) {
 	postID := c.Param("id")
 
@@ -274,6 +358,19 @@ func (pc *PostController) GetComments(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses, "total": len(responses)})
 }
 
+// CreateComment godoc
+// @Summary   Add a comment to a post
+// @Tags      posts
+// @Security  BearerAuth
+// @Accept    json
+// @Produce   json
+// @Param     id   path string                     true "post id"
+// @Param     body body models.CreateCommentInput true "comment content"
+// @Success   201 {object} models.CommentResponse
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Failure   404 {object} map[string]string
+// @Router    /posts/{id}/comments [post]
 func (pc *PostController) CreateComment(c *gin.Context) {
 	postID := c.Param("id")
 
@@ -319,6 +416,22 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 	c.JSON(http.StatusCreated, comment.ToResponse())
 }
 
+// UpdateComment godoc
+// @Summary   Update a comment
+// @Tags      posts
+// @Security  BearerAuth
+// @Accept    json
+// @Produce   json
+// @Param     id        path string                     true "post id"
+// @Param     commentId path string                     true "comment id"
+// @Param     body      body models.UpdateCommentInput true "comment fields to update"
+// @Success   200 {object} models.CommentResponse
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Failure   403 {object} map[string]string
+// @Failure   404 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /posts/{id}/comments/{commentId} [put]
 func (pc *PostController) UpdateComment(c *gin.Context) {
 	commentID := c.Param("commentId")
 
@@ -343,6 +456,19 @@ func (pc *PostController) UpdateComment(c *gin.Context) {
 	c.JSON(http.StatusOK, comment.ToResponse())
 }
 
+// DeleteComment godoc
+// @Summary   Delete a comment
+// @Tags      posts
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id        path string true "post id"
+// @Param     commentId path string true "comment id"
+// @Success   200 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Failure   403 {object} map[string]string
+// @Failure   404 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /posts/{id}/comments/{commentId} [delete]
 func (pc *PostController) DeleteComment(c *gin.Context) {
 	commentID := c.Param("commentId")
 

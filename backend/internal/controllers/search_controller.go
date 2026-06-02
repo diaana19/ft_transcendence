@@ -17,6 +17,22 @@ func NewSearchController(service *services.SearchService) *SearchController {
 	return &SearchController{service: service}
 }
 
+// Search godoc
+// @Summary  Search across resources
+// @Tags     search
+// @Security BearerAuth
+// @Produce  json
+// @Param    q     query string true  "search query"
+// @Param    type  query string false "type of resource to search" default(user)
+// @Param    sort  query string false "field to sort by" default(username)
+// @Param    order query string false "sort order (asc, desc)" default(asc)
+// @Param    page  query int    false "page number" default(1)
+// @Param    limit query int    false "max number of results per page (1-100)" default(20)
+// @Success  200 {object} map[string]interface{}
+// @Failure  400 {object} map[string]string
+// @Failure  403 {object} map[string]string
+// @Failure  500 {object} map[string]string
+// @Router   /search [get]
 func (sc *SearchController) Search(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {

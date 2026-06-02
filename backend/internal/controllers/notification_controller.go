@@ -16,6 +16,15 @@ func NewNotificationController(notifService *services.NotificationService) *Noti
 	return &NotificationController{notifService: notifService}
 }
 
+// GetUnread godoc
+// @Summary   List unread notifications
+// @Tags      notifications
+// @Security  BearerAuth
+// @Produce   json
+// @Success   200  {object}  map[string]interface{}  "data: notifications, total: count"
+// @Failure   401  {object}  map[string]string
+// @Failure   500  {object}  map[string]string
+// @Router    /notification [get]
 func (nc *NotificationController) GetUnread(c *gin.Context) {
 	userIDRaw, exists := c.Get("user_id")
 	if !exists {
@@ -32,6 +41,15 @@ func (nc *NotificationController) GetUnread(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": notifs, "total": len(notifs)})
 }
 
+// MarkAllRead godoc
+// @Summary   Mark all notifications as read
+// @Tags      notifications
+// @Security  BearerAuth
+// @Produce   json
+// @Success   200  {object}  map[string]string
+// @Failure   401  {object}  map[string]string
+// @Failure   500  {object}  map[string]string
+// @Router    /notification/read [patch]
 func (nc *NotificationController) MarkAllRead(c *gin.Context) {
 	userIDRaw, exists := c.Get("user_id")
 	if !exists {

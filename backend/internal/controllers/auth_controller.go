@@ -46,6 +46,16 @@ type RegisterInput struct {
 	DateOfBirth string `json:"dateOfBirth" binding:"required"`
 }
 
+// RegisterUser godoc
+// @Summary   Register a new user
+// @Description Create a local account after validating age and password strength
+// @Tags      auth
+// @Accept    json
+// @Produce   json
+// @Param     body body RegisterInput true "Registration details"
+// @Success   200 {object} models.User
+// @Failure   400 {object} map[string]string
+// @Router    /auth/register [post]
 func (ac *AuthController) RegisterUser(c *gin.Context) {
 	var input RegisterInput
 
@@ -98,6 +108,18 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 	c.JSON(200, response)
 }
 
+// LoginUser godoc
+// @Summary   Authenticate a user
+// @Description Log in with email or username and password; may require a 2FA step
+// @Tags      auth
+// @Accept    json
+// @Produce   json
+// @Param     body body LoginInput true "Login credentials"
+// @Success   200 {object} map[string]interface{}
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /auth/login [post]
 func (ac *AuthController) LoginUser(c *gin.Context) {
 	var input LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -159,6 +181,15 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token, "user": user.ToResponse()})
 }
 
+// RefreshToken godoc
+// @Summary   Refresh a JWT
+// @Description Issue a new JWT from a valid bearer token
+// @Tags      auth
+// @Produce   json
+// @Param     Authorization header string true "Bearer token"
+// @Success   200 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Router    /auth/refresh [post]
 func (ac *AuthController) RefreshToken(c *gin.Context) {
 	tokenStr := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
 	if tokenStr == "" {
@@ -179,6 +210,16 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 // resolve "who am I via cookie?" — the OAuth callback only sets the HttpOnly
 // auth_token cookie, so JS can't read the JWT directly and needs an endpoint
 // to recover the user identity from a cookie-only session.
+// Me godoc
+// @Summary   Get current user
+// @Description Return the authenticated user's profile resolved from the session
+// @Tags      auth
+// @Security  BearerAuth
+// @Produce   json
+// @Success   200 {object} map[string]interface{}
+// @Failure   401 {object} map[string]string
+// @Failure   404 {object} map[string]string
+// @Router    /auth/me [get]
 func (ac *AuthController) Me(c *gin.Context) {
 	userIDRaw, exists := c.Get("user_id")
 	if !exists {
@@ -193,6 +234,16 @@ func (ac *AuthController) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": user.ToResponse()})
 }
 
+// LogoutUser godoc
+// @Summary   Log out the current user
+// @Description Blacklist the active token and clear the auth cookie
+// @Tags      auth
+// @Security  BearerAuth
+// @Produce   json
+// @Success   200 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /auth/logout [post]
 func (ac *AuthController) LogoutUser(c *gin.Context) {
 	tokenStr := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
 
@@ -228,6 +279,18 @@ type Verify2FAInput struct {
 	Code         string `json:"code" binding:"required,len=6,numeric"`
 }
 
+// Verify2FA godoc
+// @Summary   Verify a 2FA code
+// @Description Complete a pending login by validating the user's TOTP code
+// @Tags      auth
+// @Accept    json
+// @Produce   json
+// @Param     body body Verify2FAInput true "Pending token and 2FA code"
+// @Success   200 {object} map[string]interface{}
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /auth/2fa/verify [post]
 func (ac *AuthController) Verify2FA(c *gin.Context) {
 	var input Verify2FAInput
 	if err := c.ShouldBindJSON(&input); err != nil {

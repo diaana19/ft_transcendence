@@ -15,6 +15,16 @@ type FriendController struct {
 	NotificationService *services.NotificationService
 }
 
+// SendFriendRequest godoc
+// @Summary   Send a friend request to a user
+// @Tags      friends
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "Target user ID to send the friend request to"
+// @Success   200 {object} map[string]string
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Router    /friends/request/{id} [post]
 func (fc *FriendController) SendFriendRequest(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -44,6 +54,16 @@ func (fc *FriendController) SendFriendRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "request sent"})
 }
 
+// AcceptFriend godoc
+// @Summary   Accept a pending friend request
+// @Tags      friends
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "Requester user ID whose friend request is being accepted"
+// @Success   200 {object} map[string]string
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Router    /friends/accept/{id} [post]
 func (fc *FriendController) AcceptFriend(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -71,6 +91,16 @@ func (fc *FriendController) AcceptFriend(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "friend request accepted"})
 }
 
+// FollowUser godoc
+// @Summary   Follow a user
+// @Tags      friends
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "Target user ID to follow"
+// @Success   200 {object} map[string]string
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Router    /friends/follow/{id} [post]
 func (fc *FriendController) FollowUser(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -85,6 +115,16 @@ func (fc *FriendController) FollowUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "user followed"})
 }
 
+// UnfollowUser godoc
+// @Summary   Unfollow a user
+// @Tags      friends
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "Target user ID to unfollow"
+// @Success   200 {object} map[string]string
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Router    /friends/follow/{id} [delete]
 func (fc *FriendController) UnfollowUser(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -99,6 +139,16 @@ func (fc *FriendController) UnfollowUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "user unfollowed"})
 }
 
+// RemoveFriend godoc
+// @Summary   Remove an existing friend
+// @Tags      friends
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "Friend user ID to remove"
+// @Success   200 {object} map[string]string
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Router    /friends/{id} [delete]
 func (fc *FriendController) RemoveFriend(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -113,6 +163,16 @@ func (fc *FriendController) RemoveFriend(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "friend removed"})
 }
 
+// RejectFriendRequest godoc
+// @Summary   Reject a pending friend request
+// @Tags      friends
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "Requester user ID whose friend request is being rejected"
+// @Success   200 {object} map[string]string
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Router    /friends/reject/{id} [post]
 func (fc *FriendController) RejectFriendRequest(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -127,6 +187,15 @@ func (fc *FriendController) RejectFriendRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "request rejected"})
 }
 
+// GetFollowers godoc
+// @Summary   List the followers of a user
+// @Tags      friends
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "User ID whose followers are listed"
+// @Success   200 {array}  models.UserResponse
+// @Failure   500 {object} map[string]string
+// @Router    /users/{id}/followers [get]
 func (fc *FriendController) GetFollowers(c *gin.Context) {
 	userID := c.Param("id")
 	followers, err := fc.Service.GetFollowers(userID)
@@ -142,6 +211,15 @@ func (fc *FriendController) GetFollowers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses})
 }
 
+// GetFollowing godoc
+// @Summary   List the users a user is following
+// @Tags      friends
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "User ID whose following list is returned"
+// @Success   200 {array}  models.UserResponse
+// @Failure   500 {object} map[string]string
+// @Router    /users/{id}/following [get]
 func (fc *FriendController) GetFollowing(c *gin.Context) {
 	userID := c.Param("id")
 	following, err := fc.Service.GetFollowing(userID)
@@ -157,6 +235,15 @@ func (fc *FriendController) GetFollowing(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses})
 }
 
+// GetFriends godoc
+// @Summary   List the friends of a user
+// @Tags      friends
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "User ID whose friends are listed"
+// @Success   200 {array}  models.UserResponse
+// @Failure   500 {object} map[string]string
+// @Router    /users/{id}/friends [get]
 func (fc *FriendController) GetFriends(c *gin.Context) {
 	userID := c.Param("id")
 	friends, err := fc.Service.GetFriends(userID)

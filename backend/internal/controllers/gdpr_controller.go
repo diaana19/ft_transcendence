@@ -25,6 +25,15 @@ func NewGDPRController(gdprService *services.GDPRService) *GDPRController {
 	return &GDPRController{gdprService: gdprService}
 }
 
+// ExportUserData godoc
+// @Summary  Export the authenticated user's data
+// @Tags     gdpr
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} map[string]interface{}
+// @Failure  401 {object} map[string]string
+// @Failure  500 {object} map[string]string
+// @Router   /gdpr/export [get]
 func (gc *GDPRController) ExportUserData(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -41,6 +50,15 @@ func (gc *GDPRController) ExportUserData(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
+// DeleteUserData godoc
+// @Summary  Permanently delete the authenticated user's data
+// @Tags     gdpr
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} map[string]string
+// @Failure  401 {object} map[string]string
+// @Failure  500 {object} map[string]string
+// @Router   /gdpr/delete [delete]
 func (gc *GDPRController) DeleteUserData(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {

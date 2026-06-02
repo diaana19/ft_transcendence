@@ -16,6 +16,15 @@ func NewTwoFAController(service *services.TwoFAService) *TwoFAController {
 	return &TwoFAController{service: service}
 }
 
+// Setup godoc
+// @Summary  Begin 2FA setup and return provisioning data
+// @Tags     2fa
+// @Security BearerAuth
+// @Produce  json
+// @Success  200 {object} map[string]interface{}
+// @Failure  400 {object} map[string]string
+// @Failure  401 {object} map[string]string
+// @Router   /2fa/setup [post]
 func (tc *TwoFAController) Setup(c *gin.Context) {
 	userIDRaw, exists := c.Get("user_id")
 	if !exists {
@@ -37,6 +46,17 @@ type Enable2FAInput struct {
 	Code string `json:"code" binding:"required,len=6,numeric"`
 }
 
+// Enable godoc
+// @Summary  Enable 2FA using a TOTP code
+// @Tags     2fa
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    input body controllers.Enable2FAInput true "TOTP code"
+// @Success  200 {object} map[string]string
+// @Failure  400 {object} map[string]string
+// @Failure  401 {object} map[string]string
+// @Router   /2fa/enable [post]
 func (tc *TwoFAController) Enable(c *gin.Context) {
 	userIDRaw, exists := c.Get("user_id")
 	if !exists {
@@ -65,6 +85,18 @@ type Disable2FAInput struct {
 	Code string `json:"code" binding:"required,len=6,numeric"`
 }
 
+// Disable godoc
+// @Summary  Disable 2FA using a TOTP code
+// @Tags     2fa
+// @Security BearerAuth
+// @Accept   json
+// @Produce  json
+// @Param    input body controllers.Disable2FAInput true "TOTP code"
+// @Success  200 {object} map[string]string
+// @Failure  400 {object} map[string]string
+// @Failure  401 {object} map[string]string
+// @Failure  500 {object} map[string]string
+// @Router   /2fa/disable [post]
 func (tc *TwoFAController) Disable(c *gin.Context) {
 	userIDRaw, exists := c.Get("user_id")
 	if !exists {

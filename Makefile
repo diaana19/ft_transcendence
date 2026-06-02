@@ -19,7 +19,7 @@ GO_IMAGE   := golang:1.25
         logs logs-backend logs-frontend logs-nginx logs-db \
         test test-frontend seed seed-clean \
         shell-backend shell-frontend shell-nginx shell-postgres shell-redis \
-        fmt lint prune version
+        fmt lint swagger prune version
 .DEFAULT_GOAL := help
 
 # ==================== Help ====================
@@ -59,6 +59,7 @@ help:
 	@echo "Tools:"
 	@echo "  make fmt             Format Go code (go fmt ./...)"
 	@echo "  make lint            Vet Go code (go vet ./...)"
+	@echo "  make swagger         Regenerate OpenAPI spec (backend/docs)"
 	@echo "  make prune           Reclaim unused engine resources"
 	@echo "  make version         Show engine and compose versions"
 	@echo ""
@@ -70,6 +71,7 @@ up:
 	@echo "Starting stack with $(ENGINE)..."
 	@$(COMPOSE) up -d --build
 	@echo "Up. App: https://localhost:3000 (self-signed cert). 'make ps' for ports, 'make logs' to follow."
+	@echo "API docs (Swagger): https://localhost:3000/swagger/index.html"
 
 down:
 	@$(COMPOSE) down
@@ -156,8 +158,13 @@ shell-redis:
 fmt:
 	@cd backend && go fmt ./...
 
-lint:
+lint: swagger
 	@cd backend && go vet ./...
+
+swagger:
+	@echo "Regenerating OpenAPI spec into backend/docs ..."
+	@cd backend && go tool swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal
+	@echo "Done. Start the stack ('make up') and open https://localhost:3000/swagger/index.html"
 
 # ==================== Utils ====================
 
