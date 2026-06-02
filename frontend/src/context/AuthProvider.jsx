@@ -80,6 +80,7 @@ export function AuthProvider({ children }) {
                         username: u.username,
                         email: u.email,
                         avatar: u.avatar,
+                        two_fa_enabled: u.two_fa_enabled,
                     })
                 }
             })
@@ -97,10 +98,11 @@ export function AuthProvider({ children }) {
 
             localStorage.setItem('token', data.token)
             const payload = decodeToken(data.token)
-            const fullUser = ({ userId: payload.userId, 
-                username: data.user?.username, 
-                email: data.user?.email, 
-                avatar: data.user?.avatar })
+            const fullUser = ({ userId: payload.userId,
+                username: data.user?.username,
+                email: data.user?.email,
+                avatar: data.user?.avatar,
+                two_fa_enabled: data.user?.two_fa_enabled })
             
             setToken(data.token)
             setUser(fullUser)
@@ -112,9 +114,16 @@ export function AuthProvider({ children }) {
         }
     }
 
+    // updateUser merges partial fields into the current user without a full
+    // re-login — e.g. after enabling 2FA so the settings page reflects it
+    // immediately instead of waiting for the next /api/auth/me on reload.
+    const updateUser = (patch) => {
+        setUser((prev) => (prev ? { ...prev, ...patch } : prev))
+    }
+
     return (
-        <AuthContext.Provider value={{ token, 
-        user, loginUser, logout, loading }}>
+        <AuthContext.Provider value={{ token,
+        user, loginUser, logout, loading, updateUser }}>
             {children}
         </AuthContext.Provider>
     )

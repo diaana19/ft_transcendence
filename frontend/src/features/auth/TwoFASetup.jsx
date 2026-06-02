@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { setupTwoFA, enableTwoFA } from './authService'
+import { useAuth } from '../../hooks/useAuth'
 
 function TwoFASetup() {
+    const { updateUser } = useAuth()
     const [qrCode, setQrCode] = useState(null)
     const [secret, setSecret] = useState('')
     const [code, setCode] = useState('')
@@ -29,6 +31,7 @@ function TwoFASetup() {
             setLoading(true)
             setError(null)
             await enableTwoFA(code)
+            updateUser({ two_fa_enabled: true })
             setSuccess(true)
         } catch (err) {
             setError(err.response?.data?.error || 'Invalid code')

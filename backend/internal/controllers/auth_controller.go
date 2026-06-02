@@ -298,7 +298,7 @@ func (ac *AuthController) Verify2FA(c *gin.Context) {
 		return
 	}
 
-	userID, err := ac.authService.ConsumePendingLogin(input.PendingToken, ac.rdb)
+	userID, err := ac.authService.PeekPendingLogin(input.PendingToken, ac.rdb)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -314,6 +314,9 @@ func (ac *AuthController) Verify2FA(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": msgInvalid2FACode})
 		return
 	}
+
+	// Code is valid: consume the pending token so it can't be reused.
+	ac.authService.ConsumePendingLogin(input.PendingToken, ac.rdb)
 
 	user, err := ac.authService.GetUserByID(userID)
 	if err != nil {
