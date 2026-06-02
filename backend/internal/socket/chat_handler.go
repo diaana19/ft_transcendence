@@ -258,6 +258,20 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		return
 	}
 
+	if msgType == "dm" {
+		parts := strings.Split(incoming.RoomID, ":")
+		if len(parts) == 3 {
+			recipientID := parts[1]
+			if recipientID == client.ID {
+				recipientID = parts[2]
+			}
+			_ = h.notificationService.SendNotification(
+				recipientID, "", client.ID, client.Username,
+				"message", client.Username+" sent you a message",
+			)
+		}
+	}
+
 	out := OutgoingMessage{
 		Type:    "message",
 		Message: &msg,

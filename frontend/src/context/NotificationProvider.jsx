@@ -1,49 +1,65 @@
-/*
-** File: NotificationProvider.jsx
-** Description: Global notification context provider
-** Responsibilities:
-** - Fetch unread notifications from API on mount
-** - Poll for new notifications every 30 seconds
-** - Provide markAllRead function to children
-*/
-
-import { createContext, useContext, useEffect, useState } from 'react'
-import { getUnreadNotifications, markAllNotificationsRead } from '../components/notifications/notificationService'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { getUnreadNotifications, markAllNotificationsRead } from '../components/notifications/notificationService'
 
 export const NotificationContext = createContext()
 
+// On mount:
+// Load all notification while offline
+// Then Connect to WebSocket to get notification in real time
 export function NotificationProvider({ children }) {
-  const { user } = useAuth()
+  const { token, user, loading } = useAuth()
   const [notifications, setNotifications] = useState([])
+  const wsRef = useRef(null)
 
-  const fetchNotifications = async () => {
-    try {
-      const data = await getUnreadNotifications()
-      setNotifications(data || [])
-    } catch (err) {
-      console.error('Error fetching notifications:', err)
+  useEffect(() => {
+    if (loading || !user) return
+
+    getUnreadNotifications()
+      .then(data => setNotifications(data ?? []))
+      .catch(err => console.error('[Notif] failed to load unread:', err))
+
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    const tokenParam = token ? `?token=${encodeURIComponent(token)}` : ''
+    const ws = new WebSocket(`${protocol}://${window.location.host}/api/ws/chat${tokenParam}`)
+    wsRef.current = ws
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data)
+        if (msg.type === 'notification' && msg.notification) {
+          setNotifications(prev => {
+            if (prev.some(n => n.id === msg.notification.id)) return prev
+            return [msg.notification, ...prev]
+          })
+        }
+      } catch {
+        // non-JSON frames — ignore
+      }
     }
-  }
+
+    ws.onerror = (e) => console.error('[Notif] WebSocket error:', e)
+    ws.onclose = () => { wsRef.current = null }
+
+    return () => {
+      ws.close()
+      wsRef.current = null
+    }
+  }, [loading, user?.userId, token])
 
   const markAllRead = async () => {
     try {
       await markAllNotificationsRead()
-      setNotifications([])
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     } catch (err) {
-      console.error('Error marking notifications read:', err)
+      console.error('[Notif] failed to mark all read:', err)
     }
   }
 
-  useEffect(() => {
-    if (!user) return
-    fetchNotifications()
-    const interval = setInterval(fetchNotifications, 5000)
-    return () => clearInterval(interval)
-  }, [user])
+  const unreadCount = notifications.filter(n => !n.read).length
 
   return (
-    <NotificationContext.Provider value={{ notifications, markAllRead }}>
+    <NotificationContext.Provider value={{ notifications, setNotifications, markAllRead, unreadCount }}>
       {children}
     </NotificationContext.Provider>
   )
