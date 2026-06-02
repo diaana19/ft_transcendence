@@ -67,14 +67,11 @@ func TestSearch_Posts(t *testing.T) {
 }
 
 func TestSearch_Messages(t *testing.T) {
-	router, _ := SetupTestEnv()
+	router, db := SetupTestEnv()
 	alice := registerAndLogin(t, router, "msrch_a", "msrch_a@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "msrch_b", "msrch_b@test.com", "StrongPass123!")
 
-	body := `{"recipient_id":"` + bob.ID + `","content":"meet me at the pier tonight"}`
-	if w := authedRequest(t, router, "POST", "/api/chat/messages", alice.Token, body); w.Code != http.StatusCreated {
-		t.Fatalf("send message: expected 201, got %d", w.Code)
-	}
+	seedMessage(t, db, alice.ID, bob.ID, "meet me at the pier tonight")
 
 	w := authedRequest(t, router, "GET", "/api/search?q=pier&type=message", alice.Token, "")
 	if w.Code != http.StatusOK {
@@ -262,14 +259,11 @@ func TestSearch_PaginationSecondPage(t *testing.T) {
 // TestSearch_AllIncludesMessages — the "all" branch must search all three
 // types and report a coherent total.
 func TestSearch_AllIncludesMessages(t *testing.T) {
-	router, _ := SetupTestEnv()
+	router, db := SetupTestEnv()
 	alice := registerAndLogin(t, router, "all_alice", "all_alice@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "all_bob_omnitag", "all_bob_omnitag@test.com", "StrongPass123!")
 	createPost(t, router, alice.Token, "post mentioning omnitag in content")
-	body := `{"recipient_id":"` + bob.ID + `","content":"hey omnitag drop by"}`
-	if w := authedRequest(t, router, "POST", "/api/chat/messages", alice.Token, body); w.Code != http.StatusCreated {
-		t.Fatalf("send message: %d", w.Code)
-	}
+	seedMessage(t, db, alice.ID, bob.ID, "hey omnitag drop by")
 
 	w := authedRequest(t, router, "GET", "/api/search?q=omnitag&type=all", alice.Token, "")
 	if w.Code != http.StatusOK {

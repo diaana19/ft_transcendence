@@ -11,7 +11,7 @@
 
 import { useNavigate } from 'react-router-dom'
 import { useNotifications } from '../../context/NotificationProvider'
-import { Heart, MessageCircle, UserPlus, Bell } from 'lucide-react'
+import { Heart, MessageCircle, UserPlus, Bell, Mail } from 'lucide-react'
 import { acceptFriendRequest } from '../../features/user/userService'
 import { useState } from 'react'
 
@@ -31,6 +31,11 @@ function getNotifIcon(type) {
       <UserPlus size={14} style={{ color: '#4a7b34' }} />
     </div>
   )
+  if (type === 'message') return (
+    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#e8f0fd' }}>
+      <Mail size={14} style={{ color: '#534ab7' }} />
+    </div>
+  )
   return (
     <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#ede8fd' }}>
       <Bell size={14} style={{ color: '#534ab7' }} />
@@ -44,7 +49,9 @@ function NotificationsPage() {
   const [accepted, setAccepted] = useState({})
 
   const handleClick = (notif) => {
-    if (notif.type === 'like' || notif.type === 'comment') {
+    if (notif.type === 'message') {
+      navigate(`/messages/${notif.actor_id}`)
+    } else if (notif.type === 'like' || notif.type === 'comment') {
       navigate(`/profile/${notif.actor_id}`)
     } else if (notif.type === 'friend_request') {
       navigate(`/profile/${notif.actor_id}`)

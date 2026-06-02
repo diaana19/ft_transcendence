@@ -1,16 +1,17 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { useSocket } from './SocketProvider'
 import { getUnreadNotifications, markAllNotificationsRead } from '../components/notifications/notificationService'
 
 export const NotificationContext = createContext()
 
 // On mount:
-// Load all notification while offline
-// Then Connect to WebSocket to get notification in real time
+// Load all notifications received while offline (REST), then listen on the
+// shared chat socket for real-time notification frames.
 export function NotificationProvider({ children }) {
-  const { token, user, loading } = useAuth()
+  const { user, loading } = useAuth()
+  const { subscribe } = useSocket()
   const [notifications, setNotifications] = useState([])
-  const wsRef = useRef(null)
 
   useEffect(() => {
     if (loading || !user) return
@@ -19,33 +20,17 @@ export function NotificationProvider({ children }) {
       .then(data => setNotifications(data ?? []))
       .catch(err => console.error('[Notif] failed to load unread:', err))
 
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    const tokenParam = token ? `?token=${encodeURIComponent(token)}` : ''
-    const ws = new WebSocket(`${protocol}://${window.location.host}/api/ws/chat${tokenParam}`)
-    wsRef.current = ws
-
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data)
-        if (msg.type === 'notification' && msg.notification) {
-          setNotifications(prev => {
-            if (prev.some(n => n.id === msg.notification.id)) return prev
-            return [msg.notification, ...prev]
-          })
-        }
-      } catch {
-        // non-JSON frames — ignore
+    const unsubscribe = subscribe((msg) => {
+      if (msg.type === 'notification' && msg.notification) {
+        setNotifications(prev => {
+          if (prev.some(n => n.id === msg.notification.id)) return prev
+          return [msg.notification, ...prev]
+        })
       }
-    }
+    })
 
-    ws.onerror = (e) => console.error('[Notif] WebSocket error:', e)
-    ws.onclose = () => { wsRef.current = null }
-
-    return () => {
-      ws.close()
-      wsRef.current = null
-    }
-  }, [loading, user?.userId, token])
+    return unsubscribe
+  }, [loading, user?.userId, subscribe])
 
   const markAllRead = async () => {
     try {

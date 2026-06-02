@@ -26,7 +26,6 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	registerProtectedAuthRoutes(protected, c.Auth)
 	registerUserRoutes(protected, c.User)
 	registerFriendRoutes(protected, c.Friend)
-	registerChatRoutes(protected, c.Chat, c.Msg)
 	registerNotificationRoutes(protected, c.Notification)
 	registerUploadRoutes(api, rdb, c.Upload)
 	registerGDPRRoutes(protected, c.GDPR)
@@ -79,16 +78,6 @@ func registerFriendRoutes(protected *gin.RouterGroup, c *controllers.FriendContr
 	protected.GET("/users/:id/followers", c.GetFollowers)
 	protected.GET("/users/:id/following", c.GetFollowing)
 	protected.GET("/users/:id/friends", c.GetFriends)
-}
-
-// Chat — REST fallback (used when the WebSocket is unavailable) plus the read
-// endpoints for room history and message replies.
-func registerChatRoutes(protected *gin.RouterGroup, c *controllers.ChatController, m *controllers.MsgController) {
-	protected.GET("/rooms/:roomId/messages", m.GetRoomMsg)
-	protected.GET("/messages/:messageId/replies", m.GetReplies)
-	protected.POST("/chat/messages", c.SendMessage)
-	protected.GET("/chat/messages", c.ListConversation)
-	protected.GET("/chat/poll", c.Poll)
 }
 
 func registerNotificationRoutes(protected *gin.RouterGroup, c *controllers.NotificationController) {

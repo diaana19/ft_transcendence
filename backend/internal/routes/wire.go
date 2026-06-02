@@ -21,8 +21,6 @@ type Controllers struct {
 	Friend       *controllers.FriendController
 	Post         *controllers.PostController
 	Notification *controllers.NotificationController
-	Msg          *controllers.MsgController
-	Chat         *controllers.ChatController
 	Upload       *controllers.UploadController
 	GDPR         *controllers.GDPRController
 	OAuth        *controllers.OAuthController
@@ -51,13 +49,12 @@ func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 	notifService := services.NewNotificationService(notifRepo, notifPubSub)
 	uploadService := services.NewUploadService(fileRepo)
 	gdprService := services.NewGDPRService(pdb)
-	chatService := services.NewChatService(msgRepo, userRepo)
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
 	searchService := services.NewSearchService(userRepo, msgRepo, postRepo)
 	gamificationService := services.NewGamificationService(pdb, friendService)
 
 	wsManager := socket.NewWSManager()
-	chatWS := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo, fileRepo, cfg.FrontendURL)
+	chatWS := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo, userRepo, fileRepo, cfg.FrontendURL)
 
 	return &Controllers{
 		Auth:         controllers.NewAuthController(authService, twoFAService, rdb),
@@ -66,8 +63,6 @@ func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 		Friend:       &controllers.FriendController{Service: friendService, NotificationService: notifService},
 		Post:         controllers.NewPostController(postService, notifService, uploadService),
 		Notification: controllers.NewNotificationController(notifService),
-		Msg:          controllers.NewMsgController(msgRepo),
-		Chat:         controllers.NewChatController(chatService),
 		Upload:       &controllers.UploadController{Service: uploadService, FriendService: friendService},
 		GDPR:         controllers.NewGDPRController(gdprService),
 		OAuth:        controllers.NewOAuthController(oauthService, cfg),

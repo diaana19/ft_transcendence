@@ -21,22 +21,13 @@ type Message struct {
 	Replies []Message `json:"replies,omitempty" gorm:"foreignKey:ParentID"`
 }
 
-type CreateMessageInput struct {
-	RecipientID string `json:"recipient_id" binding:"required"`
-	Content     string `json:"content" binding:"required,min=1,max=4000"`
-}
-
 type MessageResponse struct {
 	ID          string    `json:"id"`
 	SenderID    string    `json:"sender_id"`
 	RecipientID string    `json:"recipient_id,omitempty"`
 	Content     string    `json:"content"`
+	FileID      *string   `json:"file_id,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
-}
-
-type PollResponse struct {
-	Messages   []MessageResponse `json:"messages"`
-	NextCursor string            `json:"next_cursor"`
 }
 
 func (m *Message) ToResponse() MessageResponse {
@@ -45,6 +36,7 @@ func (m *Message) ToResponse() MessageResponse {
 		SenderID:    m.SenderID,
 		RecipientID: m.RecipientID,
 		Content:     m.Content,
+		FileID:      m.FileID,
 		CreatedAt:   m.CreatedAt,
 	}
 }

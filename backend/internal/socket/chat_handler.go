@@ -22,31 +22,38 @@ import (
 	"ft_transcendence/backend/internal/services"
 )
 
+// chatHistoryLimit caps how many past messages an "open" returns.
+const chatHistoryLimit = 50
+
 type ChatHandler struct {
 	manager             *WSManager
 	rdb                 *redis.Client
 	notificationService *services.NotificationService
 	msgRepo             repositories.MessageRepository
+	users               repositories.UserRepository
 	fileRepo            repositories.FileRepository
 	upgrader            websocket.Upgrader
 	subscribedRooms     map[string]bool
 	subscribedMu        sync.Mutex
 }
 
+// IncomingMessage is a client frame. "open" loads a conversation with PeerID;
+// "message" sends Content (and/or a FileID attachment) to RecipientID.
 type IncomingMessage struct {
-	Action   string  `json:"action"`
-	RoomID   string  `json:"room_id"`
-	Content  string  `json:"content"`
-	ParentID *string `json:"parent_id"`
-	FileID   *string `json:"file_id,omitempty"`
+	Action      string  `json:"action"`
+	PeerID      string  `json:"peer_id"`
+	RecipientID string  `json:"recipient_id"`
+	Content     string  `json:"content"`
+	FileID      *string `json:"file_id,omitempty"`
 }
 
+// OutgoingMessage is a server frame. "history" carries Messages for PeerID;
+// "message" carries a single Message.
 type OutgoingMessage struct {
-	Type     string          `json:"type"`
-	Message  *models.Message `json:"message,omitempty"`
-	Username string          `json:"username,omitempty"`
-	UserID   string          `json:"user_id,omitempty"`
-	RoomID   string          `json:"room_id,omitempty"`
+	Type     string                   `json:"type"`
+	Message  *models.MessageResponse  `json:"message,omitempty"`
+	Messages []models.MessageResponse `json:"messages,omitempty"`
+	PeerID   string                   `json:"peer_id,omitempty"`
 }
 
 // NewChatHandler builds a ChatHandler whose WebSocket upgrader accepts
@@ -58,6 +65,7 @@ func NewChatHandler(
 	rdb *redis.Client,
 	notifService *services.NotificationService,
 	msgRepo repositories.MessageRepository,
+	users repositories.UserRepository,
 	fileRepo repositories.FileRepository,
 	frontendURL string,
 ) *ChatHandler {
@@ -67,6 +75,7 @@ func NewChatHandler(
 		rdb:                 rdb,
 		notificationService: notifService,
 		msgRepo:             msgRepo,
+		users:               users,
 		fileRepo:            fileRepo,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -165,66 +174,76 @@ func (h *ChatHandler) HandleMessage(client *Client, raw []byte) {
 	}
 
 	switch incoming.Action {
-	case "join":
-		h.handleJoin(client, incoming.RoomID)
-	case "leave":
-		h.handleLeave(client, incoming.RoomID)
+	case "open":
+		h.handleOpen(client, incoming.PeerID)
 	case "message":
-		h.handleChat(client, incoming)
+		h.handleDM(client, incoming)
 	default:
 		log.Printf("Unknown action from %s: %s\n", client.ID, incoming.Action)
 	}
 }
 
-func (h *ChatHandler) handleJoin(client *Client, roomID string) {
-	if roomID == "" {
+// dmChannel returns the deterministic pub/sub channel for a pair of users.
+// Sorting the IDs makes both participants derive the same channel regardless of
+// who opened the conversation. It is a transport detail only — not stored.
+func dmChannel(a, b string) string {
+	if a > b {
+		a, b = b, a
+	}
+	return "dm:" + a + ":" + b
+}
+
+// handleOpen subscribes the client to its conversation with peerID and replies
+// with the recent history so the UI can render it immediately.
+func (h *ChatHandler) handleOpen(client *Client, peerID string) {
+	if peerID == "" || peerID == client.ID {
 		return
 	}
-	h.manager.JoinRoom(client, roomID)
+
+	channel := dmChannel(client.ID, peerID)
+	h.manager.JoinRoom(client, channel)
 
 	h.subscribedMu.Lock()
-	if !h.subscribedRooms[roomID] {
-		h.subscribedRooms[roomID] = true
-		redispub.Subscribe(context.Background(), h.rdb, "chat:"+roomID, func(payload string) {
-			h.manager.BroadcastToRoom(roomID, []byte(payload), "")
+	if !h.subscribedRooms[channel] {
+		h.subscribedRooms[channel] = true
+		redispub.Subscribe(context.Background(), h.rdb, "chat:"+channel, func(payload string) {
+			h.manager.BroadcastToRoom(channel, []byte(payload), "")
 		})
 	}
 	h.subscribedMu.Unlock()
 
-	out := OutgoingMessage{
-		Type:     "joined",
-		UserID:   client.ID,
-		Username: client.Username,
-		RoomID:   roomID,
-	}
-	h.publishToRoom(roomID, out)
-}
-
-func (h *ChatHandler) handleLeave(client *Client, roomID string) {
-	if roomID == "" {
+	msgs, err := h.msgRepo.ListConversation(client.ID, peerID, "", chatHistoryLimit)
+	if err != nil {
+		log.Printf("[Chat] history load failed for %s<->%s: %v", client.ID, peerID, err)
 		return
 	}
-	h.manager.LeaveRoom(client, roomID)
 
-	out := OutgoingMessage{
-		Type:     "left",
-		UserID:   client.ID,
-		Username: client.Username,
-		RoomID:   roomID,
-	}
-	h.publishToRoom(roomID, out)
-}
-
-func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
-	if incoming.Content == "" && incoming.FileID == nil {
+	out := OutgoingMessage{Type: "history", PeerID: peerID, Messages: toResponses(msgs)}
+	payload, err := json.Marshal(out)
+	if err != nil {
+		log.Printf("Marshal error: %v\n", err)
 		return
 	}
-	if incoming.RoomID == "" {
+	safeSend(client.Send, payload)
+}
+
+// handleDM persists a direct message (sender_id + recipient_id), pushes it to
+// both participants over their dm channel, and notifies the recipient.
+func (h *ChatHandler) handleDM(client *Client, incoming IncomingMessage) {
+	content := strings.TrimSpace(incoming.Content)
+	if content == "" && incoming.FileID == nil {
+		return
+	}
+	if incoming.RecipientID == "" || incoming.RecipientID == client.ID {
+		return
+	}
+	if _, err := h.users.GetByID(incoming.RecipientID); err != nil {
+		log.Printf("[Chat] message to unknown recipient %s: %v", incoming.RecipientID, err)
 		return
 	}
 
 	if incoming.FileID != nil {
-		if err := h.handleAttachment(client.ID, incoming.RoomID, *incoming.FileID); err != nil {
+		if err := h.grantAttachment(client.ID, incoming.RecipientID, *incoming.FileID); err != nil {
 			log.Printf("[Chat] attachment rejected: %v", err)
 			return
 		}
@@ -236,21 +255,15 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		return
 	}
 
-	msgType := "room"
-	if strings.HasPrefix(incoming.RoomID, "dm:") {
-		msgType = "dm"
-	}
-
 	msg := models.Message{
-		ID:        id.String(),
-		CreatedAt: time.Now(),
-		SenderID:  client.ID,
-		Username:  client.Username,
-		RoomID:    incoming.RoomID,
-		Content:   incoming.Content,
-		ParentID:  incoming.ParentID,
-		FileID:    incoming.FileID,
-		Type:      msgType,
+		ID:          id.String(),
+		CreatedAt:   time.Now().UTC(),
+		SenderID:    client.ID,
+		Username:    client.Username,
+		RecipientID: incoming.RecipientID,
+		Content:     content,
+		FileID:      incoming.FileID,
+		Type:        "dm",
 	}
 
 	if err := h.msgRepo.Create(&msg); err != nil {
@@ -258,26 +271,25 @@ func (h *ChatHandler) handleChat(client *Client, incoming IncomingMessage) {
 		return
 	}
 
-	if msgType == "dm" {
-		parts := strings.Split(incoming.RoomID, ":")
-		if len(parts) == 3 {
-			recipientID := parts[1]
-			if recipientID == client.ID {
-				recipientID = parts[2]
-			}
-			_ = h.notificationService.SendNotification(
-				recipientID, "", client.ID, client.Username,
-				"message", client.Username+" sent you a message",
-			)
-		}
-	}
-
-	out := OutgoingMessage{
+	resp := msg.ToResponse()
+	h.publishToRoom(dmChannel(client.ID, incoming.RecipientID), OutgoingMessage{
 		Type:    "message",
-		Message: &msg,
-	}
+		Message: &resp,
+	})
 
-	h.publishToRoom(incoming.RoomID, out)
+	_ = h.notificationService.SendNotification(
+		incoming.RecipientID, "", client.ID, client.Username,
+		"message", client.Username+" sent you a message",
+	)
+}
+
+// toResponses maps stored messages to their wire form, oldest first.
+func toResponses(msgs []models.Message) []models.MessageResponse {
+	out := make([]models.MessageResponse, len(msgs))
+	for i := range msgs {
+		out[i] = msgs[i].ToResponse()
+	}
+	return out
 }
 
 func (h *ChatHandler) publishToRoom(roomID string, out OutgoingMessage) {
@@ -292,7 +304,10 @@ func (h *ChatHandler) publishToRoom(roomID string, out OutgoingMessage) {
 	}
 }
 
-func (h *ChatHandler) handleAttachment(senderID, roomID, fileID string) error {
+// grantAttachment validates a private file owned by the sender and grants the
+// recipient read access so a DM attachment is viewable by exactly the two
+// participants.
+func (h *ChatHandler) grantAttachment(senderID, recipientID, fileID string) error {
 	file, err := h.fileRepo.GetByID(fileID)
 	if err != nil {
 		return fmt.Errorf("file not found: %w", err)
@@ -302,20 +317,6 @@ func (h *ChatHandler) handleAttachment(senderID, roomID, fileID string) error {
 	}
 	if file.Visibility != models.FileVisibilityPrivate {
 		return fmt.Errorf("file must be uploaded with visibility=private for DM attachments")
-	}
-
-	parts := strings.Split(roomID, ":")
-	if len(parts) != 3 || parts[0] != "dm" {
-		return fmt.Errorf("invalid room id format for DM attachment (expected dm:userA:userB)")
-	}
-
-	var recipientID string
-	if parts[1] == senderID {
-		recipientID = parts[2]
-	} else if parts[2] == senderID {
-		recipientID = parts[1]
-	} else {
-		return fmt.Errorf("sender not part of this room")
 	}
 
 	if err := h.fileRepo.GrantAccess(fileID, recipientID); err != nil {

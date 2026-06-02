@@ -27,10 +27,11 @@ func wsConnect(t *testing.T, srvURL, token string) *websocket.Conn {
 	return conn
 }
 
-// readUntilType reads frames until one with the given "type" arrives or timeout.
-func readUntilType(t *testing.T, conn *websocket.Conn, wantType string, timeout time.Duration) map[string]any {
+// readUntilType reads frames until one with the given "type" arrives or a 4s
+// deadline elapses.
+func readUntilType(t *testing.T, conn *websocket.Conn, wantType string) map[string]any {
 	t.Helper()
-	conn.SetReadDeadline(time.Now().Add(timeout))
+	conn.SetReadDeadline(time.Now().Add(4 * time.Second))
 	for {
 		_, raw, err := conn.ReadMessage()
 		if err != nil {
@@ -46,10 +47,12 @@ func readUntilType(t *testing.T, conn *websocket.Conn, wantType string, timeout 
 	}
 }
 
-func wsJoin(t *testing.T, conn *websocket.Conn, room string) {
+// wsOpen subscribes the connection to its conversation with peerID. The server
+// replies with a "history" frame (asserted/drained by the caller).
+func wsOpen(t *testing.T, conn *websocket.Conn, peerID string) {
 	t.Helper()
-	if err := conn.WriteJSON(map[string]any{"action": "join", "room_id": room}); err != nil {
-		t.Fatalf("write join: %v", err)
+	if err := conn.WriteJSON(map[string]any{"action": "open", "peer_id": peerID}); err != nil {
+		t.Fatalf("write open: %v", err)
 	}
 }
 
@@ -91,7 +94,7 @@ func TestWS_InvalidToken(t *testing.T) {
 	}
 }
 
-func TestWS_JoinAndBroadcastMessage(t *testing.T) {
+func TestWS_SendAndReceiveDM(t *testing.T) {
 	router, _ := SetupTestEnv()
 	srv := httptest.NewServer(router)
 	defer srv.Close()
@@ -104,22 +107,21 @@ func TestWS_JoinAndBroadcastMessage(t *testing.T) {
 	bobConn := wsConnect(t, srv.URL, bob.Token)
 	defer bobConn.Close()
 
-	room := "dm:" + alice.ID + ":" + bob.ID
-	wsJoin(t, aliceConn, room)
-	wsJoin(t, bobConn, room)
-
-	// Let both joins register and the redis subscription become live.
+	// Both participants open the conversation so the dm channel subscription
+	// becomes live for realtime delivery.
+	wsOpen(t, aliceConn, bob.ID)
+	wsOpen(t, bobConn, alice.ID)
 	time.Sleep(600 * time.Millisecond)
 
 	if err := aliceConn.WriteJSON(map[string]any{
-		"action":  "message",
-		"room_id": room,
-		"content": "hi bob",
+		"action":       "message",
+		"recipient_id": bob.ID,
+		"content":      "hi bob",
 	}); err != nil {
 		t.Fatalf("write message: %v", err)
 	}
 
-	msg := readUntilType(t, bobConn, "message", 4*time.Second)
+	msg := readUntilType(t, bobConn, "message")
 	inner, ok := msg["message"].(map[string]any)
 	if !ok {
 		t.Fatalf("expected message payload, got %v", msg)
@@ -127,15 +129,38 @@ func TestWS_JoinAndBroadcastMessage(t *testing.T) {
 	if inner["content"] != "hi bob" {
 		t.Fatalf("expected content 'hi bob', got %v", inner["content"])
 	}
-
-	// The message must also be retrievable through the REST history endpoint.
-	w := authedRequest(t, router, "GET", "/api/rooms/"+room+"/messages", bob.Token, "")
-	if w.Code != http.StatusOK {
-		t.Fatalf("room history: expected 200, got %d", w.Code)
+	if inner["sender_id"] != alice.ID || inner["recipient_id"] != bob.ID {
+		t.Fatalf("unexpected sender/recipient: %v", inner)
 	}
 }
 
-func TestWS_LeaveRoomAndUnknownAction(t *testing.T) {
+func TestWS_OpenReturnsHistory(t *testing.T) {
+	router, db := SetupTestEnv()
+	srv := httptest.NewServer(router)
+	defer srv.Close()
+
+	alice := registerAndLogin(t, router, "wshist_a", "wshist_a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "wshist_b", "wshist_b@test.com", "StrongPass123!")
+
+	seedMessage(t, db, alice.ID, bob.ID, "earlier message")
+
+	conn := wsConnect(t, srv.URL, alice.Token)
+	defer conn.Close()
+
+	wsOpen(t, conn, bob.ID)
+
+	hist := readUntilType(t, conn, "history")
+	msgs, ok := hist["messages"].([]any)
+	if !ok || len(msgs) != 1 {
+		t.Fatalf("expected 1 history message, got %v", hist["messages"])
+	}
+	first, _ := msgs[0].(map[string]any)
+	if first["content"] != "earlier message" {
+		t.Fatalf("unexpected history content: %v", first["content"])
+	}
+}
+
+func TestWS_UnknownActionAndEmptyOpen(t *testing.T) {
 	router, _ := SetupTestEnv()
 	srv := httptest.NewServer(router)
 	defer srv.Close()
@@ -144,19 +169,15 @@ func TestWS_LeaveRoomAndUnknownAction(t *testing.T) {
 	conn := wsConnect(t, srv.URL, u.Token)
 	defer conn.Close()
 
-	room := "dm:" + u.ID + ":someone"
-	wsJoin(t, conn, room)
-	time.Sleep(300 * time.Millisecond)
-
-	if err := conn.WriteJSON(map[string]any{"action": "leave", "room_id": room}); err != nil {
-		t.Fatalf("write leave: %v", err)
-	}
+	// Unknown actions and an empty/self peer open must be no-ops, not crashes.
 	if err := conn.WriteJSON(map[string]any{"action": "bogus"}); err != nil {
 		t.Fatalf("write bogus: %v", err)
 	}
-	// empty room id join is a no-op and must not crash
-	if err := conn.WriteJSON(map[string]any{"action": "join", "room_id": ""}); err != nil {
-		t.Fatalf("write empty join: %v", err)
+	if err := conn.WriteJSON(map[string]any{"action": "open", "peer_id": ""}); err != nil {
+		t.Fatalf("write empty open: %v", err)
+	}
+	if err := conn.WriteJSON(map[string]any{"action": "open", "peer_id": u.ID}); err != nil {
+		t.Fatalf("write self open: %v", err)
 	}
 	time.Sleep(200 * time.Millisecond)
 }
@@ -179,7 +200,7 @@ func TestWS_DeliversPendingNotificationsOnConnect(t *testing.T) {
 	conn := wsConnect(t, srv.URL, target.Token)
 	defer conn.Close()
 
-	msg := readUntilType(t, conn, "notification", 4*time.Second)
+	msg := readUntilType(t, conn, "notification")
 	if _, ok := msg["notification"]; !ok {
 		t.Fatalf("expected a notification payload, got %v", msg)
 	}
@@ -202,13 +223,12 @@ func TestWS_AttachmentRejectedWhenNotPrivate(t *testing.T) {
 	bobConn := wsConnect(t, srv.URL, bob.Token)
 	defer bobConn.Close()
 
-	room := "dm:" + alice.ID + ":" + bob.ID
-	wsJoin(t, aliceConn, room)
-	wsJoin(t, bobConn, room)
+	wsOpen(t, aliceConn, bob.ID)
+	wsOpen(t, bobConn, alice.ID)
 	time.Sleep(500 * time.Millisecond)
 
 	// attachment is rejected (not private) so no chat message is broadcast
-	aliceConn.WriteJSON(map[string]any{"action": "message", "room_id": room, "file_id": publicFile})
+	aliceConn.WriteJSON(map[string]any{"action": "message", "recipient_id": bob.ID, "file_id": publicFile})
 
 	bobConn.SetReadDeadline(time.Now().Add(1 * time.Second))
 	for {
@@ -220,40 +240,6 @@ func TestWS_AttachmentRejectedWhenNotPrivate(t *testing.T) {
 		json.Unmarshal(raw, &msg)
 		if msg["type"] == "message" {
 			t.Fatal("expected no broadcast for a rejected (non-private) attachment")
-		}
-	}
-}
-
-func TestWS_AttachmentRejectedForBadRoom(t *testing.T) {
-	t.Cleanup(func() { os.RemoveAll("./uploads") })
-	router, _ := SetupTestEnv()
-	srv := httptest.NewServer(router)
-	defer srv.Close()
-
-	alice := registerAndLogin(t, router, "wsbad_a", "wsbad_a@test.com", "StrongPass123!")
-
-	privateFile := uploadAndGetID(t, router, alice.Token, "private")
-
-	conn := wsConnect(t, srv.URL, alice.Token)
-	defer conn.Close()
-
-	// a non-"dm:a:b" room id is not a valid attachment target
-	room := "group-room-123"
-	wsJoin(t, conn, room)
-	time.Sleep(400 * time.Millisecond)
-
-	conn.WriteJSON(map[string]any{"action": "message", "room_id": room, "file_id": privateFile})
-
-	conn.SetReadDeadline(time.Now().Add(1 * time.Second))
-	for {
-		_, raw, err := conn.ReadMessage()
-		if err != nil {
-			break
-		}
-		var msg map[string]any
-		json.Unmarshal(raw, &msg)
-		if msg["type"] == "message" {
-			t.Fatal("attachment in a non-dm room must be rejected (no message broadcast)")
 		}
 	}
 }
@@ -280,20 +266,19 @@ func TestWS_AttachmentGrantsAccessToRecipient(t *testing.T) {
 	bobConn := wsConnect(t, srv.URL, bob.Token)
 	defer bobConn.Close()
 
-	room := "dm:" + alice.ID + ":" + bob.ID
-	wsJoin(t, aliceConn, room)
-	wsJoin(t, bobConn, room)
+	wsOpen(t, aliceConn, bob.ID)
+	wsOpen(t, bobConn, alice.ID)
 	time.Sleep(600 * time.Millisecond)
 
 	if err := aliceConn.WriteJSON(map[string]any{
-		"action":  "message",
-		"room_id": room,
-		"file_id": fileID,
+		"action":       "message",
+		"recipient_id": bob.ID,
+		"file_id":      fileID,
 	}); err != nil {
 		t.Fatalf("write attachment message: %v", err)
 	}
 
-	readUntilType(t, bobConn, "message", 4*time.Second)
+	readUntilType(t, bobConn, "message")
 
 	// after the DM attachment, bob is granted access (canAccess true → 404 from disk, not 403)
 	w = authedRequest(t, router, "GET", "/api/files/"+fileID, bob.Token, "")

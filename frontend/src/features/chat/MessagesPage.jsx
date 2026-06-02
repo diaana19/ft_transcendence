@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axiosInstance from '../../services/axiosInstance'
 import { useAuth } from '../../hooks/useAuth'
+import { useSocket } from '../../context/SocketProvider'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
 
@@ -19,12 +20,12 @@ export default function MessagesPage() {
 	const { peerId } = useParams()
 	const navigate = useNavigate()
 	const { user: currentUser } = useAuth()
+	const { subscribe, send } = useSocket()
 
 	const [users, setUsers] = useState([])
 	const [search, setSearch] = useState('')
 	const [messages, setMessages] = useState([])
 	const [fetching, setFetching] = useState(false)
-	const [loading, setLoading] = useState(false)
 	const [selectedUser, setSelectedUser] = useState(null)
 	const lastMessageRef = useRef(null)
 
@@ -48,44 +49,41 @@ export default function MessagesPage() {
 		}
 	}, [peerId, users])
 
+	// Open the conversation over the socket: the server replies with a "history"
+	// frame and pushes each new "message" in real time. No polling.
 	useEffect(() => {
 		if (!peerId) return
 		setMessages([])
 		setFetching(true)
-		fetchConversation()
-		const interval = setInterval(fetchConversation, 3000)
-		return () => clearInterval(interval)
-	}, [peerId])
+		send({ action: 'open', peer_id: peerId })
+
+		const me = currentUser?.userId
+		const unsubscribe = subscribe((msg) => {
+			if (msg.type === 'history' && msg.peer_id === peerId) {
+				setMessages(msg.messages || [])
+				setFetching(false)
+				return
+			}
+			if (msg.type === 'message' && msg.message) {
+				const m = msg.message
+				const belongs =
+					(m.sender_id === peerId && m.recipient_id === me) ||
+					(m.sender_id === me && m.recipient_id === peerId)
+				if (!belongs) return
+				setMessages(prev => (prev.some(x => x.id === m.id) ? prev : [...prev, m]))
+			}
+		})
+		return unsubscribe
+	}, [peerId, subscribe, send, currentUser?.userId])
 
 	useEffect(() => {
 		lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
 	}, [messages])
 
-	const fetchConversation = async () => {
-		try {
-			const res = await axiosInstance.get(`/api/chat/messages?with=${peerId}`)
-			const msgs = res.data?.messages || []
-			setMessages(msgs)
-		} catch (err) {
-			console.error(err)
-		} finally {
-			setFetching(false)
-		}
-	}
-
-	const handleSend = async (content) => {
-		setLoading(true)
-		try {
-			const res = await axiosInstance.post('/api/chat/messages', {
-				recipient_id: peerId,
-				content,
-			})
-			setMessages(prev => [...prev, res.data])
-		} catch (err) {
-			console.error(err)
-		} finally {
-			setLoading(false)
-		}
+	// The sent message is echoed back over the socket (we joined the channel on
+	// open), so we render it on arrival rather than appending optimistically.
+	const handleSend = (content) => {
+		send({ action: 'message', recipient_id: peerId, content })
 	}
 
 	const filteredUsers = users.filter(u =>
@@ -181,7 +179,7 @@ export default function MessagesPage() {
 
 						{/* Input */}
 						<div style={{ borderTop: '1px solid #ede8fd', background: 'white' }}>
-							<MessageInput onSend={handleSend} loading={loading} />
+							<MessageInput onSend={handleSend} loading={false} />
 						</div>
 					</>
 				) : (
