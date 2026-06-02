@@ -56,7 +56,8 @@ func (oc *OAuthController) OAuthLogin(c *gin.Context) {
 
 // OAuthCallback godoc
 // @Summary   Handle GitHub OAuth callback
-// @Description Validate state, exchange the code for a token, resolve the user, set the auth cookie, and redirect to the frontend
+// @Description Validate state, exchange the code for a token, resolve the user,
+// @Description set the auth cookie, and redirect to the frontend
 // @Tags      oauth
 // @Produce   json
 // @Param     code  query string true  "Authorization code returned by GitHub"

@@ -224,7 +224,7 @@ func TestSearch_PaginationSecondPage(t *testing.T) {
 	router, _ := SetupTestEnv()
 	author := registerAndLogin(t, router, "p_auth", "p_auth@test.com", "StrongPass123!")
 	// Five posts. limit=2 -> page1: 2 items, page2: 2 items, page3: 1 item.
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		createPost(t, router, author.Token, "paginate me item "+string(rune('A'+i)))
 	}
 

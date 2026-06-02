@@ -10,11 +10,10 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	_ "ft_transcendence/backend/docs" // generated OpenAPI spec (run `make swagger`)
 	"ft_transcendence/backend/internal/config"
 	"ft_transcendence/backend/internal/redis"
 	"ft_transcendence/backend/internal/routes"
-
-	_ "ft_transcendence/backend/docs" // generated OpenAPI spec (run `make swagger`)
 )
 
 // @title                       ft_transcendence API

@@ -12,7 +12,7 @@ type User struct {
 	Provider  string         `gorm:"type:varchar(50);default:'local'" json:"provider"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at,omitzero" gorm:"index"`
 
 	Name     string  `json:"name"`
 	Username string  `json:"username" binding:"required" gorm:"unique;not null"`
