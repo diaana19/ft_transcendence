@@ -17,7 +17,7 @@ GO_IMAGE   := golang:1.25
 
 .PHONY: help build up down stop restart re clean ps \
         logs logs-backend logs-frontend logs-nginx logs-db \
-        test test-frontend seed seed-clean \
+        test test-frontend seed \
         shell-backend shell-frontend shell-nginx shell-postgres shell-redis \
         fmt lint swagger prune version
 .DEFAULT_GOAL := help
@@ -46,8 +46,9 @@ help:
 	@echo "  make test-frontend Frontend tests (inside the frontend container)"
 	@echo ""
 	@echo "Database:"
-	@echo "  make seed          Seed the database (Go seeder container)"
-	@echo "  make seed-clean    Fresh volumes, then seed"
+	@echo "  make seed          Seed via the REST API with bash+curl (500 users,"
+	@echo "                     2000 unique posts, comments, likes, follows;"
+	@echo "                     real photos). Override: make seed USERS=200 POSTS_TARGET=800"
 	@echo ""
 	@echo "Shells:"
 	@echo "  make shell-backend   Open a shell in the backend (Go API) container"
@@ -131,12 +132,14 @@ test-frontend:
 
 # ==================== Database ====================
 
+# Seed through the public REST API with bash + curl. Pulls real names and photos
+# from randomuser.me, then creates users/posts/comments/likes/follows. Runs on
+# the host, so it needs curl + jq and a running stack (the script waits for the
+# API to come up). Override the user count with USERS=N.
 seed:
-	@$(COMPOSE) --profile seed run --rm seed
-
-seed-clean: clean up
-	@sleep 3
-	@$(COMPOSE) --profile seed run --rm seed
+	@ENGINE="$(ENGINE)" COMPOSE="$(COMPOSE)" \
+		$(if $(USERS),USERS="$(USERS)") $(if $(POSTS_TARGET),POSTS_TARGET="$(POSTS_TARGET)") $(if $(PAR),PAR="$(PAR)") \
+		bash scripts/seed.sh
 
 # ==================== Shells & tools ====================
 
