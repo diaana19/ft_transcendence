@@ -11,3 +11,9 @@ export async function markAllNotificationsRead() {
 
   return res.data
 }
+
+export async function markNotificationRead(id) {
+  const res = await axiosInstance.patch(`/api/notification/${id}/read`)
+
+  return res.data
+}

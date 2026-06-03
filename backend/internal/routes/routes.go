@@ -83,6 +83,7 @@ func registerFriendRoutes(protected *gin.RouterGroup, c *controllers.FriendContr
 func registerNotificationRoutes(protected *gin.RouterGroup, c *controllers.NotificationController) {
 	protected.GET("/notification", c.GetUnread)
 	protected.PATCH("/notification/read", c.MarkAllRead)
+	protected.PATCH("/notification/:id/read", c.MarkRead)
 }
 
 // Uploads have mixed visibility. POST /upload requires auth (only logged-in

@@ -70,6 +70,10 @@ func (s *NotificationService) MarkAllRead(userID string) error {
 	return s.repo.MarkAllReadByUserID(userID)
 }
 
+func (s *NotificationService) MarkRead(userID, notifID string) error {
+	return s.repo.MarkReadByID(userID, notifID)
+}
+
 // func (s *NotificationService) SendLikeNotification(receiverID string, actorID string, actorUsername string) error {
 // 	receiverUsername, err := s.repo.GetUsernameByID(receiverID)
 // 	if err != nil {

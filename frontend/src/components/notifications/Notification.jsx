@@ -11,7 +11,7 @@
 
 import { useNavigate } from 'react-router-dom'
 import { useNotifications } from '../../context/NotificationProvider'
-import { Heart, MessageCircle, UserPlus, Bell, Mail } from 'lucide-react'
+import { Heart, MessageCircle, UserPlus, Bell, Mail, Check } from 'lucide-react'
 import { acceptFriendRequest } from '../../features/user/userService'
 import { useState } from 'react'
 
@@ -44,7 +44,7 @@ function getNotifIcon(type) {
 }
 
 function NotificationsPage() {
-  const { notifications, markAllRead } = useNotifications()
+  const { notifications, markAllRead, markRead } = useNotifications()
   const navigate = useNavigate()
   const [accepted, setAccepted] = useState({})
 
@@ -125,7 +125,15 @@ function NotificationsPage() {
               )}
             </div>
             {!notif.read && (
-              <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ background: '#534ab7' }} />
+              <button
+                onClick={(e) => { e.stopPropagation(); markRead(notif.id) }}
+                title="Mark as read"
+                aria-label="Mark as read"
+                className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:opacity-80"
+                style={{ background: '#ede8fd', color: '#534ab7' }}
+              >
+                <Check size={15} />
+              </button>
             )}
           </div>
         ))

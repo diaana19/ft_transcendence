@@ -32,6 +32,21 @@ func (r *NotificationRepositories) MarkAllReadByUserID(userID string) error {
 		Update("read", true).Error
 }
 
+// MarkReadByID marks a single notification read, scoped to its owner so a user
+// can only touch their own. Returns ErrRecordNotFound if nothing matched.
+func (r *NotificationRepositories) MarkReadByID(userID, notifID string) error {
+	res := r.db.Model(&models.Notification{}).
+		Where("id = ? AND user_id = ?", notifID, userID).
+		Update("read", true)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
 func (r *NotificationRepositories) GetUsernameByID(userID string) (string, error) {
 	var user models.User
 	err := r.db.Select("username").First(&user, "id = ?", userID).Error
