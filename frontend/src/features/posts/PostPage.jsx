@@ -71,7 +71,7 @@ export default function PostPage() {
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h2 className="font-semibold text-sm" style={{ color: '#2c2c2a' }}>
-                {post.author?.username}
+                {post.author?.displayname}
               </h2>
 
               <span className="text-sm" style={{ color: '#afa9ec' }}>
@@ -140,7 +140,7 @@ export default function PostPage() {
             <div className="flex-1 rounded-xl px-3 py-2 mb-1" style={{ background: 'white', border: '0.5px solid #f0ebfe' }} >
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-xs" style={{ color: '#2c2c2a' }}>
-                  {comment.author?.username}
+                  {comment.author?.displayname}
                 </span>
 
                 <span className="text-xs" style={{ color: '#afa9ec' }}>

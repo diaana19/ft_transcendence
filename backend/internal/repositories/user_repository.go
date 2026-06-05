@@ -49,8 +49,8 @@ func (r *userRepository) Update(id string, input models.UpdateUserInput) (*model
 	}
 
 	updates := make(map[string]any)
-	if input.Name != "" {
-		updates["name"] = input.Name
+	if input.DisplayName != "" {
+		updates["display_name"] = input.DisplayName
 	}
 	if input.Username != "" {
 		updates["username"] = input.Username

@@ -49,8 +49,8 @@ func (m *mockUserRepository) Update(id string, input models.UpdateUserInput) (*m
 	if !ok {
 		return nil, errors.New("record not found")
 	}
-	if input.Name != "" {
-		user.Name = input.Name
+	if input.DisplayName != "" {
+		user.DisplayName = input.DisplayName
 	}
 	if input.Username != "" {
 		user.Username = input.Username

@@ -135,7 +135,7 @@ func TestUpdateUser_Success_Partial(t *testing.T) {
 	id := createUserAndGetID(router, t)
 
 	body := `{
-		"name": "Updated Name",
+		"displayname": "Updated Name",
 		"username": "newusername",
 		"bio": "New bio here",
 		"avatar": "https://example.com/avatar.jpg"
@@ -149,7 +149,7 @@ func TestUpdateUser_Success_Partial(t *testing.T) {
 	var updated map[string]any
 	json.Unmarshal(w.Body.Bytes(), &updated)
 
-	if updated["name"] != "Updated Name" || updated["username"] != "newusername" {
+	if updated["displayname"] != "Updated Name" || updated["username"] != "newusername" {
 		t.Fatal("update fields not applied correctly")
 	}
 }

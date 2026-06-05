@@ -25,7 +25,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("posts");
 
-  const [user, setUser] = useState({ name: "", email: "", bio: "" });
+  const [user, setUser] = useState({ displayname: "", email: "", bio: "" });
   const [loading, setLoading] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -192,8 +192,8 @@ export default function Profile() {
 
           {/* Info */}
           <div className="mt-12 pb-3">
-            <h2 className="text-xl font-bold" style={{ color: '#2c2c2a' }}>{user.name || 'No name'}</h2>
-            <p className="text-sm" style={{ color: '#afa9ec' }}>@{user.email}</p>
+            <h2 className="text-xl font-bold" style={{ color: '#2c2c2a' }}>{user.displayname}</h2>
+            <p className="text-sm" style={{ color: '#afa9ec' }}>@{user.username}</p>
             {user.bio && (
               <p className="mt-2 text-sm" style={{ color: '#5f5e5a', borderLeft: '2px solid #a78bfa', paddingLeft: '8px' }}>
                 {user.bio}
@@ -336,8 +336,8 @@ export default function Profile() {
               </div>
 
               <input className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-400"
-                placeholder="Name" type="text" value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                placeholder="Display name" type="text" value={form.displayname}
+                onChange={(e) => setForm({ ...form, displayname: e.target.value })} />
               <input className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-400"
                 placeholder="Email" type="email" value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />

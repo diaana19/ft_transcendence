@@ -212,12 +212,12 @@ func (s *OAuthService) FindOrCreateUser(_ context.Context, ghUser *GitHubUser) (
 	avatar := ghUser.AvatarURL
 
 	newUser := models.User{
-		Name:     name,
-		Username: username,
-		Email:    ghUser.Email,
-		Avatar:   &avatar,
-		GithubID: &githubIDStr,
-		Provider: providerGitHub,
+		DisplayName: name,
+		Username:    username,
+		Email:       ghUser.Email,
+		Avatar:      &avatar,
+		GithubID:    &githubIDStr,
+		Provider:    providerGitHub,
 	}
 
 	if err := s.userRepo.CreateUser(&newUser); err != nil {

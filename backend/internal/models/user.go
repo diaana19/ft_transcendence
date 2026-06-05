@@ -14,10 +14,10 @@ type User struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at,omitzero" gorm:"index"`
 
-	Name     string  `json:"name"`
-	Username string  `json:"username" binding:"required" gorm:"unique;not null"`
-	Email    string  `json:"email" binding:"required,email" gorm:"unique;not null"`
-	Password *string `json:"-"`
+	DisplayName string  `json:"displayname"`
+	Username    string  `json:"username" binding:"required" gorm:"unique;not null"`
+	Email       string  `json:"email" binding:"required,email" gorm:"unique;not null"`
+	Password    *string `json:"-"`
 
 	DateOfBirth *time.Time `json:"dateOfBirth"`
 
@@ -30,19 +30,19 @@ type User struct {
 }
 
 type UpdateUserInput struct {
-	Name      string  `json:"name"`
-	Username  string  `json:"username"`
-	Email     string  `json:"email"`
-	Bio       string  `json:"bio"`
-	Avatar    *string `json:"avatar"`
-	Wallpaper *string `json:"wallpaper"`
+	DisplayName string  `json:"displayname"`
+	Username    string  `json:"username"`
+	Email       string  `json:"email"`
+	Bio         string  `json:"bio"`
+	Avatar      *string `json:"avatar"`
+	Wallpaper   *string `json:"wallpaper"`
 }
 
 type UserResponse struct {
 	ID             string    `json:"id"`
 	Username       string    `json:"username"`
 	Email          string    `json:"email"`
-	Name           string    `json:"name,omitempty"`
+	DisplayName    string    `json:"displayname,omitempty"`
 	Bio            string    `json:"bio,omitempty"`
 	Avatar         *string   `json:"avatar,omitempty"`
 	Wallpaper      *string   `json:"wallpaper,omitempty"`
@@ -57,7 +57,7 @@ func (u *User) ToResponse() UserResponse {
 		ID:           u.ID,
 		Username:     u.Username,
 		Email:        u.Email,
-		Name:         u.Name,
+		DisplayName:  u.DisplayName,
 		Bio:          u.Bio,
 		Avatar:       u.Avatar,
 		Wallpaper:    u.Wallpaper,

@@ -330,7 +330,7 @@ def seed_users(people):
 
         # avatar + bio + display name (partial update — username/email untouched)
         api("PUT", f"/users/{uid}",
-            json.dumps({"name": name, "bio": pick(BIOS), "avatar": avatar}), tok)
+            json.dumps({"displayname": name, "bio": pick(BIOS), "avatar": avatar}), tok)
 
         uids.append(uid); toks.append(tok); names.append(name); unames.append(username)
         created += 1

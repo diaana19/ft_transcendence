@@ -52,8 +52,8 @@ func (s *AuthService) CreateAuthUserService(user *models.User) (*models.UserResp
 	}
 
 	// Display name defaults to the login, so it is never null or empty.
-	if user.Name == "" {
-		user.Name = user.Username
+	if user.DisplayName == "" {
+		user.DisplayName = user.Username
 	}
 
 	err = s.repo.CreateUser(user)
@@ -62,11 +62,11 @@ func (s *AuthService) CreateAuthUserService(user *models.User) (*models.UserResp
 	}
 
 	response := models.UserResponse{
-		ID:        user.ID,
-		Username:  user.Username,
-		Name:      user.Name,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt,
+		ID:          user.ID,
+		Username:    user.Username,
+		DisplayName: user.DisplayName,
+		Email:       user.Email,
+		CreatedAt:   user.CreatedAt,
 	}
 
 	return &response, nil

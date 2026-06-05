@@ -86,11 +86,12 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
           <div className="flex items-center gap-2">
             <span
               onClick={() => navigate('/profile/' + post.author_id)}
-              className="font-bold text-black cursor-pointer hover:underline"
+              className="font-bold cursor-pointer hover:underline"
+              style={{ color: '#2c2c2a' }}
             >
-              {post.author?.name || 'Unknown'}
+              {post.author?.displayname}
             </span>
-            <span className="text-gray-500">@{post.author?.username || 'unknown'}</span>
+            <span className="text-sm" style={{ color: '#afa9ec' }}>@{post.author?.username}</span>
             <span className="text-gray-500">·</span>
             <span className="text-gray-500 text-sm">
               {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

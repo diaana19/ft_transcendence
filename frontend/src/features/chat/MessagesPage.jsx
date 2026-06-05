@@ -5,7 +5,7 @@
 ** - Display list of users to chat with on the left
 ** - Display active conversation on the right
 ** - Handle sending and receiving messages
-** - Search users by name or username
+** - Search users by display name or username
 */
 
 import { useEffect, useRef, useState } from 'react'
@@ -88,7 +88,7 @@ export default function MessagesPage() {
 
 	const filteredUsers = users.filter(u =>
 		u.username?.toLowerCase().includes(search.toLowerCase()) ||
-		u.name?.toLowerCase().includes(search.toLowerCase())
+		u.displayname?.toLowerCase().includes(search.toLowerCase())
 	)
 
 	return (
@@ -132,7 +132,7 @@ export default function MessagesPage() {
 								</div>
 								<div className="flex-1 min-w-0">
 									<p className="text-sm font-bold truncate" style={{ color: '#2c2c2a' }}>{u.username}</p>
-									<p className="text-xs truncate" style={{ color: '#afa9ec' }}>{u.name || ''}</p>
+									<p className="text-xs truncate" style={{ color: '#afa9ec' }}>{u.displayname || ''}</p>
 								</div>
 							</div>
 						))
@@ -163,7 +163,7 @@ export default function MessagesPage() {
 							</div>
 							<div>
 								<p className="text-sm font-bold" style={{ color: '#2c2c2a' }}>{selectedUser.username}</p>
-								<p className="text-xs" style={{ color: '#afa9ec' }}>{selectedUser.name || ''}</p>
+								<p className="text-xs" style={{ color: '#afa9ec' }}>{selectedUser.displayname || ''}</p>
 							</div>
 						</div>
 
