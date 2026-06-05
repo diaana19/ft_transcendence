@@ -20,10 +20,14 @@ import { sendFriendRequest } from '../../features/user/userService'
 
 export default function Profile() {
   const { user: authUser } = useAuth();
-  const { id } = useParams();
-  const userId = id || authUser?.userId;
+  const { id, username } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("posts");
+
+  // The profile is keyed by user id. The /profile/u/:username route (used by
+  // @mention links) carries a username instead, so resolve it to an id first.
+  const [resolvedId, setResolvedId] = useState(null);
+  const userId = resolvedId;
 
   const [user, setUser] = useState({ displayname: "", email: "", bio: "" });
   const [loading, setLoading] = useState(false);
@@ -36,6 +40,18 @@ export default function Profile() {
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [friendRequested, setFriendRequested] = useState(false)
   const [isFriend, setIsFriend] = useState(false)
+
+  useEffect(() => {
+    let active = true;
+    if (username) {
+      api.get(`/api/users?username=${encodeURIComponent(username)}`)
+        .then(({ data }) => { if (active) setResolvedId(data.id); })
+        .catch((err) => console.error(err));
+    } else {
+      setResolvedId(id || authUser?.userId || null);
+    }
+    return () => { active = false; };
+  }, [username, id, authUser?.userId]);
 
   useEffect(() => {
     if (userId) {

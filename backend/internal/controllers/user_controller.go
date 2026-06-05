@@ -25,14 +25,35 @@ func NewUserController(userService *services.UserService, friendService *service
 }
 
 // GetUsers godoc
-// @Summary   List all users
+// @Summary   List all users, or look one up by exact username
 // @Tags      users
 // @Security  BearerAuth
 // @Produce   json
+// @Param     username query string false "exact username; returns the single matching user instead of the list"
 // @Success   200 {array}  models.UserResponse
+// @Failure   404 {object} map[string]string
 // @Failure   500 {object} map[string]string
 // @Router    /users [get]
 func (uc *UserController) GetUsers(c *gin.Context) {
+	// ?username=foo resolves a single user (used to turn an @mention into a
+	// profile link). username is unique-indexed, so this is a cheap lookup.
+	if username := c.Query("username"); username != "" {
+		user, err := uc.userService.GetUserByUsername(username)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": msgUserNotFound})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		response := user.ToResponse()
+		response.FollowersCount, _ = uc.friendService.CountFollowers(user.ID)
+		response.FollowingCount, _ = uc.friendService.CountFollowing(user.ID)
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
 	users, err := uc.userService.GetUsers()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

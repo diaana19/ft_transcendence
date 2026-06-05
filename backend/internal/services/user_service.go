@@ -24,6 +24,10 @@ func (s *UserService) GetUser(id string) (*models.User, error) {
 	return s.repo.GetByID(id)
 }
 
+func (s *UserService) GetUserByUsername(username string) (*models.User, error) {
+	return s.repo.GetByUsername(username)
+}
+
 func (s *UserService) UpdateUser(id string, input models.UpdateUserInput) (*models.User, error) {
 	return s.repo.Update(id, input)
 }

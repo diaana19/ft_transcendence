@@ -40,6 +40,7 @@ function App() {
                 >
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/:id" element={<Profile />} />
+                    <Route path="/profile/u/:username" element={<Profile />} />
                     <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/post/:id" element={<PostPage />} />
                     <Route path="/2fa/setup" element={<TwoFASetup />} />
