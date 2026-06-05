@@ -19,7 +19,7 @@ import { getPostsByAuthor } from '../posts/postService'
 import { sendFriendRequest } from '../../features/user/userService'
 
 export default function Profile() {
-  const { user: authUser, logout } = useAuth();
+  const { user: authUser } = useAuth();
   const { id } = useParams();
   const userId = id || authUser?.userId;
   const navigate = useNavigate();
@@ -28,7 +28,6 @@ export default function Profile() {
   const [user, setUser] = useState({ displayname: "", email: "", bio: "" });
   const [loading, setLoading] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
-  const [showDelete, setShowDelete] = useState(false);
   const [form, setForm] = useState(user);
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
@@ -37,7 +36,6 @@ export default function Profile() {
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [friendRequested, setFriendRequested] = useState(false)
   const [isFriend, setIsFriend] = useState(false)
-  const [deletePassword, setDeletePassword] = useState('')
 
   useEffect(() => {
     if (userId) {
@@ -93,18 +91,6 @@ export default function Profile() {
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      await api.delete(`/api/users/${userId}`, {
-        data: { password: deletePassword }
-      })
-      await logout()
-      navigate("/login")
-    } catch (err) {
-      console.error(err)
-    }
-  };
-
   const handleFriendRequest = async () => {
     try {
       await sendFriendRequest(userId)
@@ -152,13 +138,6 @@ export default function Profile() {
                   style={{ border: '1px solid #ede8fd', color: '#534ab7', background: 'white' }}
                 >
                   Edit profile
-                </button>
-                <button
-                  onClick={() => setShowDelete(true)}
-                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors"
-                  style={{ border: '1px solid #fde8f0', color: '#d4537e', background: 'white' }}
-                >
-                  Delete
                 </button>
                 <button
                   onClick={() => navigate('/settings')}
@@ -349,32 +328,6 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Modal Delete */}
-      {showDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(237, 232, 253, 0.4)', backdropFilter: 'blur(4px)' }}>
-          <div className="absolute inset-0" onClick={() => setShowDelete(false)} />
-          <div className="relative z-10 bg-white p-6 rounded-2xl w-80" style={{ border: '2px solid #ede8fd', boxShadow: '0 8px 32px rgba(167, 139, 250, 0.15)' }}>
-            <h3 className="text-lg font-bold mb-2" style={{ color: '#2c2c2a' }}>Delete account</h3>
-            <p className="text-sm mb-4" style={{ color: '#b4b2a9' }}>This action is permanent and cannot be undone.</p>
-            <input
-              type="password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-              placeholder="Enter your password"
-              className="w-full rounded-lg px-3 py-2 mb-4 text-sm focus:outline-none"
-              style={{ border: '1px solid #ede8fd' }}
-            />
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setShowDelete(false)} className="px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#faf8f5] transition-colors" style={{ border: '1px solid #ede8fd', color: '#534ab7' }}>
-                Cancel
-              </button>
-              <button onClick={handleDelete} className="px-4 py-2 rounded-full text-sm font-bold transition-colors" style={{ background: '#d4537e', color: 'white', border: 'none' }}>
-                Yes, delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
