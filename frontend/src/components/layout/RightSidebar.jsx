@@ -2,7 +2,7 @@ export default function RightSidebar() {
   return (
     <aside className="w-80 h-screen fixed right-0 top-0
                       backdrop-blur-xl
-                      border-l border-gray-200
+                      border-r border-transparent
                       px-4 py-6 hidden lg:block">
 
       {/* Search placeholder */}

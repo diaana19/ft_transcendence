@@ -13,6 +13,7 @@ import CookiesBanner from '../components/common/CookiesBanner'
 import HelpCenter from '../features/help/HelpCenter.jsx'
 import SettingsPage from '../features/settings/SettingsPage.jsx'
 import MessagesPage from '../features/chat/MessagesPage'
+import BadgePage from '../features/gamification/BadgePage.jsx'
 
 function App() {
     return (
@@ -23,6 +24,7 @@ function App() {
                 <Route element={<Layout />}>
                     <Route path="/" element={<Feed />} />
                     <Route path="/help" element={<HelpCenter />} />
+					<Route path="/badge" element={<BadgePage />} />
                 </Route>
                 <Route path="/register" element={<RegisterForm />} />
                 <Route path="/login" element={<LoginForm />} />
