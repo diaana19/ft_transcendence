@@ -23,6 +23,8 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
   const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(post.content)
+  const [editMediaUrl, setEditMediaUrl] = useState(post.media_url || null)
+  const [editFile, setEditFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [liked, setLiked] = useState(post.liked || false)
   const [likesCount, setLikesCount] = useState(post.likes_count || 0)
@@ -43,9 +45,17 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
   const handleUpdate = async () => {
     setLoading(true)
     try {
-      const updatedPost = await updatePost(post.id, editContent)
-      onUpdate(updatedPost)
+    let mediaUrl = editMediaUrl
+		if (editFile) {
+		const formData = new FormData()
+		formData.append('file', editFile)
+		const res = await axiosInstance.post('/api/upload', formData)
+		mediaUrl = res.data.url
+		}
+      const updatedPost = await updatePost(post.id, editContent,  mediaUrl)
+      onUpdate({ ...updatedPost, media_url: mediaUrl})
       setIsEditing(false)
+	  setEditFile(null)
     } catch (err) {
       console.error('Error updating post:', err)
     } finally {
@@ -66,6 +76,14 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
       console.error('Error liking post:', err)
     }
   }
+
+	const handleEditFileChange = (e) => {
+	const selected = e.target.files[0]
+	if (selected) {
+		setEditFile(selected)
+		setEditMediaUrl(URL.createObjectURL(selected))
+	}
+	}
 
   const handleComment = () => {
     if (!user) {
@@ -108,9 +126,23 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
                 className="w-full border border-gray-300 rounded p-2 text-black focus:outline-none focus:border-blue-400 resize-none"
                 rows={3}
               />
-              <div className="flex gap-2 mt-2">
+			{editMediaUrl && (
+			<div className="relative mt-2 mb-2">
+				<img src={editMediaUrl} alt="preview" className="rounded-xl max-h-48 w-full object-cover" />
+				<button
+				onClick={() => { setEditMediaUrl(null); setEditFile(null) }}
+				className="absolute top-2 right-2 w-6 h-6 rounded-full text-xs text-white flex items-center justify-center"
+				style={{ background: 'rgba(83,74,183,0.7)' }}
+				>✕</button>
+			</div>
+			)}
+			<div className="flex items-center gap-2 mt-2">
+				<label className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 flex-1">
+				+ Change image
+				<input type="file" accept="image/*,video/*" onChange={handleEditFileChange} className="hidden" />
+				</label>
                 <button
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => {setIsEditing(false) ; setEditMediaUrl(post.media_url || null); setEditFile(null)}}
                   className="px-4 py-1 rounded-full border border-gray-300 text-gray-600 text-sm hover:bg-gray-100"
                 >
                   Cancel
@@ -121,8 +153,8 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
                   className="px-4 py-1 rounded-full bg-blue-400 text-white text-sm font-bold hover:bg-blue-500 disabled:opacity-50"
                 >
                   {loading ? 'Saving...' : 'Save'}
-                </button>
-              </div>
+                </button> </div>
+
             </div>
           ) : (
             <>
@@ -138,7 +170,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
               )}
             </>
           )}
-
+		  {!isEditing && (
           <div className="flex gap-6 mt-3 text-gray-500 text-sm">
             <span
               onClick={handleComment}
@@ -166,7 +198,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
                 </button>
               </div>
             )}
-          </div>
+          </div> )}
         </div>
       </div>
 

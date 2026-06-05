@@ -51,7 +51,7 @@ func (r *postRepository) GetAll(page, limit int) ([]models.Post, int64, error) {
 
 func (r *postRepository) GetByID(id string) (*models.Post, error) {
 	var post models.Post
-	result := r.db.Preload("Author").First(&post, "id = ?", id)
+	result := r.db.Preload("Author") .First(&post, "id = ?", id)
 	return &post, result.Error
 }
 
@@ -70,7 +70,10 @@ func (r *postRepository) Update(id string, input models.UpdatePostInput) (*model
 	if err := r.db.First(&post, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
-	if err := r.db.Model(&post).Updates(input).Error; err != nil {
+	if err := r.db.Model(&post).Select("content", "media_url").Updates(map[string]interface{}{
+    "content":   input.Content,
+    "media_url": input.MediaURL,
+	}).Error; err != nil {
 		return nil, err
 	}
 	r.db.Preload("Author").First(&post, "id = ?", id)

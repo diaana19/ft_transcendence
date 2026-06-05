@@ -8,6 +8,7 @@ function CommentForm({ postId, onCommentAdded }) {
   const [content, setContent]   = useState('')
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState(null)
+  const [file, setFile] = useState(null)
 
 
   const handleSubmit = async () => {
@@ -63,7 +64,20 @@ function CommentForm({ postId, onCommentAdded }) {
           rows={2}
           className="w-full focus:outline-none resize-none text-sm bg-transparent placeholder-[#b4b2a9]" style={{ color: '#2c2c2a' }}
         />
-
+		{file && (
+		<div className="relative mt-2 mb-1">
+			{file.type.startsWith('video/') ? (
+			<video src={URL.createObjectURL(file)} controls className="rounded-xl max-h-48 w-full object-cover" />
+			) : (
+			<img src={URL.createObjectURL(file)} alt="preview" className="rounded-xl max-h-48 w-full object-cover" />
+			)}
+			<button
+			onClick={() => setFile(null)}
+			className="absolute top-2 right-2 w-5 h-5 rounded-full text-xs text-white flex items-center justify-center"
+			style={{ background: 'rgba(83, 74, 183, 0.7)' }}
+			>✕</button>
+		</div>
+		)}
         {error && (
           <p className="text-xs mb-1" style={{ color: '#d4537e' }} >{error}</p>
         )}
