@@ -328,8 +328,11 @@ This builds the images and starts the **nginx reverse proxy + frontend + backend
 
 The proxy is the **only published port** — all access goes through nginx. It's fixed at **3000**
 (set in `infra/docker-compose.yml`) because **rootless Podman can't bind privileged ports < 1024**,
-and serves **HTTPS** there with a **self-signed certificate** (one-time browser "not secure"
-warning — Advanced → proceed). A plain-HTTP request to the port is auto-redirected to HTTPS. The
+and serves **HTTPS** there with a **self-signed certificate**. The cert is generated once on the
+host into `infra/certs/` by `make certs` (run automatically by `make up`) and bind-mounted into
+the proxy, so it stays stable across rebuilds — the one-time browser "not secure" warning
+(Advanced → proceed) you accept therefore keeps working. A plain-HTTP request to the port is
+auto-redirected to HTTPS. The
 backend listens on a fixed internal port **8080** (the proxy's upstream; not exposed to the host).
 
 ### Tests

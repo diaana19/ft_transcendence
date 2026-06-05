@@ -674,3 +674,7 @@ htmlcov/
 backend/docs/docs.go
 backend/docs/swagger.json
 backend/docs/swagger.yaml
+
+# Locally-generated self-signed TLS cert for the dev proxy (`make certs`).
+# Never committed — each machine generates its own; mount real certs in prod.
+infra/certs/

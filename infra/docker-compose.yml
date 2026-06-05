@@ -47,6 +47,10 @@ services:
     # privileged ports (<1024); the proxy serves HTTPS on container :443.
     ports:
       - "3000:443"
+    # Stable self-signed cert generated once on the host (`make certs`), so a
+    # browser trust exception accepted once survives image rebuilds.
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
     depends_on:
       backend:
         condition: service_healthy
