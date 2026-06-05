@@ -46,7 +46,7 @@ help:
 	@echo "  make test-frontend Frontend tests (inside the frontend container)"
 	@echo ""
 	@echo "Database:"
-	@echo "  make seed          Seed via the REST API with bash+curl (500 users,"
+	@echo "  make seed          Seed via the REST API with Python (500 users,"
 	@echo "                     2000 unique posts, comments, likes, follows;"
 	@echo "                     real photos). Override: make seed USERS=200 POSTS_TARGET=800"
 	@echo ""
@@ -132,14 +132,18 @@ test-frontend:
 
 # ==================== Database ====================
 
-# Seed through the public REST API with bash + curl. Pulls real names and photos
-# from randomuser.me, then creates users/posts/comments/likes/follows. Runs on
-# the host, so it needs curl + jq and a running stack (the script waits for the
-# API to come up). Override the user count with USERS=N.
+# Seed through the public REST API with Python (stdlib only). Pulls real names
+# and photos from randomuser.me, then creates users/posts/comments/likes/follows.
+# Runs on the host, so it needs python3 and a running stack (the script waits for
+# the API to come up). The seeder paces its auth calls to RATE_LIMIT_MAX (the
+# backend's per-IP/min ceiling) — by default we read that straight from infra/.env
+# so the seeder matches the running backend. Override the user count with USERS=N,
+# or the limit with RATE_LIMIT_MAX=N on the command line.
+RATE_LIMIT_MAX ?= $(shell sed -n 's/^RATE_LIMIT_MAX=//p' infra/.env 2>/dev/null | tail -1)
 seed:
-	@ENGINE="$(ENGINE)" COMPOSE="$(COMPOSE)" \
-		$(if $(USERS),USERS="$(USERS)") $(if $(POSTS_TARGET),POSTS_TARGET="$(POSTS_TARGET)") $(if $(PAR),PAR="$(PAR)") \
-		bash scripts/seed.sh
+	@$(if $(USERS),USERS="$(USERS)") $(if $(POSTS_TARGET),POSTS_TARGET="$(POSTS_TARGET)") $(if $(PAR),PAR="$(PAR)") \
+		$(if $(RATE_LIMIT_MAX),RATE_LIMIT_MAX="$(RATE_LIMIT_MAX)") \
+		python3 scripts/seed.py
 
 # ==================== Shells & tools ====================
 

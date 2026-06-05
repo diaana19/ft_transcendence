@@ -1,5 +1,5 @@
 # Edge reverse proxy: TLS termination + routing to frontend and backend.
-FROM nginx:alpine
+FROM docker.io/library/nginx:alpine
 
 # Self-signed certificate for local HTTPS (dev / school evaluation). Generated at
 # build time so nothing sensitive is committed; mount real certs over
