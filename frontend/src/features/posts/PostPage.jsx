@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import axiosInstance from "../../services/axiosInstance"
+import RichText from "../../components/common/RichText"
 import CommentForm from "./CommentForm"
 
 export default function PostPage() {
@@ -80,7 +81,7 @@ export default function PostPage() {
             </div>
 
             <p className="mt-2 text-[15px] whitespace-pre-wrap" style={{ color: '#2c2c2a' }}>
-              {post.content}
+              <RichText text={post.content} />
             </p>
             {post.media_url && (
             <div className="mt-3 overflow-hidden rounded-2xl " style={{ border: '0.5px solid #ede8fd' }}>
@@ -149,7 +150,7 @@ export default function PostPage() {
               </div>
 
               <p className="text-sm mt-1 whitespace-pre-wrap" style={{ color: '#5f5e5a' }}>
-                {comment.content}
+                <RichText text={comment.content} />
               </p>
             </div>
           </div>

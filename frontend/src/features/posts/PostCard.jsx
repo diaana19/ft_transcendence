@@ -15,6 +15,7 @@ import { Pencil, Trash2, MessageCircle, Heart } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import axiosInstance from '../../services/axiosInstance'
 import LoginModal from '../../components/common/LoginModal'
+import RichText from '../../components/common/RichText'
 import { useAuth } from '../../hooks/useAuth'
 
 function PostCard({ post, onDelete, onUpdate, currentUserId }) {
@@ -125,7 +126,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
             </div>
           ) : (
             <>
-              <p className="text-black mt-1">{post.content}</p>
+              <p className="text-black mt-1"><RichText text={post.content} /></p>
               {post.media_url && (
                 <div className="mt-3 overflow-hidden rounded-2xl">
                   <img
