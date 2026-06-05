@@ -190,7 +190,7 @@ lint: swagger
 
 swagger:
 	@echo "Regenerating OpenAPI spec into backend/docs ..."
-	@cd backend && go tool swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal
+	@cd backend && go tool swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal --quiet
 	@echo "Done. Start the stack ('make up') and open https://localhost:3000/swagger/index.html"
 
 # ==================== Utils ====================

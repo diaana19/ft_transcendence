@@ -9,7 +9,9 @@ COPY backend/ .
 
 # Generate the OpenAPI spec (backend/docs) on every image build. The spec is a
 # build artifact (git-ignored), so it is regenerated here rather than committed.
-RUN go tool swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal
+# --quiet silences swag's cosmetic warnings (e.g. "no Go files in /app" — the
+# module root holds no .go files per the project layout); the spec is identical.
+RUN go tool swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal --quiet
 
 RUN go build -o server ./cmd/server/main.go
 
