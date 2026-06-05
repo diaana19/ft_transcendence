@@ -5,12 +5,13 @@ FROM docker.io/library/nginx:alpine
 # build time so nothing sensitive is committed; mount real certs over
 # /etc/nginx/certs for production.
 RUN apk add --no-cache openssl \
- && mkdir -p /etc/nginx/certs \
- && openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
-      -keyout /etc/nginx/certs/server.key \
-      -out    /etc/nginx/certs/server.crt \
-      -subj "/CN=localhost" \
-      -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+ && mkdir -p /etc/ssl/private /etc/ssl/certs \
+ && openssl req -x509 -sha256 -nodes -days 365 \
+      -newkey rsa:2048 \
+      -keyout /etc/ssl/private/ft_transcendence.42.fr.key \
+      -out    /etc/ssl/certs/ft_transcendence.42.fr.crt \
+      -subj "/C=FR/ST=Ile-de-France/L=Paris/O=42/OU=ft_transcendence/CN=ft_transcendence.42.fr" \
+      -addext "subjectAltName=DNS:ft_transcendence.42.fr,DNS:localhost,IP:127.0.0.1"
 
 COPY docker/proxy.nginx.conf /etc/nginx/conf.d/default.conf
 
