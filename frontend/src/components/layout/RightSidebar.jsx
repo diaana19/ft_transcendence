@@ -5,18 +5,6 @@ export default function RightSidebar() {
                       border-r border-transparent
                       px-4 py-6 hidden lg:block">
 
-      {/* Search placeholder */}
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search..."
-          className="w-full px-4 py-2 rounded-xl
-                     bg-white/70 border border-gray-200
-                     text-gray-700 placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-gray-300"
-        />
-      </div>
-
       {/* Placeholder card 1 */}
       <div className="bg-white/60 border border-gray-200 rounded-xl p-4 mb-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-2">

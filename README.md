@@ -44,7 +44,6 @@ modern reactive frontend — the "Social Network" project archetype from the sub
   threaded replies, and file attachments (backend complete; see limitations).
 - **Notifications** — in-app notifications for social actions (friend requests, likes,
   messages, replies).
-- **Search** — query users, posts, and messages with type filters, sorting, and pagination.
 - **File management** — secure uploads (avatars, wallpapers, post media) with per-file
   visibility and access control.
 - **Privacy** — GDPR data export and account deletion.
@@ -66,7 +65,7 @@ The team is composed of 5 members. Roles follow the subject's recommended struct
 | **rmarcas-** | Project Manager / Scrum Master | Organises planning and meetings, tracks progress and deadlines, manages blockers, and ensures team communication. Also led the **frontend** (UI, notifications, PWA). |
 | **lepereir** | Tech Lead / Architect | Owns technical architecture and code quality: the golang-standards project layout, Go module structure, CI pipeline, linting, the integration test suite, and critical-code review. |
 | **luluzuri** | Developer | Backend feature development (users, friends, posts, uploads, auth) and infrastructure/seed tooling. |
-| **vali** | Developer | Real-time backend: WebSocket chat, message persistence, and search. |
+| **vali** | Developer | Real-time backend: WebSocket chat and message persistence. |
 
 > All members contributed to both the mandatory part and the modules. See
 > [Individual Contributions](#individual-contributions) for details.
@@ -185,7 +184,6 @@ Attribution is derived from Git history (commit topics and per-file authorship);
 | Likes & comments            | Toggle likes; threaded comments CRUD                                   | Lucas · Rosse         |
 | Real-time chat              | WebSocket DMs & rooms, history, threaded replies, attachments          | Valentin              |
 | Notifications               | In-app notifications for social actions; mark-all-read                 | Valentin              |
-| Search                      | Users / posts / messages with filters, sorting, pagination             | Valentin              |
 | File upload & management    | Multi-type uploads, validation, visibility/ACL, serving                | Lucas · Diana         |
 | GDPR                        | Data export + account deletion                                         | Diana                 |
 | PWA                         | Installable + offline service worker                                   | Rosse                 |
@@ -227,7 +225,6 @@ status**, since only fully functional modules count at evaluation:
 |---|---|---|---|---|---|
 | ORM | Web | 1 | ✅ | GORM with auto-migration, relations, soft deletes | luluzuri |
 | Notification system | Web | 1 | 🟧 | Notifications for friend requests/likes/messages/replies; basic UI + mark-all-read | rmarcas-, vali |
-| Advanced search (filters/sort/pagination) | Web | 1 | 🟧 | `/api/search` over users/posts/messages, e2e-tested; search UI pending | vali, lepereir |
 | File upload & management | Web | 1 | ✅ | Multi-type uploads, client+server validation, visibility/ACL, delete, serving | luluzuri |
 | Progressive Web App (PWA) | Web | 1 | ✅ | `vite-plugin-pwa`, manifest, Workbox service worker, installable + offline | rmarcas- |
 | OAuth 2.0 (GitHub) | User Mgmt | 1 | ✅ | OAuth login + callback, account linking | vali, luluzuri |
@@ -237,21 +234,20 @@ status**, since only fully functional modules count at evaluation:
 | Custom-made design system | UX UI  | 1 | ⬜ | Planned: design system with reusable components, including a proper color palette, typography, and icons (minimum: 10 reusable components). | dirituay |
 | Sypport for aditional browsers | Accessibility  | 1 | ✅ |Full compatibility with at least 2 additional browsers (Firefox, Safari, Edge, etc.). | rmarcas- |
 
-**Minor subtotal: 10 pts**
+**Minor subtotal: 9 pts**
 
 ### Point calculation
 
 ```
 Major modules :  5 × 2 = 10 pts
-Minor modules : 10 × 1 = 10 pts
+Minor modules :  9 × 1 =  9 pts
                        -------
-Total claimed          = 20 pts   (mandatory: 14 · bonus cap: 19 = 125%)
+Total claimed          = 19 pts   (mandatory: 14 · bonus cap: 19 = 125%)
 ```
 
-We target the **125% ceiling (19 points = 14 mandatory + 5 bonus)** and claim **20** so the
-project still reaches 19 even if one module is not validated during evaluation (as recommended
-in §IV). No "Module of choice" / custom module is claimed, so no extra justification is
-required there.
+We target the **125% ceiling (19 points = 14 mandatory + 5 bonus)** and claim exactly **19**,
+which leaves no buffer if a module fails to validate during evaluation. No "Module of choice" /
+custom module is claimed, so no extra justification is required there.
 
 ---
 
@@ -266,15 +262,15 @@ required there.
   evolving API — addressed by centralising HTTP in a shared axios instance.
 - **lepereir — Tech Lead / Architect.** Restructured the backend to the
   golang-standards/project-layout, renamed the Go module, drove the integration test suite to
-  ~81% coverage with a CI coverage gate, achieved a clean golangci-lint pass, wired and
-  e2e-tested search, implemented GDPR export/delete, and authored the curl-based HTTP seeder.
+  ~81% coverage with a CI coverage gate, achieved a clean golangci-lint pass,
+  implemented GDPR export/delete, and authored the curl-based HTTP seeder.
   _Challenge:_ flaky tests from DB connection exhaustion under testcontainers — solved by
   sharing a single DB/Redis connection across the suite.
 - **luluzuri — Developer.** Core backend: users, friends/follows, posts/likes/comments, file
   uploads, and large parts of auth; plus infrastructure and DB seeding. _Challenge:_ correct
   like/follow uniqueness and counters — solved with composite unique indexes and cached counts.
-- **vali — Developer.** Real-time subsystem: the WebSocket chat hub, message persistence
-  (DMs, rooms, threaded replies, attachments), and the search backend. _Challenge:_ delivering
+- **vali — Developer.** Real-time subsystem: the WebSocket chat hub and message persistence
+  (DMs, rooms, threaded replies, attachments). _Challenge:_ delivering
   message history without loading entire conversations — solved with `since`-based pagination
   on room messages.
 
@@ -420,8 +416,6 @@ defense (several are mandatory per the subject):
 - **Chat UI.** The WebSocket chat backend is complete and message persistence works, but the
   frontend chat components (`features/chat/*`) and the `useWebSocket` hook are not yet wired —
   required to demonstrate the *real-time* and *user-interaction* majors end-to-end.
-- **Search UI.** The search API is implemented and e2e-tested; the search bar/results UI is not
-  yet wired.
 - **Online status.** Presence indicators are not implemented yet (needed to fully satisfy the
   *standard user management* major).
 - **Notifications coverage & confirmation emails.** Notifications cover the main social actions;

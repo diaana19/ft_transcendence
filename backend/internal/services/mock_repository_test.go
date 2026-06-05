@@ -1,7 +1,6 @@
 package services
 
 import (
-	"context"
 	"errors"
 
 	"gorm.io/gorm"
@@ -18,19 +17,6 @@ func newMockRepo() *mockUserRepository {
 	return &mockUserRepository{
 		users: make(map[string]*models.User),
 	}
-}
-
-func (m *mockUserRepository) SearchByUsername(
-	_ context.Context, _ string, _, _ int, _, _ string,
-) ([]models.User, int64, error) {
-	if m.err != nil {
-		return nil, 0, m.err
-	}
-	result := make([]models.User, 0, len(m.users))
-	for _, u := range m.users {
-		result = append(result, *u)
-	}
-	return result, int64(len(result)), nil
 }
 
 func (m *mockUserRepository) GetAll() ([]models.User, error) {

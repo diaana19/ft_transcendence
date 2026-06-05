@@ -24,7 +24,6 @@ type Controllers struct {
 	Upload       *controllers.UploadController
 	GDPR         *controllers.GDPRController
 	OAuth        *controllers.OAuthController
-	Search       *controllers.SearchController
 	Gamification *controllers.GamificationController
 	ChatWS       *socket.ChatHandler
 }
@@ -50,7 +49,6 @@ func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 	uploadService := services.NewUploadService(fileRepo)
 	gdprService := services.NewGDPRService(pdb)
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
-	searchService := services.NewSearchService(userRepo, msgRepo, postRepo)
 	gamificationService := services.NewGamificationService(pdb, friendService)
 
 	wsManager := socket.NewWSManager()
@@ -66,7 +64,6 @@ func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 		Upload:       &controllers.UploadController{Service: uploadService, FriendService: friendService},
 		GDPR:         controllers.NewGDPRController(gdprService),
 		OAuth:        controllers.NewOAuthController(oauthService, cfg),
-		Search:       controllers.NewSearchController(searchService),
 		Gamification: controllers.NewGamificationController(gamificationService),
 		ChatWS:       chatWS,
 	}

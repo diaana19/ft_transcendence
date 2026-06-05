@@ -1,7 +1,6 @@
 package services
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -26,16 +25,6 @@ func newMockPostRepo() *mockPostRepo {
 		comments: map[string]*models.Reply{},
 		liked:    map[string]bool{},
 	}
-}
-
-func (m *mockPostRepo) SearchByPost(
-	_ context.Context, _ string, _, _ int, _, _ string,
-) ([]models.Post, int64, error) {
-	out := make([]models.Post, 0, len(m.posts))
-	for _, p := range m.posts {
-		out = append(out, *p)
-	}
-	return out, int64(len(out)), nil
 }
 
 func (m *mockPostRepo) GetAll(_, _ int) ([]models.Post, int64, error) {

@@ -30,7 +30,6 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	registerUploadRoutes(api, rdb, c.Upload)
 	registerGDPRRoutes(protected, c.GDPR)
 	registerTwoFARoutes(protected, c.TwoFA)
-	registerSearchRoutes(protected, c.Search)
 	registerGamificationRoutes(protected, c.Gamification)
 }
 
@@ -107,10 +106,6 @@ func registerTwoFARoutes(protected *gin.RouterGroup, c *controllers.TwoFAControl
 	protected.POST("/2fa/setup", c.Setup)
 	protected.POST("/2fa/enable", c.Enable)
 	protected.POST("/2fa/disable", c.Disable)
-}
-
-func registerSearchRoutes(protected *gin.RouterGroup, c *controllers.SearchController) {
-	protected.GET("/search", c.Search)
 }
 
 func registerGamificationRoutes(protected *gin.RouterGroup, c *controllers.GamificationController) {

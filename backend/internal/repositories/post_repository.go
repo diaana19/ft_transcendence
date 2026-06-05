@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -29,8 +28,6 @@ type PostRepository interface {
 	GetCommentByID(id string) (*models.Reply, error)
 	UpdateComment(id string, input models.UpdateCommentInput) (*models.Reply, error)
 	DeleteComment(id string) error
-
-	SearchByPost(ctx context.Context, q string, limit, offset int, sort, order string) ([]models.Post, int64, error)
 }
 
 type postRepository struct {
@@ -193,37 +190,4 @@ func (r *postRepository) DeleteComment(id string) error {
 		return fmt.Errorf("delete comment: %w", err)
 	}
 	return nil
-}
-
-func (r *postRepository) SearchByPost(
-	ctx context.Context, q string, limit, offset int, sort, order string,
-) ([]models.Post, int64, error) {
-	allowedSort := map[string]bool{sortCreatedAt: true, "likes_count": true, "comments_count": true}
-	if !allowedSort[sort] {
-		sort = sortCreatedAt
-	}
-	if order != orderAsc && order != orderDesc {
-		order = orderDesc
-	}
-
-	var posts []models.Post
-	var total int64
-
-	query := r.db.WithContext(ctx).
-		Model(&models.Post{}).
-		Where("content ILIKE ?", escapeLike(q))
-
-	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	if err := query.
-		Preload("Author").
-		Order(sort + " " + order).
-		Limit(limit).
-		Offset(offset).
-		Find(&posts).Error; err != nil {
-		return nil, 0, err
-	}
-	return posts, total, nil
 }

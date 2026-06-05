@@ -5,7 +5,6 @@
 ** - Display list of users to chat with on the left
 ** - Display active conversation on the right
 ** - Handle sending and receiving messages
-** - Search users by name or username
 */
 
 import { useEffect, useRef, useState } from 'react'
@@ -23,7 +22,6 @@ export default function MessagesPage() {
 	const { subscribe, send } = useSocket()
 
 	const [users, setUsers] = useState([])
-	const [search, setSearch] = useState('')
 	const [messages, setMessages] = useState([])
 	const [fetching, setFetching] = useState(false)
 	const [selectedUser, setSelectedUser] = useState(null)
@@ -86,11 +84,6 @@ export default function MessagesPage() {
 		send({ action: 'message', recipient_id: peerId, content })
 	}
 
-	const filteredUsers = users.filter(u =>
-		u.username?.toLowerCase().includes(search.toLowerCase()) ||
-		u.name?.toLowerCase().includes(search.toLowerCase())
-	)
-
 	return (
 		<div className="flex h-screen overflow-hidden">
 
@@ -98,21 +91,13 @@ export default function MessagesPage() {
 			<div className={`${peerId ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col`}
 				style={{ borderRight: '1px solid #ede8fd', background: 'linear-gradient(135deg, #faf5ff 0%, #eef2ff 100%)' }}>
 				<div className="px-4 py-4" style={{ borderBottom: '1px solid #ede8fd' }}>
-					<h1 className="text-xl font-bold mb-3" style={{ color: '#2c2c2a' }}>Messages</h1>
-					<input
-						type="text"
-						placeholder="Search..."
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-						className="w-full px-3 py-2 text-sm rounded-full focus:outline-none"
-						style={{ background: '#f5f3ff', border: '1px solid #ede8fd', color: '#2c2c2a' }}
-					/>
+					<h1 className="text-xl font-bold" style={{ color: '#2c2c2a' }}>Messages</h1>
 				</div>
 				<div className="flex-1 overflow-y-auto">
-					{filteredUsers.length === 0 ? (
+					{users.length === 0 ? (
 						<p className="text-center py-8 text-sm" style={{ color: '#afa9ec' }}>No users found</p>
 					) : (
-						filteredUsers.map((u) => (
+						users.map((u) => (
 							<div
 								key={u.id}
 								onClick={() => navigate(`/messages/${u.id}`)}
