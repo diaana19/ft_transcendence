@@ -196,9 +196,7 @@ swagger:
 # ==================== Utils ====================
 
 prune:
-	@echo "Reclaiming unused $(ENGINE) data: stopped containers, unused networks, dangling"
-	@echo "images and build cache. Named volumes are kept. This can take a while when there"
-	@echo "is a lot to remove (run '$(ENGINE) system df' to see how much)."
+	@echo "Reclaiming unused $(ENGINE) data (containers, networks, images, cache; named volumes kept)..."
 	$(ENGINE) system prune -f
 
 version:
