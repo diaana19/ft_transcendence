@@ -139,8 +139,8 @@ func TestWS_OpenReturnsHistory(t *testing.T) {
 	srv := httptest.NewServer(router)
 	defer srv.Close()
 
-	alice := registerAndLogin(t, router, "wshist_a", "wshist_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "wshist_b", "wshist_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "wshist-a", "wshist-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "wshist-b", "wshist-b@test.com", "StrongPass123!")
 
 	seedMessage(t, db, alice.ID, bob.ID, "earlier message")
 
@@ -187,8 +187,8 @@ func TestWS_DeliversPendingNotificationsOnConnect(t *testing.T) {
 	srv := httptest.NewServer(router)
 	defer srv.Close()
 
-	sender := registerAndLogin(t, router, "wsnotif_s", "wsnotif_s@test.com", "StrongPass123!")
-	target := registerAndLogin(t, router, "wsnotif_t", "wsnotif_t@test.com", "StrongPass123!")
+	sender := registerAndLogin(t, router, "wsnotif-s", "wsnotif-s@test.com", "StrongPass123!")
+	target := registerAndLogin(t, router, "wsnotif-t", "wsnotif-t@test.com", "StrongPass123!")
 
 	// a friend request creates an unread notification for the target
 	w := authedRequest(t, router, "POST", "/api/friends/request/"+target.ID, sender.Token, "")
@@ -212,8 +212,8 @@ func TestWS_AttachmentRejectedWhenNotPrivate(t *testing.T) {
 	srv := httptest.NewServer(router)
 	defer srv.Close()
 
-	alice := registerAndLogin(t, router, "wsrej_a", "wsrej_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "wsrej_b", "wsrej_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "wsrej-a", "wsrej-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "wsrej-b", "wsrej-b@test.com", "StrongPass123!")
 
 	// public file cannot be used as a DM attachment (must be private)
 	publicFile := uploadAndGetID(t, router, alice.Token, "public")
@@ -250,8 +250,8 @@ func TestWS_AttachmentGrantsAccessToRecipient(t *testing.T) {
 	srv := httptest.NewServer(router)
 	defer srv.Close()
 
-	alice := registerAndLogin(t, router, "wsatt_a", "wsatt_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "wsatt_b", "wsatt_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "wsatt-a", "wsatt-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "wsatt-b", "wsatt-b@test.com", "StrongPass123!")
 
 	fileID := uploadAndGetID(t, router, alice.Token, "private")
 

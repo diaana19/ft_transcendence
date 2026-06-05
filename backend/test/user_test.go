@@ -22,7 +22,7 @@ func createUserAndGetID(router *gin.Engine, t *testing.T) string {
 	unique := fmt.Sprintf("%d", time.Now().UnixNano())
 
 	body := fmt.Sprintf(`{
-		"username": "testuser_%s",
+		"username": "testuser-%s",
 		"email": "testuser_%s@example.com",
 		"password": "%s",
 		"dateOfBirth": "2000-01-01"

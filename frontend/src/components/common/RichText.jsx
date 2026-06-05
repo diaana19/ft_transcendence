@@ -9,12 +9,15 @@
 */
 
 import { Link } from 'react-router-dom'
+import { MENTION_RE, MENTION_ONE_RE } from '../../utils/username'
 
 // Capturing group so String.split keeps the tokens as their own array entries.
-const SPLIT = /(#\w+|@\w+)/g
+// The mention alternative reuses the canonical username rule (MENTION_RE), so a
+// token like @a--b or @a- only matches the valid prefix, never a bad username.
+const SPLIT = new RegExp(`(#\\w+|${MENTION_RE.source})`, 'gi')
 // Separate, non-global (stateless) matchers for classifying each split part.
 const IS_TAG = /^#\w+$/
-const IS_MENTION = /^@\w+$/
+const IS_MENTION = MENTION_ONE_RE
 
 const accent = { color: '#534ab7', fontWeight: 600 }
 

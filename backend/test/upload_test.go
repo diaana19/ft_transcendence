@@ -72,7 +72,7 @@ func uploadAndGetID(t *testing.T, router *gin.Engine, token, visibility string) 
 func TestUpload_Success(t *testing.T) {
 	t.Cleanup(func() { os.RemoveAll("./uploads") })
 	router, _ := SetupTestEnv()
-	u := registerAndLogin(t, router, "upl_ok", "upl_ok@test.com", "StrongPass123!")
+	u := registerAndLogin(t, router, "upl-ok", "upl-ok@test.com", "StrongPass123!")
 
 	w := uploadFile(t, router, u.Token, "pic.png", "public", pngBytes(t))
 	if w.Code != http.StatusOK {
@@ -105,7 +105,7 @@ func TestUpload_RequiresAuth(t *testing.T) {
 
 func TestUpload_MissingFile(t *testing.T) {
 	router, _ := SetupTestEnv()
-	u := registerAndLogin(t, router, "upl_nofile", "upl_nofile@test.com", "StrongPass123!")
+	u := registerAndLogin(t, router, "upl-nofile", "upl-nofile@test.com", "StrongPass123!")
 
 	var body bytes.Buffer
 	mw := multipart.NewWriter(&body)
@@ -124,7 +124,7 @@ func TestUpload_MissingFile(t *testing.T) {
 func TestUpload_InvalidExtension(t *testing.T) {
 	t.Cleanup(func() { os.RemoveAll("./uploads") })
 	router, _ := SetupTestEnv()
-	u := registerAndLogin(t, router, "upl_ext", "upl_ext@test.com", "StrongPass123!")
+	u := registerAndLogin(t, router, "upl-ext", "upl-ext@test.com", "StrongPass123!")
 
 	w := uploadFile(t, router, u.Token, "notes.txt", "public", []byte("hello world"))
 	if w.Code != http.StatusBadRequest {
@@ -135,7 +135,7 @@ func TestUpload_InvalidExtension(t *testing.T) {
 func TestUpload_MimeMismatch(t *testing.T) {
 	t.Cleanup(func() { os.RemoveAll("./uploads") })
 	router, _ := SetupTestEnv()
-	u := registerAndLogin(t, router, "upl_mime", "upl_mime@test.com", "StrongPass123!")
+	u := registerAndLogin(t, router, "upl-mime", "upl-mime@test.com", "StrongPass123!")
 
 	w := uploadFile(t, router, u.Token, "fake.png", "public", []byte("this is not really a png"))
 	if w.Code != http.StatusBadRequest {
@@ -146,7 +146,7 @@ func TestUpload_MimeMismatch(t *testing.T) {
 func TestUpload_InvalidVisibility(t *testing.T) {
 	t.Cleanup(func() { os.RemoveAll("./uploads") })
 	router, _ := SetupTestEnv()
-	u := registerAndLogin(t, router, "upl_vis", "upl_vis@test.com", "StrongPass123!")
+	u := registerAndLogin(t, router, "upl-vis", "upl-vis@test.com", "StrongPass123!")
 
 	w := uploadFile(t, router, u.Token, "pic.png", "everyone", pngBytes(t))
 	if w.Code != http.StatusBadRequest {
@@ -156,7 +156,7 @@ func TestUpload_InvalidVisibility(t *testing.T) {
 
 func TestServeFile_NotFound(t *testing.T) {
 	router, _ := SetupTestEnv()
-	u := registerAndLogin(t, router, "srv_nf", "srv_nf@test.com", "StrongPass123!")
+	u := registerAndLogin(t, router, "srv-nf", "srv-nf@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "GET", "/api/files/550e8400-e29b-41d4-a716-446655440000", u.Token, "")
 	if w.Code != http.StatusNotFound {
@@ -170,8 +170,8 @@ func TestServeFile_NotFound(t *testing.T) {
 func TestServeFile_PublicAccessGranted(t *testing.T) {
 	t.Cleanup(func() { os.RemoveAll("./uploads") })
 	router, _ := SetupTestEnv()
-	owner := registerAndLogin(t, router, "srv_pub_o", "srv_pub_o@test.com", "StrongPass123!")
-	other := registerAndLogin(t, router, "srv_pub_x", "srv_pub_x@test.com", "StrongPass123!")
+	owner := registerAndLogin(t, router, "srv-pub-o", "srv-pub-o@test.com", "StrongPass123!")
+	other := registerAndLogin(t, router, "srv-pub-x", "srv-pub-x@test.com", "StrongPass123!")
 
 	fileID := uploadAndGetID(t, router, owner.Token, "public")
 
@@ -184,8 +184,8 @@ func TestServeFile_PublicAccessGranted(t *testing.T) {
 func TestServeFile_PrivateForbiddenForOthers(t *testing.T) {
 	t.Cleanup(func() { os.RemoveAll("./uploads") })
 	router, _ := SetupTestEnv()
-	owner := registerAndLogin(t, router, "srv_pri_o", "srv_pri_o@test.com", "StrongPass123!")
-	other := registerAndLogin(t, router, "srv_pri_x", "srv_pri_x@test.com", "StrongPass123!")
+	owner := registerAndLogin(t, router, "srv-pri-o", "srv-pri-o@test.com", "StrongPass123!")
+	other := registerAndLogin(t, router, "srv-pri-x", "srv-pri-x@test.com", "StrongPass123!")
 
 	fileID := uploadAndGetID(t, router, owner.Token, "private")
 
@@ -204,9 +204,9 @@ func TestServeFile_PrivateForbiddenForOthers(t *testing.T) {
 func TestServeFile_FriendsVisibility(t *testing.T) {
 	t.Cleanup(func() { os.RemoveAll("./uploads") })
 	router, _ := SetupTestEnv()
-	owner := registerAndLogin(t, router, "srv_fr_o", "srv_fr_o@test.com", "StrongPass123!")
-	stranger := registerAndLogin(t, router, "srv_fr_s", "srv_fr_s@test.com", "StrongPass123!")
-	friend := registerAndLogin(t, router, "srv_fr_f", "srv_fr_f@test.com", "StrongPass123!")
+	owner := registerAndLogin(t, router, "srv-fr-o", "srv-fr-o@test.com", "StrongPass123!")
+	stranger := registerAndLogin(t, router, "srv-fr-s", "srv-fr-s@test.com", "StrongPass123!")
+	friend := registerAndLogin(t, router, "srv-fr-f", "srv-fr-f@test.com", "StrongPass123!")
 
 	fileID := uploadAndGetID(t, router, owner.Token, "friends")
 
@@ -237,7 +237,7 @@ func anonRequest(t *testing.T, router *gin.Engine, path string) *httptest.Respon
 func TestServeFile_PublicAllowsAnonymous(t *testing.T) {
 	t.Cleanup(func() { os.RemoveAll("./uploads") })
 	router, _ := SetupTestEnv()
-	owner := registerAndLogin(t, router, "srv_pub_anon_o", "srv_pub_anon_o@test.com", "StrongPass123!")
+	owner := registerAndLogin(t, router, "srv-pub-anon-o", "srv-pub-anon-o@test.com", "StrongPass123!")
 	fileID := uploadAndGetID(t, router, owner.Token, "public")
 
 	w := anonRequest(t, router, "/api/files/"+fileID)
@@ -249,7 +249,7 @@ func TestServeFile_PublicAllowsAnonymous(t *testing.T) {
 func TestServeFile_NonPublicRejectsAnonymous(t *testing.T) {
 	t.Cleanup(func() { os.RemoveAll("./uploads") })
 	router, _ := SetupTestEnv()
-	owner := registerAndLogin(t, router, "srv_anon_rej_o", "srv_anon_rej_o@test.com", "StrongPass123!")
+	owner := registerAndLogin(t, router, "srv-anon-rej-o", "srv-anon-rej-o@test.com", "StrongPass123!")
 
 	cases := map[string]string{
 		"private": uploadAndGetID(t, router, owner.Token, "private"),

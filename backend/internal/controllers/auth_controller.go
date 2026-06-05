@@ -66,6 +66,12 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 
 	log.Printf("Register attempt: username=%s, ip=%s", input.Username, c.ClientIP())
 
+	if !utils.CheckUsernameFormat(input.Username) {
+		c.JSON(400, gin.H{"error": "username may only contain alphanumeric characters or single hyphens, " +
+			"cannot begin or end with a hyphen, and must be 1-39 characters"})
+		return
+	}
+
 	parsedDate, err := time.Parse("2006-01-02", input.DateOfBirth)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "invalid date format (expected YYYY-MM-DD)"})

@@ -8,8 +8,8 @@ import (
 
 func TestFriend_RemoveFriend(t *testing.T) {
 	router, _ := SetupTestEnv()
-	alice := registerAndLogin(t, router, "rmf_a", "rmf_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "rmf_b", "rmf_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "rmf-a", "rmf-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "rmf-b", "rmf-b@test.com", "StrongPass123!")
 
 	authedRequest(t, router, "POST", "/api/friends/request/"+bob.ID, alice.Token, "")
 	authedRequest(t, router, "POST", "/api/friends/accept/"+alice.ID, bob.Token, "")
@@ -31,8 +31,8 @@ func TestFriend_RemoveFriend(t *testing.T) {
 
 func TestFriend_RemoveNonFriendFails(t *testing.T) {
 	router, _ := SetupTestEnv()
-	alice := registerAndLogin(t, router, "rmnf_a", "rmnf_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "rmnf_b", "rmnf_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "rmnf-a", "rmnf-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "rmnf-b", "rmnf-b@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "DELETE", "/api/friends/"+bob.ID, alice.Token, "")
 	if w.Code != http.StatusBadRequest {
@@ -42,8 +42,8 @@ func TestFriend_RemoveNonFriendFails(t *testing.T) {
 
 func TestFriend_DuplicateFollowFails(t *testing.T) {
 	router, _ := SetupTestEnv()
-	alice := registerAndLogin(t, router, "dupf_a", "dupf_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "dupf_b", "dupf_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "dupf-a", "dupf-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "dupf-b", "dupf-b@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "POST", "/api/friends/follow/"+bob.ID, alice.Token, "")
 	if w.Code != http.StatusOK {
@@ -57,8 +57,8 @@ func TestFriend_DuplicateFollowFails(t *testing.T) {
 
 func TestFriend_UnfollowNotFollowingFails(t *testing.T) {
 	router, _ := SetupTestEnv()
-	alice := registerAndLogin(t, router, "unf2_a", "unf2_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "unf2_b", "unf2_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "unf2-a", "unf2-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "unf2-b", "unf2-b@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "DELETE", "/api/friends/follow/"+bob.ID, alice.Token, "")
 	if w.Code != http.StatusBadRequest {
@@ -68,8 +68,8 @@ func TestFriend_UnfollowNotFollowingFails(t *testing.T) {
 
 func TestFriend_AcceptWithoutPendingFails(t *testing.T) {
 	router, _ := SetupTestEnv()
-	alice := registerAndLogin(t, router, "acc_a", "acc_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "acc_b", "acc_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "acc-a", "acc-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "acc-b", "acc-b@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "POST", "/api/friends/accept/"+alice.ID, bob.Token, "")
 	if w.Code != http.StatusBadRequest {
@@ -79,8 +79,8 @@ func TestFriend_AcceptWithoutPendingFails(t *testing.T) {
 
 func TestFriend_DuplicateRequestFails(t *testing.T) {
 	router, _ := SetupTestEnv()
-	alice := registerAndLogin(t, router, "dreq_a", "dreq_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "dreq_b", "dreq_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "dreq-a", "dreq-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "dreq-b", "dreq-b@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "POST", "/api/friends/request/"+bob.ID, alice.Token, "")
 	if w.Code != http.StatusOK {
@@ -94,8 +94,8 @@ func TestFriend_DuplicateRequestFails(t *testing.T) {
 
 func TestFriend_RejectWithoutPendingFails(t *testing.T) {
 	router, _ := SetupTestEnv()
-	alice := registerAndLogin(t, router, "rej2_a", "rej2_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "rej2_b", "rej2_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "rej2-a", "rej2-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "rej2-b", "rej2-b@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "POST", "/api/friends/reject/"+alice.ID, bob.Token, "")
 	if w.Code != http.StatusBadRequest {
@@ -105,7 +105,7 @@ func TestFriend_RejectWithoutPendingFails(t *testing.T) {
 
 func TestFriend_ListingEmpty(t *testing.T) {
 	router, _ := SetupTestEnv()
-	alice := registerAndLogin(t, router, "lst_a", "lst_a@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "lst-a", "lst-a@test.com", "StrongPass123!")
 
 	for _, path := range []string{"/followers", "/following", "/friends"} {
 		w := authedRequest(t, router, "GET", "/api/users/"+alice.ID+path, alice.Token, "")

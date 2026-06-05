@@ -301,8 +301,9 @@ def seed_users(people):
     for i, (username, first, last, dob, avatar) in enumerate(people):
         if not username:
             continue
-        # keep usernames API-valid + deterministic email domain to avoid clashes
-        username = "".join(ch for ch in username if ch.isalnum() or ch == "_")
+        # keep usernames API-valid (GitHub rules: alphanumeric only here, which
+        # always satisfies them) + deterministic email domain to avoid clashes
+        username = "".join(ch for ch in username if ch.isalnum())
         email = f"{username}@{EMAIL_DOMAIN}"
         name = f"{first} {last}"
 

@@ -23,6 +23,25 @@ func CheckEmailFormat(email string) bool {
 	return re.MatchString(email)
 }
 
+// usernameRe enforces GitHub's username rule: alphanumeric + single hyphens,
+// no leading/trailing/consecutive hyphens. The canonical regex
+// `^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$` uses a lookahead, which Go's stdlib
+// RE2 engine does not support; the lookahead only means "a hyphen must be
+// followed by an alphanumeric", so this equivalent — alphanumeric segments
+// joined by single hyphens — accepts the identical set. The {0,38} length cap
+// (1-39 chars) is enforced separately below.
+var usernameRe = regexp.MustCompile(`^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$`)
+
+// CheckUsernameFormat reports whether username matches GitHub's rules:
+// alphanumeric + single hyphens, no leading/trailing/consecutive hyphens, 1-39
+// characters.
+func CheckUsernameFormat(username string) bool {
+	if len(username) < 1 || len(username) > 39 {
+		return false
+	}
+	return usernameRe.MatchString(username)
+}
+
 func CheckPasswordFormat(password string, username string) (bool, int) {
 	lowerPass := strings.ToLower(strings.TrimSpace(password))
 	lowerUser := strings.ToLower(strings.TrimSpace(username))

@@ -47,8 +47,8 @@ func TestFriend_FollowSelfFails(t *testing.T) {
 
 func TestFriend_Unfollow(t *testing.T) {
 	router, _ := SetupTestEnv()
-	alice := registerAndLogin(t, router, "funf_a", "funf_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "funf_b", "funf_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "funf-a", "funf-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "funf-b", "funf-b@test.com", "StrongPass123!")
 
 	authedRequest(t, router, "POST", "/api/friends/follow/"+bob.ID, alice.Token, "")
 
@@ -60,8 +60,8 @@ func TestFriend_Unfollow(t *testing.T) {
 
 func TestFriend_RequestAcceptFlow(t *testing.T) {
 	router, _ := SetupTestEnv()
-	alice := registerAndLogin(t, router, "freq_a", "freq_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "freq_b", "freq_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "freq-a", "freq-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "freq-b", "freq-b@test.com", "StrongPass123!")
 
 	// alice sends a friend request to bob
 	w := authedRequest(t, router, "POST", "/api/friends/request/"+bob.ID, alice.Token, "")
@@ -94,8 +94,8 @@ func TestFriend_RequestUnknownTarget(t *testing.T) {
 
 func TestFriend_RejectRequest(t *testing.T) {
 	router, _ := SetupTestEnv()
-	alice := registerAndLogin(t, router, "frej_a", "frej_a@test.com", "StrongPass123!")
-	bob := registerAndLogin(t, router, "frej_b", "frej_b@test.com", "StrongPass123!")
+	alice := registerAndLogin(t, router, "frej-a", "frej-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "frej-b", "frej-b@test.com", "StrongPass123!")
 
 	authedRequest(t, router, "POST", "/api/friends/request/"+bob.ID, alice.Token, "")
 

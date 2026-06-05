@@ -30,8 +30,8 @@ func createComment(t *testing.T, router *gin.Engine, token, postID, content stri
 
 func TestComment_UpdateOwnership(t *testing.T) {
 	router, _ := SetupTestEnv()
-	author := registerAndLogin(t, router, "cup_a", "cup_a@test.com", "StrongPass123!")
-	other := registerAndLogin(t, router, "cup_o", "cup_o@test.com", "StrongPass123!")
+	author := registerAndLogin(t, router, "cup-a", "cup-a@test.com", "StrongPass123!")
+	other := registerAndLogin(t, router, "cup-o", "cup-o@test.com", "StrongPass123!")
 	postID := createPost(t, router, author.Token, "post with comments")
 	commentID := createComment(t, router, author.Token, postID, "original comment")
 
@@ -79,8 +79,8 @@ func TestComment_UpdateInvalidBody(t *testing.T) {
 
 func TestComment_DeleteOwnership(t *testing.T) {
 	router, _ := SetupTestEnv()
-	author := registerAndLogin(t, router, "cdel_a", "cdel_a@test.com", "StrongPass123!")
-	other := registerAndLogin(t, router, "cdel_o", "cdel_o@test.com", "StrongPass123!")
+	author := registerAndLogin(t, router, "cdel-a", "cdel-a@test.com", "StrongPass123!")
+	other := registerAndLogin(t, router, "cdel-o", "cdel-o@test.com", "StrongPass123!")
 	postID := createPost(t, router, author.Token, "post")
 	commentID := createComment(t, router, author.Token, postID, "comment")
 
@@ -120,8 +120,8 @@ func TestComment_CreateOnMissingPost(t *testing.T) {
 
 func TestComment_NotifiesPostAuthor(t *testing.T) {
 	router, _ := SetupTestEnv()
-	author := registerAndLogin(t, router, "cnotif_a", "cnotif_a@test.com", "StrongPass123!")
-	commenter := registerAndLogin(t, router, "cnotif_c", "cnotif_c@test.com", "StrongPass123!")
+	author := registerAndLogin(t, router, "cnotif-a", "cnotif-a@test.com", "StrongPass123!")
+	commenter := registerAndLogin(t, router, "cnotif-c", "cnotif-c@test.com", "StrongPass123!")
 	postID := createPost(t, router, author.Token, "notify me")
 
 	createComment(t, router, commenter.Token, postID, "great post")
@@ -134,8 +134,8 @@ func TestComment_NotifiesPostAuthor(t *testing.T) {
 
 func TestPost_DeleteForbiddenAndNotFound(t *testing.T) {
 	router, _ := SetupTestEnv()
-	author := registerAndLogin(t, router, "pdf_a", "pdf_a@test.com", "StrongPass123!")
-	other := registerAndLogin(t, router, "pdf_o", "pdf_o@test.com", "StrongPass123!")
+	author := registerAndLogin(t, router, "pdf-a", "pdf-a@test.com", "StrongPass123!")
+	other := registerAndLogin(t, router, "pdf-o", "pdf-o@test.com", "StrongPass123!")
 	postID := createPost(t, router, author.Token, "mine")
 
 	w := authedRequest(t, router, "DELETE", "/api/posts/"+postID, other.Token, "")
@@ -161,8 +161,8 @@ func TestPost_LikeMissingPost(t *testing.T) {
 
 func TestPost_LikeNotifiesAuthor(t *testing.T) {
 	router, _ := SetupTestEnv()
-	author := registerAndLogin(t, router, "plna_a", "plna_a@test.com", "StrongPass123!")
-	liker := registerAndLogin(t, router, "plna_l", "plna_l@test.com", "StrongPass123!")
+	author := registerAndLogin(t, router, "plna-a", "plna-a@test.com", "StrongPass123!")
+	liker := registerAndLogin(t, router, "plna-l", "plna-l@test.com", "StrongPass123!")
 	postID := createPost(t, router, author.Token, "like and notify")
 
 	w := authedRequest(t, router, "POST", "/api/posts/"+postID+"/like", liker.Token, "")

@@ -146,3 +146,29 @@ func TestCheckPasswordFormat_ExactlyMinLength(t *testing.T) {
 		t.Error("8 char password meeting all criteria should pass")
 	}
 }
+
+func TestCheckUsernameFormat(t *testing.T) {
+	valid := []string{"a", "0", "a-b", "a-b-123", "john", "john-due", "llp-dev",
+		repeatStr("a", 39)}
+	for _, u := range valid {
+		if !CheckUsernameFormat(u) {
+			t.Errorf("expected %q to be a valid username", u)
+		}
+	}
+
+	invalid := []string{"", "a_b", "a--b", "a-b-", "-a-b", "john due", "café",
+		repeatStr("a", 40)}
+	for _, u := range invalid {
+		if CheckUsernameFormat(u) {
+			t.Errorf("expected %q to be an invalid username", u)
+		}
+	}
+}
+
+func repeatStr(s string, n int) string {
+	out := ""
+	for i := 0; i < n; i++ {
+		out += s
+	}
+	return out
+}

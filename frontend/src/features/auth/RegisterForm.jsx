@@ -13,6 +13,7 @@ import { register } from './authService.js'
 import { useNavigate } from 'react-router-dom'
 import Button from '../../components/common/Button'
 import Input from '../../components/common/Input'
+import { USERNAME_RE } from '../../utils/username'
 
 function RegisterForm() {
   const navigate = useNavigate()
@@ -48,6 +49,11 @@ function RegisterForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!USERNAME_RE.test(formData.username)) {
+      setError('Username may only contain alphanumeric characters or single hyphens, ' +
+        'cannot begin or end with a hyphen, and must be 1-39 characters.')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
