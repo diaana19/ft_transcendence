@@ -18,6 +18,7 @@ import PostCard from '../posts/PostCard';
 import { getPostsByAuthor } from '../posts/postService'
 import { sendFriendRequest } from '../../features/user/userService'
 import FollowersModal from './FollowersModal'
+import ProfileBadges from '../gamification/ProfileBadge'
 
 export default function Profile() {
   const { user: authUser, updateUser } = useAuth();
@@ -214,7 +215,7 @@ export default function Profile() {
 
         {/* Posts tab */}
         <div className="flex border-b" style={{ borderColor: '#ede8fd' }}>
-          {['posts', 'replies', 'media'].map(tab => (
+          {['posts', 'replies', 'badges'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -253,8 +254,8 @@ export default function Profile() {
         {activeTab === 'replies' && (
           <p className="text-center py-8" style={{ color: '#b4b2a9' }}>No replies yet</p>
         )}
-        {activeTab === 'media' && (
-          <p className="text-center py-8" style={{ color: '#b4b2a9' }}>No media yet</p>
+        {activeTab === 'badges' && (
+			<ProfileBadges userId={userId} />
         )}
       </div>
 

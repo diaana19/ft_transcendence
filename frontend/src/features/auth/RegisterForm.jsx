@@ -10,7 +10,7 @@
 
 import { useState } from 'react'
 import { register } from './authService.js'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import Button from '../../components/common/Button'
 import Input from '../../components/common/Input'
 import { USERNAME_RE } from '../../utils/username'
@@ -122,9 +122,9 @@ function RegisterForm() {
 
             <p className="text-gray-500 text-xs">
               By signing up, you agree to our{' '}
-              <span className="text-blue-400 cursor-pointer hover:underline">Terms of Service</span>
+              < Link to="/terms" className="text-blue-400 cursor-pointer hover:underline">Terms of Service</Link>
               {' '}and{' '}
-              <span className="text-blue-400 cursor-pointer hover:underline">Privacy Policy</span>
+              <Link to="/privacy" className="text-blue-400 cursor-pointer hover:underline">Privacy Policy</Link>
             </p>
 
             <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
