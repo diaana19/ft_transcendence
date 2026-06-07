@@ -17,9 +17,9 @@ import (
 	"ft_transcendence/backend/internal/routes"
 )
 
-// maxBodySize is the maximum request body size for JSON endpoints (1MB).
-// File uploads have their own 25MB limit in the upload service.
-const maxBodySize = 1 << 20 // 1MB
+// maxBodySize is the maximum request body size (30MB).
+// This covers both JSON endpoints and file uploads (upload service has a 25MB file limit).
+const maxBodySize = 30 << 20 // 30MB
 
 // BodySizeLimit middleware rejects requests with a body larger than maxBodySize.
 func BodySizeLimit() gin.HandlerFunc {
