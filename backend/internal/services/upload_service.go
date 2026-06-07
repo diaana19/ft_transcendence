@@ -24,6 +24,7 @@ var allowedMimeTypes = map[string]bool{
 	"image/png":  true,
 	"image/gif":  true,
 	"image/webp": true,
+	"video/mp4":  true,
 }
 
 var allowedExtensions = map[string]bool{
@@ -32,6 +33,7 @@ var allowedExtensions = map[string]bool{
 	".png":  true,
 	".gif":  true,
 	".webp": true,
+	".mp4":  true,
 }
 
 type UploadService struct {

@@ -82,9 +82,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
 
 	const handleEditFileChange = (e) => {
 	const selected = e.target.files[0]
-	if (!selected) return
-	if (!selected.type.startsWith('image/')) {
-		setEditError('Only image files are allowed')
+	if (selected) {
 		return
 	}
 	setEditError(null)

@@ -20,13 +20,13 @@ function FileUploader({ onUploadSuccess }) {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0]
     if (!selectedFile) return
-    if (!selectedFile.type.startsWith('image/')) {
-      setError('Only image files are allowed')
-      setFile(null)
-      return
-    }
-    if (selectedFile.size > 20 * 1024 * 1024) {
-      setError('File too large. Maximum size is 20MB')
+    // if (!selectedFile.type.startsWith('image/')) {
+    //   setError('Only image files are allowed')
+    //   setFile(null)
+    //   return
+    // }
+    if (selectedFile.size > 25 * 1024 * 1024) {
+      setError('File too large. Maximum size is 25MB')
       setFile(null)
       return
     }
@@ -96,7 +96,7 @@ function FileUploader({ onUploadSuccess }) {
         </div>
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           onChange={handleFileChange}
           className="hidden"
         />
