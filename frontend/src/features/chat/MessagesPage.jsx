@@ -1,13 +1,3 @@
-/*
-** File: MessagesPage.jsx
-** Description: Full chat page with conversation list and active chat
-** Responsibilities:
-** - Display list of users to chat with on the left
-** - Display active conversation on the right
-** - Handle sending and receiving messages
-** - Search users by display name or username
-*/
-
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axiosInstance from '../../services/axiosInstance'
@@ -161,7 +151,10 @@ export default function MessagesPage() {
 									: selectedUser.username?.[0]?.toUpperCase()
 								}
 							</div>
-							<div>
+							<div
+								onClick={() => navigate(`/profile/${selectedUser.id}`)}
+								className="cursor-pointer hover:underline"
+							>
 								<p className="text-sm font-bold" style={{ color: '#2c2c2a' }}>{selectedUser.username}</p>
 								<p className="text-xs" style={{ color: '#afa9ec' }}>{selectedUser.displayname || ''}</p>
 							</div>
