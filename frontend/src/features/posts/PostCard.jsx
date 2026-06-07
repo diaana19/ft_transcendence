@@ -151,14 +151,14 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
 				{editError && <span className="text-xs" style={{ color: '#d4537e' }}>{editError}</span>}
                 <button
                   onClick={() => {setIsEditing(false) ; setEditMediaUrl(post.media_url || null); setEditFile(null)}}
-                  className="px-4 py-1 rounded-full border border-gray-300 text-gray-600 text-sm hover:bg-gray-100"
+                  className="px-4 py-1 rounded-full text-sm transition-colors" style={{ border: '0.5px solid #ede8fd', color: '#534ab7', background: 'white' }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleUpdate}
                   disabled={loading}
-                  className="px-4 py-1 rounded-full bg-blue-400 text-white text-sm font-bold hover:bg-blue-500 disabled:opacity-50"
+                  className="px-4 py-1 rounded-full text-sm font-semibold transition-colors disabled:opacity-50" style={{ background: '#534ab7', color: 'white', border: 'none' }}
                 >
                   {loading ? 'Saving...' : 'Save'}
                 </button> </div>

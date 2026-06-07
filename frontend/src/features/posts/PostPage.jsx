@@ -32,9 +32,18 @@ export default function PostPage() {
     }
   }
 
-  const handleCommentAdded = (newComment) => {
-    setComments((prev) => [...prev, newComment])
-  }
+	const handleCommentAdded = (newComment) => {
+	setComments((prev) => [...prev, newComment])
+	}
+
+
+	const handleCommentDeleted = (commentId) => {
+		setComments(prev => prev.filter(c => c.id !== commentId))
+	}
+
+	const handleCommentUpdated = (updatedComment) => {
+		setComments(prev => prev.map(c => c.id === updatedComment.id ? updatedComment : c))
+	}
 
   if (loading) {
     return (
@@ -118,6 +127,8 @@ export default function PostPage() {
             postId={id}
             comment={comment}
             isLast={index === comments.length - 1}
+			onDelete={handleCommentDeleted}
+  			onUpdate={handleCommentUpdated}
           />
         ))}
       </div>

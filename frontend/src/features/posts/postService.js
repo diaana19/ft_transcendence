@@ -91,3 +91,13 @@ export async function getComments(postId) {
     )
     return response.data
 }
+
+export async function updateComment(postId, commentId, content) {
+  const res = await axiosInstance.put(`/api/posts/${postId}/comments/${commentId}`, { content })
+  return res.data
+}
+
+export async function deleteComment(postId, commentId) {
+  const res = await axiosInstance.delete(`/api/posts/${postId}/comments/${commentId}`)
+  return res.data
+}
