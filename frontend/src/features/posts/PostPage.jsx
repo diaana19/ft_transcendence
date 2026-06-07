@@ -33,7 +33,7 @@ export default function PostPage() {
   }
 
   const handleCommentAdded = (newComment) => {
-    setComments((prev) => [newComment, ...prev])
+    setComments((prev) => [...prev, newComment])
   }
 
   if (loading) {
@@ -110,12 +110,6 @@ export default function PostPage() {
 
 	<div className="px-4 pb-2 pt-4" style={{ borderBottom: '0.5px solid #ede8fd' }} />
 
-      {/* COMMENT FORM */}
-      <CommentForm
-        postId={id}
-        onCommentAdded={handleCommentAdded}
-      />
-
       {/* COMMENTS */}
       <div className="px-4 pt-4">
         {comments.map((comment, index) => (
@@ -127,6 +121,12 @@ export default function PostPage() {
           />
         ))}
       </div>
+
+      {/* COMMENT FORM */}
+      <CommentForm
+        postId={id}
+        onCommentAdded={handleCommentAdded}
+      />
 
     </div>
   )
