@@ -22,6 +22,9 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	registerWebSocketRoutes(api, c.ChatWS)
 	registerPostRoutes(api, rdb, c.Post)
 
+	// Trending hashtags — public, read-only, computed live from posts.
+	api.GET("/trends", c.Post.GetTrends)
+
 	protected := api.Group("", middleware.AuthMiddleware(rdb))
 	registerProtectedAuthRoutes(protected, c.Auth)
 	registerUserRoutes(protected, c.User)

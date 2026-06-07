@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/google/uuid"
+	"ft_transcendence/backend/internal/utils"
 
 	"ft_transcendence/backend/internal/models"
 	"ft_transcendence/backend/internal/repositories"
@@ -88,7 +88,7 @@ func (s *UploadService) SaveFile(
 	}
 
 	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
-	fileID := uuid.New().String()
+	fileID := utils.NewID()
 	safeName := fileID + ext
 	diskPath := filepath.Join("./uploads", safeName)
 

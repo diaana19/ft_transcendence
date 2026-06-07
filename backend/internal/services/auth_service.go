@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 
 	"ft_transcendence/backend/internal/models"
@@ -26,7 +25,7 @@ func NewAuthService(repo repositories.UserRepository) *AuthService {
 
 func (s *AuthService) CreateAuthUserService(user *models.User) (*models.UserResponse, error) {
 	if user.ID == "" {
-		user.ID = uuid.New().String()
+		user.ID = utils.NewID()
 	}
 
 	if _, err := s.repo.GetByEmail(user.Email); err == nil {

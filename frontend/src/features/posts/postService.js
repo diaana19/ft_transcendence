@@ -13,8 +13,8 @@ function getToken() {
     return localStorage.getItem('token')
 }
 
-export async function getPosts(page = 1, limit = 10) {
-    const response = await axiosInstance.get(`/api/posts?page=${page}&limit=${limit}`)
+export async function getPosts(limit = 10, offset = 0) {
+    const response = await axiosInstance.get(`/api/posts?limit=${limit}&offset=${offset}`)
     return response.data.data
 }
 

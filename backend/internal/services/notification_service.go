@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/google/uuid"
+	"ft_transcendence/backend/internal/utils"
 
 	"ft_transcendence/backend/internal/models"
 	"ft_transcendence/backend/internal/repositories"
@@ -38,7 +38,7 @@ func (s *NotificationService) SendNotification(
 	}
 
 	notif := models.Notification{
-		ID:            uuid.New().String(),
+		ID:            utils.NewID(),
 		CreatedAt:     time.Now(),
 		UserID:        userID,
 		UserUsername:  userUsername,

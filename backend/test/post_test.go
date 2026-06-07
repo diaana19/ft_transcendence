@@ -56,6 +56,43 @@ func TestPost_CreateAndGet(t *testing.T) {
 	}
 }
 
+func TestPost_ListLimitOffset(t *testing.T) {
+	router, _ := SetupTestEnv()
+	u := registerAndLogin(t, router, "ppage", "ppage@test.com", "StrongPass123!")
+	for _, c := range []string{"one", "two", "three"} {
+		createPost(t, router, u.Token, c)
+	}
+
+	type listResp struct {
+		Data   []map[string]any `json:"data"`
+		Limit  int              `json:"limit"`
+		Offset int              `json:"offset"`
+		Total  int64            `json:"total"`
+	}
+	get := func(query string) listResp {
+		w := authedRequest(t, router, "GET", "/api/posts"+query, u.Token, "")
+		if w.Code != http.StatusOK {
+			t.Fatalf("list %q: expected 200, got %d", query, w.Code)
+		}
+		var r listResp
+		json.Unmarshal(w.Body.Bytes(), &r)
+		return r
+	}
+
+	// limit caps the page; total stays the full count.
+	if r := get("?limit=2"); len(r.Data) != 2 || r.Limit != 2 || r.Offset != 0 || r.Total != 3 {
+		t.Fatalf("limit=2: got len=%d limit=%d offset=%d total=%d", len(r.Data), r.Limit, r.Offset, r.Total)
+	}
+	// offset skips into the list.
+	if r := get("?limit=2&offset=2"); len(r.Data) != 1 || r.Offset != 2 {
+		t.Fatalf("offset=2: got len=%d offset=%d", len(r.Data), r.Offset)
+	}
+	// out-of-range values are clamped: limit>50 → 50, negative offset → 0.
+	if r := get("?limit=9999&offset=-5"); r.Limit != 50 || r.Offset != 0 {
+		t.Fatalf("clamp: got limit=%d offset=%d", r.Limit, r.Offset)
+	}
+}
+
 func TestPost_GetNotFound(t *testing.T) {
 	router, _ := SetupTestEnv()
 	u := registerAndLogin(t, router, "pnf", "pnf@test.com", "StrongPass123!")
@@ -314,6 +351,40 @@ func TestPost_Comments(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &list)
 	if list.Total != 1 {
 		t.Fatalf("expected 1 comment, got %d", list.Total)
+	}
+}
+
+func TestPost_Trends(t *testing.T) {
+	router, _ := SetupTestEnv()
+	u := registerAndLogin(t, router, "ptrend", "ptrend@test.com", "StrongPass123!")
+
+	// #golang appears once per post (deduped + case-insensitive within a post),
+	// in two posts → count 2. #redis in one post → count 1. The last post has no
+	// tags and must not appear.
+	createPost(t, router, u.Token, "love #golang and #Golang and #redis")
+	createPost(t, router, u.Token, "more #golang here")
+	createPost(t, router, u.Token, "no tags at all")
+
+	// Public endpoint — no token needed.
+	w := authedRequest(t, router, "GET", "/api/trends", "", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("trends: expected 200, got %d - body: %s", w.Code, w.Body.String())
+	}
+	var resp struct {
+		Data []struct {
+			Tag   string `json:"tag"`
+			Count int64  `json:"count"`
+		} `json:"data"`
+	}
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if len(resp.Data) != 2 {
+		t.Fatalf("expected 2 distinct tags, got %d: %+v", len(resp.Data), resp.Data)
+	}
+	if resp.Data[0].Tag != "#golang" || resp.Data[0].Count != 2 {
+		t.Fatalf("expected top tag #golang count=2, got %+v", resp.Data[0])
+	}
+	if resp.Data[1].Tag != "#redis" || resp.Data[1].Count != 1 {
+		t.Fatalf("expected #redis count=1, got %+v", resp.Data[1])
 	}
 }
 

@@ -3,15 +3,22 @@ package models
 import (
 	"time"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
 type Post struct {
-	ID            string  `gorm:"primaryKey;type:uuid"`
-	AuthorID      string  `gorm:"type:uuid;not null"`
-	Author        User    `gorm:"foreignKey:AuthorID;references:ID"`
-	Content       string  `gorm:"type:text;not null"`
-	MediaURL      *string `gorm:"type:text" json:"media_url,omitempty"`
+	ID       string  `gorm:"primaryKey;type:uuid"`
+	AuthorID string  `gorm:"type:uuid;not null"`
+	Author   User    `gorm:"foreignKey:AuthorID;references:ID"`
+	Content  string  `gorm:"type:text;not null"`
+	MediaURL *string `gorm:"type:text" json:"media_url,omitempty"`
+	// Tags holds the distinct lowercased hashtags extracted from Content at
+	// write time (see utils.ExtractHashtags). Stored as a Postgres text[] with a
+	// GIN index so trends can be aggregated with unnest() without re-scanning
+	// content. Kept denormalized alongside Content so it survives a Redis flush
+	// and powers real-time trend counts straight from the source of truth.
+	Tags          pq.StringArray `gorm:"type:text[];index:idx_posts_tags,type:gin" json:"tags,omitempty"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	DeletedAt     gorm.DeletedAt `gorm:"index"`
@@ -19,6 +26,13 @@ type Post struct {
 	DislikesCount int            `json:"dislikes_count" gorm:"default:0"`
 	CommentsCount int            `json:"comments_count" gorm:"default:0"`
 	Comments      []Reply        `gorm:"foreignKey:PostID" json:"comments,omitempty"`
+}
+
+// TagCount is one row of the trends aggregation: a hashtag and how many posts
+// used it within the queried window.
+type TagCount struct {
+	Tag   string `json:"tag"`
+	Count int64  `json:"count"`
 }
 
 type UpdatePostInput struct {

@@ -3,22 +3,26 @@ package repositories
 import (
 	"errors"
 	"fmt"
+	"time"
 
-	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 
 	"ft_transcendence/backend/internal/models"
+	"ft_transcendence/backend/internal/utils"
 )
 
-func generateUUID() string { return uuid.New().String() }
+func generateUUID() string { return utils.NewID() }
 
 type PostRepository interface {
-	GetAll(page, limit int) ([]models.Post, int64, error)
+	GetAll(limit, offset int) ([]models.Post, int64, error)
 	GetByID(id string) (*models.Post, error)
 	GetByAuthorID(authorID string) ([]models.Post, error)
 	Create(post *models.Post) error
 	Update(id string, input models.UpdatePostInput) (*models.Post, error)
 	Delete(id string) error
+
+	TopTags(since time.Time, limit int) ([]models.TagCount, error)
 
 	SetPostReaction(userID, postID string, value int) error
 	GetPostReaction(userID, postID string) (int, error)
@@ -41,11 +45,10 @@ func NewPostRepository(db *gorm.DB) PostRepository {
 	return &postRepository{db: db}
 }
 
-func (r *postRepository) GetAll(page, limit int) ([]models.Post, int64, error) {
+func (r *postRepository) GetAll(limit, offset int) ([]models.Post, int64, error) {
 	var posts []models.Post
 	var total int64
 
-	offset := (page - 1) * limit
 	result := r.db.Preload("Author").Order("created_at DESC").Offset(offset).Limit(limit).Find(&posts)
 	r.db.Model(&models.Post{}).Count(&total)
 
@@ -73,14 +76,31 @@ func (r *postRepository) Update(id string, input models.UpdatePostInput) (*model
 	if err := r.db.First(&post, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
-	if err := r.db.Model(&post).Select("content", "media_url").Updates(map[string]any{
+	if err := r.db.Model(&post).Select("content", "media_url", "tags").Updates(map[string]any{
 		"content":   input.Content,
 		"media_url": input.MediaURL,
+		"tags":      pq.StringArray(utils.ExtractHashtags(input.Content)),
 	}).Error; err != nil {
 		return nil, err
 	}
 	r.db.Preload("Author").First(&post, "id = ?", id)
 	return &post, nil
+}
+
+// TopTags aggregates the most-used hashtags across non-deleted posts created at
+// or after since. It unnests the denormalized tags array and counts per tag, so
+// the result is computed live from current rows — new posts show immediately
+// and deleted posts drop out, with no separate counter to keep in sync.
+func (r *postRepository) TopTags(since time.Time, limit int) ([]models.TagCount, error) {
+	var out []models.TagCount
+	err := r.db.Raw(`
+		SELECT tag, COUNT(*) AS count
+		FROM posts, unnest(tags) AS tag
+		WHERE deleted_at IS NULL AND created_at >= ?
+		GROUP BY tag
+		ORDER BY count DESC, tag ASC
+		LIMIT ?`, since, limit).Scan(&out).Error
+	return out, err
 }
 
 func (r *postRepository) Delete(id string) error {

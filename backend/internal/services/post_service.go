@@ -2,11 +2,11 @@ package services
 
 import (
 	"errors"
-
-	"github.com/google/uuid"
+	"time"
 
 	"ft_transcendence/backend/internal/models"
 	"ft_transcendence/backend/internal/repositories"
+	"ft_transcendence/backend/internal/utils"
 )
 
 type PostService struct {
@@ -17,8 +17,8 @@ func NewPostService(repo repositories.PostRepository) *PostService {
 	return &PostService{repo: repo}
 }
 
-func (s *PostService) GetPosts(page, limit int) ([]models.Post, int64, error) {
-	return s.repo.GetAll(page, limit)
+func (s *PostService) GetPosts(limit, offset int) ([]models.Post, int64, error) {
+	return s.repo.GetAll(limit, offset)
 }
 
 func (s *PostService) GetPost(id string) (*models.Post, error) {
@@ -38,14 +38,26 @@ func (s *PostService) CreatePost(content, authorID string, media *string) (*mode
 	}
 
 	post := &models.Post{
-		ID:       uuid.New().String(),
+		ID:       utils.NewID(),
 		Content:  content,
 		MediaURL: media,
 		AuthorID: authorID,
+		Tags:     utils.ExtractHashtags(content),
 	}
 
 	err := s.repo.Create(post)
 	return post, err
+}
+
+// trendWindow is how far back GetTrends looks; tags are "trending" based on
+// posts from the last week.
+const trendWindow = 7 * 24 * time.Hour
+
+// GetTrends returns the most-used hashtags across posts from the last week,
+// most popular first, capped at limit. The count is computed live on each call,
+// so it reflects posts created or deleted right up to the moment of the request.
+func (s *PostService) GetTrends(limit int) ([]models.TagCount, error) {
+	return s.repo.TopTags(time.Now().Add(-trendWindow), limit)
 }
 
 func (s *PostService) UpdatePost(id string, input models.UpdatePostInput, authorID string) (*models.Post, error) {
@@ -148,7 +160,7 @@ func (s *PostService) CreateComment(content, authorID, postID string, fileID *st
 	}
 
 	comment := &models.Reply{
-		ID:       uuid.New().String(),
+		ID:       utils.NewID(),
 		PostID:   postID,
 		AuthorID: authorID,
 		Content:  content,

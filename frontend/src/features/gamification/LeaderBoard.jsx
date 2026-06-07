@@ -15,6 +15,14 @@ function metricValue(entry, tab) {
   return (tab === "total" ? entry.stats?.total : entry.stats?.[tab]?.count) ?? 0
 }
 
+// metricLevel is the level for the active tab — the per-metric level for a
+// specific tab (e.g. likes), or the overall level on the "Score" tab. Keeps the
+// shown level consistent with the count: 0 likes reads as lv. 0, not the global
+// level driven by posts/followers.
+function metricLevel(entry, tab) {
+  return (tab === "total" ? entry.stats?.level : entry.stats?.[tab]?.level) ?? 0
+}
+
 // ScoreBar fills relative to the leader: the top entry is 100%, everyone else
 // is their share of the leader's value for the active tab.
 function ScoreBar({ pct }) {
@@ -107,7 +115,7 @@ export default function LeaderBoard() {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="text-sm font-semibold" style={{ color: '#534ab7' }}>{value ?? 0}</div>
-                    <div className="text-xs" style={{ color: '#b4b2a9' }}>lv. {entry.stats?.level ?? 0}</div>
+                    <div className="text-xs" style={{ color: '#b4b2a9' }}>lv. {metricLevel(entry, activeTab)}</div>
                   </div>
                 </div>
               )

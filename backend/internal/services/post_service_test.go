@@ -3,6 +3,7 @@ package services
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -141,6 +142,10 @@ func (m *mockPostRepo) SetReplyReaction(userID, replyID string, value int) error
 
 func (m *mockPostRepo) GetReplyReaction(userID, replyID string) (int, error) {
 	return m.replyReaction[userID+"|"+replyID], nil
+}
+
+func (m *mockPostRepo) TopTags(_ time.Time, _ int) ([]models.TagCount, error) {
+	return nil, nil
 }
 
 func TestPostService_ContentValidationBranches(t *testing.T) {

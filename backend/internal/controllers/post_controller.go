@@ -49,20 +49,66 @@ func respondOwnedResourceError(c *gin.Context, err error, notFoundMsg string) {
 	}
 }
 
-// GetPosts godoc
-// @Summary   List posts (paginated)
+// GetTrends godoc
+// @Summary   Trending hashtags (most-used in posts over the last week)
 // @Tags      posts
 // @Produce   json
-// @Param     page  query int false "page number (default 1)"
-// @Param     limit query int false "items per page (default 10)"
+// @Param     limit query int false "max tags to return (default 10, max 50)"
+// @Success   200 {object} map[string]interface{}
+// @Failure   500 {object} map[string]string
+// @Router    /trends [get]
+func (pc *PostController) GetTrends(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if limit <= 0 {
+		limit = 10
+	}
+	if limit > 50 {
+		limit = 50
+	}
+
+	trends, err := pc.postService.GetTrends(limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if trends == nil {
+		trends = []models.TagCount{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": trends})
+}
+
+// parseLimitOffset reads the limit/offset pagination params, applying defaults
+// and clamping limit to [1,50] and offset to >= 0, so a caller can't request an
+// unbounded page or a negative offset (the latter errors in Postgres).
+func parseLimitOffset(c *gin.Context) (limit, offset int) {
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+	if limit > 50 {
+		limit = 50
+	}
+	offset, err = strconv.Atoi(c.DefaultQuery("offset", "0"))
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+	return limit, offset
+}
+
+// GetPosts godoc
+// @Summary   List posts (limit/offset pagination)
+// @Tags      posts
+// @Produce   json
+// @Param     limit  query int false "max items to return (default 10, max 50)"
+// @Param     offset query int false "items to skip (default 0)"
 // @Success   200 {object} map[string]interface{}
 // @Failure   500 {object} map[string]string
 // @Router    /posts [get]
 func (pc *PostController) GetPosts(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	limit, offset := parseLimitOffset(c)
 
-	posts, total, err := pc.postService.GetPosts(page, limit)
+	posts, total, err := pc.postService.GetPosts(limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -81,10 +127,10 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"data":  responses,
-		"page":  page,
-		"limit": limit,
-		"total": total,
+		"data":   responses,
+		"limit":  limit,
+		"offset": offset,
+		"total":  total,
 	})
 }
 

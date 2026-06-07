@@ -200,11 +200,25 @@ PO_TAIL = ["Feels good.", "No idea how.", "Ship it.", "Tests are green.", "Worth
            "Send coffee.", "Small wins.", "Never again.", "Big if true.",
            "Living dangerously.", "10 out of 10.", "Do not ask.", "It compiles.",
            "We move.", "Chef kiss.", "Pain."]
+# Hashtags appended to most posts so the trends feature has data. The pool is
+# deliberately small-ish so some tags recur often and a clear ranking emerges.
+PO_TAGS = ["#golang", "#rust", "#docker", "#kubernetes", "#postgres", "#redis",
+           "#webdev", "#devops", "#testing", "#opensource", "#typescript",
+           "#react", "#ci", "#42born2code", "#cleancode", "#performance"]
 
 
 def pick(arr):
     """Pull a random element from a list."""
     return random.choice(arr)
+
+
+def gen_tags():
+    """Return a leading-space string of 0-2 distinct hashtags. Most posts get at
+    least one so the trends aggregation has something to rank."""
+    n = random.choices([0, 1, 2], weights=[2, 5, 3])[0]
+    if n == 0:
+        return ""
+    return " " + " ".join(random.sample(PO_TAGS, n))
 
 
 # gen_post returns a unique, randomly-composed post. It loops until it lands on a
@@ -225,6 +239,7 @@ def gen_post():
         else:
             s = (f"Day {random.randint(1, 90)} of {pick(PO_VERBING)} "
                  f"{pick(PO_NOUN)}. {pick(PO_TAIL)}")
+        s += gen_tags()
         if s not in _SEEN_POST:
             _SEEN_POST.add(s)
             return s
