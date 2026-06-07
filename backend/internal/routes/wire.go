@@ -26,6 +26,7 @@ type Controllers struct {
 	OAuth        *controllers.OAuthController
 	Gamification *controllers.GamificationController
 	ChatWS       *socket.ChatHandler
+	WSManager    *socket.WSManager
 }
 
 // Wire builds the full dependency graph (repositories -> services -> controllers)
@@ -66,5 +67,6 @@ func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 		OAuth:        controllers.NewOAuthController(oauthService, cfg),
 		Gamification: controllers.NewGamificationController(gamificationService),
 		ChatWS:       chatWS,
+		WSManager:    wsManager,
 	}
 }

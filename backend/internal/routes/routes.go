@@ -25,6 +25,11 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	// Trending hashtags — public, read-only, computed live from posts.
 	api.GET("/trends", c.Post.GetTrends)
 
+	// Online status — check if a user has an active WebSocket connection.
+	api.GET("/users/:id/online", func(ctx *gin.Context) {
+		ctx.JSON(200, gin.H{"online": c.WSManager.IsOnline(ctx.Param("id"))})
+	})
+
 	protected := api.Group("", middleware.AuthMiddleware(rdb))
 	registerProtectedAuthRoutes(protected, c.Auth)
 	registerUserRoutes(protected, c.User)

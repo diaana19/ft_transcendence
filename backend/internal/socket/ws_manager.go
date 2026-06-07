@@ -132,6 +132,15 @@ func (m *WSManager) GetRoomMembers(roomID string) []string {
 	return members
 }
 
+// IsOnline returns true if the user has an active WebSocket connection.
+func (m *WSManager) IsOnline(userID string) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	_, ok := m.clients[userID]
+	return ok
+}
+
 func (c *Client) WritePump() {
 	defer func() { _ = c.Conn.Close() }()
 	for message := range c.Send {
