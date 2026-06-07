@@ -150,6 +150,8 @@ func reactionDelta(oldValue, newValue, bucket int) int {
 // the denormalized likes_count / dislikes_count by the transition delta. The
 // whole reconciliation runs in one transaction so a row and its counters can
 // never drift apart.
+//
+//nolint:dupl // Intentionally parallel to SetReplyReaction; different model types.
 func (r *postRepository) SetPostReaction(userID, postID string, value int) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		var existing models.PostReaction
@@ -285,6 +287,8 @@ func (r *postRepository) DeleteComment(id string) error {
 // SetReplyReaction is the reply counterpart of SetPostReaction: it reconciles a
 // user's reaction on a reply and adjusts that reply's denormalized counters in
 // one transaction.
+//
+//nolint:dupl // Intentionally parallel to SetPostReaction; different model types.
 func (r *postRepository) SetReplyReaction(userID, replyID string, value int) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		var existing models.ReplyReaction

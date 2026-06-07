@@ -40,7 +40,10 @@ func SecurityHeaders() gin.HandlerFunc {
 		// - media-src 'self' blob: videos/audio from our domain and blob URLs
 		// - connect-src 'self' wss: ws: API calls to our domain + WebSocket connections
 		// - frame-ancestors 'none': prevents page from being embedded in iframes (clickjacking)
-		c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' wss: ws:; frame-ancestors 'none'")
+		csp := "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+			"img-src 'self' data: blob:; media-src 'self' blob:; " +
+			"connect-src 'self' wss: ws:; frame-ancestors 'none'"
+		c.Header("Content-Security-Policy", csp)
 
 		// Prevents browsers from MIME-sniffing a response away from declared content-type.
 		// Stops a file labeled as image.jpg from being executed as JavaScript.

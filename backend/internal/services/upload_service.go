@@ -8,10 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"ft_transcendence/backend/internal/utils"
-
 	"ft_transcendence/backend/internal/models"
 	"ft_transcendence/backend/internal/repositories"
+	"ft_transcendence/backend/internal/utils"
 )
 
 const (

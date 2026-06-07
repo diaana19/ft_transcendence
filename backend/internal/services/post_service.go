@@ -112,7 +112,7 @@ func (s *PostService) ReactToPost(userID, postID string, pressed int) (int, *mod
 	}
 
 	value := resolveReaction(current, pressed)
-	if err := s.repo.SetPostReaction(userID, postID, value); err != nil {
+	if err = s.repo.SetPostReaction(userID, postID, value); err != nil {
 		return 0, nil, err
 	}
 
@@ -139,7 +139,7 @@ func (s *PostService) ReactToComment(userID, commentID string, pressed int) (int
 	}
 
 	value := resolveReaction(current, pressed)
-	if err := s.repo.SetReplyReaction(userID, commentID, value); err != nil {
+	if err = s.repo.SetReplyReaction(userID, commentID, value); err != nil {
 		return 0, nil, err
 	}
 
