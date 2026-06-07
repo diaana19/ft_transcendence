@@ -25,6 +25,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
   const [editContent, setEditContent] = useState(post.content)
   const [editMediaUrl, setEditMediaUrl] = useState(post.media_url || null)
   const [editFile, setEditFile] = useState(null)
+  const [editError, setEditError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [userReaction, setUserReaction] = useState(post.liked ? 1 : post.disliked ? -1 : 0)
   const [likesCount, setLikesCount] = useState(post.likes_count || 0)
@@ -81,10 +82,14 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
 
 	const handleEditFileChange = (e) => {
 	const selected = e.target.files[0]
-	if (selected) {
-		setEditFile(selected)
-		setEditMediaUrl(URL.createObjectURL(selected))
+	if (!selected) return
+	if (!selected.type.startsWith('image/')) {
+		setEditError('Only image files are allowed')
+		return
 	}
+	setEditError(null)
+	setEditFile(selected)
+	setEditMediaUrl(URL.createObjectURL(selected))
 	}
 
   const handleComment = () => {
@@ -141,8 +146,9 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
 			<div className="flex items-center gap-2 mt-2">
 				<label className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 flex-1">
 				+ Change image
-				<input type="file" accept="image/*,video/*" onChange={handleEditFileChange} className="hidden" />
+				<input type="file" accept="image/*" onChange={handleEditFileChange} className="hidden" />
 				</label>
+				{editError && <span className="text-xs" style={{ color: '#d4537e' }}>{editError}</span>}
                 <button
                   onClick={() => {setIsEditing(false) ; setEditMediaUrl(post.media_url || null); setEditFile(null)}}
                   className="px-4 py-1 rounded-full border border-gray-300 text-gray-600 text-sm hover:bg-gray-100"

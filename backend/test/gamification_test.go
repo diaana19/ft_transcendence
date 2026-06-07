@@ -108,6 +108,33 @@ func TestGamification_AggregatesPostsLikesFollowersFollowing(t *testing.T) {
 	}
 }
 
+// Likes on a user's replies count toward their received-likes score, the same
+// as likes on their posts.
+func TestGamification_CountsReplyLikes(t *testing.T) {
+	router, _ := SetupTestEnv()
+	alice := registerAndLogin(t, router, "grl-a", "grl-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "grl-b", "grl-b@test.com", "StrongPass123!")
+
+	postID := createPost(t, router, alice.Token, "a post")
+	replyID := createComment(t, router, alice.Token, postID, "a reply by alice")
+
+	if w := authedRequest(t, router, "POST",
+		"/api/posts/"+postID+"/comments/"+replyID+"/react", bob.Token, `{"value":1}`); w.Code != http.StatusOK {
+		t.Fatalf("bob like alice reply: expected 200, got %d - body: %s", w.Code, w.Body.String())
+	}
+
+	w := authedRequest(t, router, "GET", "/api/users/"+alice.ID+"/gamification", alice.Token, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("gamification: expected 200, got %d - body: %s", w.Code, w.Body.String())
+	}
+	stats := decodeGamification(t, w.Body.Bytes())
+	// 1 post + 1 like received (on the reply) = total 2; the reply itself is not
+	// counted as a post.
+	if stats.Likes.Count != 1 || stats.Posts.Count != 1 || stats.Total != 2 {
+		t.Fatalf("expected posts=1 likes=1 total=2, got %+v", stats)
+	}
+}
+
 type leaderboardEntry struct {
 	ID       string               `json:"id"`
 	Username string               `json:"username"`

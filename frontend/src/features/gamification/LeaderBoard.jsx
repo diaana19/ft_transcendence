@@ -10,8 +10,14 @@ const WEEKLY_TABS = [
   { key: "followers", label: "Followers" },
 ]
 
-function LevelBar({ level }) {
-  const pct = Math.min((level / 20) * 100, 100)
+// metricValue extracts the number shown for the active tab from an entry.
+function metricValue(entry, tab) {
+  return (tab === "total" ? entry.stats?.total : entry.stats?.[tab]?.count) ?? 0
+}
+
+// ScoreBar fills relative to the leader: the top entry is 100%, everyone else
+// is their share of the leader's value for the active tab.
+function ScoreBar({ pct }) {
   return (
     <div className="w-full rounded-full overflow-hidden" style={{ height: '4px', background: '#ede8fd' }}>
       <div className="rounded-full h-full transition-all" style={{ width: `${pct}%`, background: '#534ab7' }} />
@@ -33,11 +39,12 @@ export default function LeaderBoard() {
 		finally { setLoadingBoard(false) }
 	}
 
-	const sortedBoard = [...leaderboard].sort((a, b) => {
-		const va = activeTab === "total" ? b.stats?.total : b.stats?.[activeTab]?.count
-		const vb = activeTab === "total" ? a.stats?.total : a.stats?.[activeTab]?.count
-		return (va ?? 0) - (vb ?? 0)
-	}).slice(0, 10)
+	const sortedBoard = [...leaderboard]
+		.sort((a, b) => metricValue(b, activeTab) - metricValue(a, activeTab))
+		.slice(0, 10)
+	// The leader (first, after the descending sort) defines 100%; every other
+	// bar is its share of that value.
+	const topValue = sortedBoard.length ? metricValue(sortedBoard[0], activeTab) : 0
 	localStorage.getItem('token')
 	return(
 	 <div>
@@ -70,7 +77,8 @@ export default function LeaderBoard() {
               <p className="text-center py-6 text-sm" style={{ color: '#b4b2a9' }}>No data yet</p>
             ) : sortedBoard.map((entry, i) => {
               const isMe = entry.id === authUser?.userId
-              const value = activeTab === "total" ? entry.stats?.total : entry.stats?.[activeTab]?.count
+              const value = metricValue(entry, activeTab)
+              const pct = topValue > 0 ? Math.min((value / topValue) * 100, 100) : 0
               const medals = ["🥇", "🥈", "🥉"]
               return (
                 <div
@@ -95,7 +103,7 @@ export default function LeaderBoard() {
                       <span className="text-sm font-semibold truncate" style={{ color: '#2c2c2a' }}>{entry.username}</span>
                       {isMe && <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: '#eeedfe', color: '#534ab7' }}>you</span>}
                     </div>
-                    <LevelBar level={entry.stats?.level ?? 0} />
+                    <ScoreBar pct={pct} />
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="text-sm font-semibold" style={{ color: '#534ab7' }}>{value ?? 0}</div>

@@ -74,6 +74,16 @@ function CommentItem({ postId, comment, isLast }) {
           <RichText text={comment.content} />
         </p>
 
+        {comment.file_url && (
+          <div className="mt-2 overflow-hidden rounded-xl" style={{ border: '0.5px solid #ede8fd' }}>
+            {comment.file_mime?.startsWith('video/') ? (
+              <video src={comment.file_url} controls className="w-full max-h-72 object-cover" />
+            ) : (
+              <img src={comment.file_url} alt="reply attachment" className="w-full max-h-72 object-cover" />
+            )}
+          </div>
+        )}
+
         <div className="flex gap-5 mt-2 text-xs" style={{ color: '#b4b2a9' }}>
           <span
             onClick={() => handleReact(1)}
