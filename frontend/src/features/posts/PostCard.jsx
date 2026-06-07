@@ -136,9 +136,9 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
 			{editMediaUrl && (
 			<div className="relative mt-2 mb-2">
 				{(post.media_mime?.startsWith('video/') && !editFile) || editFile?.type?.startsWith('video/') ? (
-					<video src={editMediaUrl} controls className="rounded-xl max-h-48 w-full object-cover" />
+					<video src={editMediaUrl} controls className="rounded-xl max-h-48 w-full object-contain" />
 				) : (
-					<img src={editMediaUrl} alt="preview" className="rounded-xl max-h-48 w-full object-cover" />
+					<img src={editMediaUrl} alt="preview" className="rounded-xl max-h-48 w-full object-contain" />
 				)}
 				<button
 				onClick={() => { setEditMediaUrl(null); setEditFile(null) }}
@@ -177,13 +177,13 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
                     <video
                       src={post.media_url}
                       controls
-                      className="w-full max-h-96 object-cover"
+                      className="w-full max-h-96 object-contain"
                     />
                   ) : (
                     <img
                       src={post.media_url}
                       alt="Post media"
-                      className="w-full max-h-96 object-cover"
+                      className="w-full max-h-96 object-contain"
                     />
                   )}
                 </div>

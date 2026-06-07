@@ -118,9 +118,9 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
 			{(editFileUrl || comment.file_url) && !editFile?.cleared && (
 				<div className="relative mt-2 mb-1">
 				{(editFileUrl || comment.file_url).match(/\.(mp4|webm|ogg)$/i) || editFile?.type?.startsWith('video/') ? (
-					<video src={editFileUrl || comment.file_url} controls className="rounded-xl max-h-48 w-full object-cover" />
+					<video src={editFileUrl || comment.file_url} controls className="rounded-xl max-h-48 w-full object-contain" />
 				) : (
-					<img src={editFileUrl || comment.file_url} alt="preview" className="rounded-xl max-h-48 w-full object-cover" />
+					<img src={editFileUrl || comment.file_url} alt="preview" className="rounded-xl max-h-48 w-full object-contain" />
 				)}
 				<button
 					onClick={() => { setEditFileUrl('removed'); setEditFile({ cleared: true }) }}
@@ -157,9 +157,9 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
 		{!isEditing && comment.file_url && (
 		<div className="mt-2 overflow-hidden rounded-xl" style={{ border: '0.5px solid #ede8fd' }}>
 			{comment.file_mime?.startsWith('video/') ? (
-			<video src={comment.file_url} controls className="w-full max-h-72 object-cover" />
+			<video src={comment.file_url} controls className="w-full max-h-72 object-contain" />
 			) : (
-			<img src={comment.file_url} alt="reply attachment" className="w-full max-h-72 object-cover" />
+			<img src={comment.file_url} alt="reply attachment" className="w-full max-h-72 object-contain" />
 			)}
 		</div>
 		)}

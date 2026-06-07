@@ -98,13 +98,13 @@ function CreatePost({ onPostCreated }) {
                 <video
                   src={URL.createObjectURL(file)}
                   controls
-                  className="rounded-xl max-h-64 w-full object-cover"
+                  className="rounded-xl max-h-64 w-full object-contain"
                 />
               ) : (
                 <img
                   src={URL.createObjectURL(file)}
                   alt="preview"
-                  className="rounded-xl max-h-64 w-full object-cover"
+                  className="rounded-xl max-h-64 w-full object-contain"
                 />
               )}
               <button

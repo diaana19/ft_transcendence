@@ -102,13 +102,13 @@ export default function PostPage() {
                 <video
                   src={post.media_url}
                   controls
-                  className="w-full max-h-[500px] object-cover"
+                  className="w-full max-h-[500px] object-contain"
                 />
               ) : (
                 <img
                   src={post.media_url}
                   alt="Post media"
-                  className="w-full max-h-[500px] object-cover"
+                  className="w-full max-h-[500px] object-contain"
                 />
               )}
             </div>
