@@ -164,7 +164,7 @@ func (m *mockPostRepo) TopTags(_ time.Time, _ int) ([]models.TagCount, error) {
 func TestPostService_ContentValidationBranches(t *testing.T) {
 	s := NewPostService(newMockPostRepo())
 
-	if _, err := s.CreatePost("", "a1", nil); err == nil {
+	if _, err := s.CreatePost("", "a1", nil, nil); err == nil {
 		t.Fatal("empty post content should error")
 	}
 	if _, err := s.CreateComment("", "u1", "p1", nil); err == nil {
