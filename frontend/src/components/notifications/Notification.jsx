@@ -49,6 +49,9 @@ function NotificationsPage() {
   const [accepted, setAccepted] = useState({})
 
   const handleClick = (notif) => {
+    if (!notif.read) {
+      markRead(notif.id)
+    }
     if (notif.type === 'message') {
       navigate(`/messages/${notif.actor_id}`)
     } else if (notif.type === 'like' || notif.type === 'comment') {
