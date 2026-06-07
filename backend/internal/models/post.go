@@ -16,6 +16,7 @@ type Post struct {
 	UpdatedAt     time.Time
 	DeletedAt     gorm.DeletedAt `gorm:"index"`
 	LikesCount    int            `json:"likes_count" gorm:"default:0"`
+	DislikesCount int            `json:"dislikes_count" gorm:"default:0"`
 	CommentsCount int            `json:"comments_count" gorm:"default:0"`
 	Comments      []Reply        `gorm:"foreignKey:PostID" json:"comments,omitempty"`
 }
@@ -32,8 +33,10 @@ type PostResponse struct {
 	AuthorID      string       `json:"author_id"`
 	Author        UserResponse `json:"author"`
 	LikesCount    int          `json:"likes_count"`
+	DislikesCount int          `json:"dislikes_count"`
 	CommentsCount int          `json:"comments_count"`
 	Liked         bool         `json:"liked"`
+	Disliked      bool         `json:"disliked"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
 }
@@ -46,39 +49,67 @@ func (p *Post) ToResponse() PostResponse {
 		AuthorID:      p.AuthorID,
 		Author:        p.Author.ToResponse(),
 		LikesCount:    p.LikesCount,
+		DislikesCount: p.DislikesCount,
 		CommentsCount: p.CommentsCount,
 		CreatedAt:     p.CreatedAt,
 		UpdatedAt:     p.UpdatedAt,
 	}
 }
 
-type Like struct {
+// PostReaction is a user's like (Value=+1) or dislike (Value=-1) on a post. A
+// user has at most one reaction per post (enforced by the composite unique
+// index), so liking switches an existing dislike and vice-versa. The table is
+// still named "likes" so the original like rows are preserved on migration —
+// the added value column defaults to 1, marking every legacy like as a like.
+type PostReaction struct {
 	ID        string `gorm:"primaryKey;type:uuid"`
 	UserID    string `gorm:"type:uuid;not null;uniqueIndex:idx_like_user_post"`
 	User      User   `gorm:"foreignKey:UserID;references:ID"`
 	PostID    string `gorm:"type:uuid;not null;uniqueIndex:idx_like_user_post"`
 	Post      Post   `gorm:"foreignKey:PostID;references:ID"`
+	Value     int    `gorm:"not null;default:1"`
 	CreatedAt time.Time
 }
 
-type LikeResponse struct {
-	PostID     string `json:"post_id"`
-	Liked      bool   `json:"liked"`
-	LikesCount int    `json:"likes_count"`
+func (PostReaction) TableName() string { return "likes" }
+
+// ReplyReaction is the reply counterpart of PostReaction: a user's like
+// (Value=+1) or dislike (Value=-1) on a single reply, unique per user/reply.
+type ReplyReaction struct {
+	ID        string `gorm:"primaryKey;type:uuid"`
+	UserID    string `gorm:"type:uuid;not null;uniqueIndex:idx_reply_reaction_user_reply"`
+	User      User   `gorm:"foreignKey:UserID;references:ID"`
+	ReplyID   string `gorm:"type:uuid;not null;uniqueIndex:idx_reply_reaction_user_reply"`
+	Reply     Reply  `gorm:"foreignKey:ReplyID;references:ID"`
+	Value     int    `gorm:"not null;default:1"`
+	CreatedAt time.Time
+}
+
+// ReactionResponse is returned by the post and comment react endpoints.
+// UserReaction is the caller's resulting reaction: +1 liked, -1 disliked, 0
+// cleared. Exactly one of PostID / CommentID is set.
+type ReactionResponse struct {
+	PostID        string `json:"post_id,omitempty"`
+	CommentID     string `json:"comment_id,omitempty"`
+	UserReaction  int    `json:"user_reaction"`
+	LikesCount    int    `json:"likes_count"`
+	DislikesCount int    `json:"dislikes_count"`
 }
 
 type Reply struct {
-	ID        string `gorm:"primaryKey;type:uuid"`
-	PostID    string `gorm:"type:uuid;not null;index"`
-	Post      Post   `gorm:"foreignKey:PostID;references:ID"`
-	AuthorID  string `gorm:"type:uuid;not null"`
-	Author    User   `gorm:"foreignKey:AuthorID;references:ID"`
-	Content   string `gorm:"type:text;not null"`
-	FileID    *string `gorm:"type:uuid"`
-	File      *File   `gorm:"foreignKey:FileID;references:ID"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ID            string  `gorm:"primaryKey;type:uuid"`
+	PostID        string  `gorm:"type:uuid;not null;index"`
+	Post          Post    `gorm:"foreignKey:PostID;references:ID"`
+	AuthorID      string  `gorm:"type:uuid;not null"`
+	Author        User    `gorm:"foreignKey:AuthorID;references:ID"`
+	Content       string  `gorm:"type:text;not null"`
+	FileID        *string `gorm:"type:uuid"`
+	File          *File   `gorm:"foreignKey:FileID;references:ID"`
+	LikesCount    int     `json:"likes_count" gorm:"default:0"`
+	DislikesCount int     `json:"dislikes_count" gorm:"default:0"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     gorm.DeletedAt `gorm:"index"`
 }
 
 type CreateCommentInput struct {
@@ -90,27 +121,33 @@ type UpdateCommentInput struct {
 }
 
 type CommentResponse struct {
-	ID        string       `json:"id"`
-	PostID    string       `json:"post_id"`
-	Content   string       `json:"content"`
-	AuthorID  string       `json:"author_id"`
-	Author    UserResponse `json:"author"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt time.Time    `json:"updated_at"`
-	FileID    *string      `json:"file_id,omitempty"`
-	FileURL   *string      `json:"file_url,omitempty"`
-	FileMIME  *string      `json:"file_mime,omitempty"`
+	ID            string       `json:"id"`
+	PostID        string       `json:"post_id"`
+	Content       string       `json:"content"`
+	AuthorID      string       `json:"author_id"`
+	Author        UserResponse `json:"author"`
+	LikesCount    int          `json:"likes_count"`
+	DislikesCount int          `json:"dislikes_count"`
+	Liked         bool         `json:"liked"`
+	Disliked      bool         `json:"disliked"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
+	FileID        *string      `json:"file_id,omitempty"`
+	FileURL       *string      `json:"file_url,omitempty"`
+	FileMIME      *string      `json:"file_mime,omitempty"`
 }
 
 func (r *Reply) ToResponse() CommentResponse {
 	resp := CommentResponse{
-		ID:        r.ID,
-		PostID:    r.PostID,
-		Content:   r.Content,
-		AuthorID:  r.AuthorID,
-		Author:    r.Author.ToResponse(),
-		CreatedAt: r.CreatedAt,
-		UpdatedAt: r.UpdatedAt,
+		ID:            r.ID,
+		PostID:        r.PostID,
+		Content:       r.Content,
+		AuthorID:      r.AuthorID,
+		Author:        r.Author.ToResponse(),
+		LikesCount:    r.LikesCount,
+		DislikesCount: r.DislikesCount,
+		CreatedAt:     r.CreatedAt,
+		UpdatedAt:     r.UpdatedAt,
 	}
 
 	if r.FileID != nil {

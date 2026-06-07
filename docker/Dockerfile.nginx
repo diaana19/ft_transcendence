@@ -1,11 +1,22 @@
 # Edge reverse proxy: TLS termination + routing to frontend and backend.
 FROM docker.io/library/nginx:alpine
 
-# The TLS certificate is NOT baked into the image — it is generated once on the
-# host (`make certs`) and bind-mounted read-only at /etc/nginx/certs (see
-# infra/docker-compose.yml). Generating per-build would mint a new cert on every
-# rebuild, invalidating any browser trust exception; a mounted, stable cert lets
-# the one-time "accept the risk" persist. Mount real certs there for production.
+# Generate the self-signed dev TLS cert at build time so it lives INSIDE the
+# image (owned by root, readable by nginx) instead of being bind-mounted from
+# the host. A host mount trips rootless-Podman/SELinux permission denials on
+# Fedora ("cannot load certificate ... Permission denied"); baking it in avoids
+# the mount entirely. Because this is its own cached layer, the cert stays
+# stable across rebuilds — so a browser "accept the risk" exception granted once
+# keeps working — until the layer cache is busted (e.g. a no-cache build).
+# Mount/COPY real certs here for production.
+RUN apk add --no-cache openssl \
+    && mkdir -p /etc/nginx/certs \
+    && openssl req -x509 -sha256 -nodes -days 3650 -newkey rsa:2048 \
+        -keyout /etc/nginx/certs/dev.key -out /etc/nginx/certs/dev.crt \
+        -subj "/C=FR/ST=Ile-de-France/L=Paris/O=42/OU=ft_transcendence/CN=ft_transcendence.42.fr" \
+        -addext "subjectAltName=DNS:ft_transcendence.42.fr,DNS:localhost,IP:127.0.0.1" \
+    && chmod 644 /etc/nginx/certs/dev.crt \
+    && chmod 600 /etc/nginx/certs/dev.key
 
 COPY docker/proxy.nginx.conf /etc/nginx/conf.d/default.conf
 

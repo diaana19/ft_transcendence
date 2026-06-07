@@ -73,8 +73,9 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 	for i, p := range posts {
 		resp := p.ToResponse()
 		if userID != nil {
-			liked, _ := pc.postService.HasLiked(userID.(string), p.ID)
-			resp.Liked = liked
+			value, _ := pc.postService.GetPostReaction(userID.(string), p.ID)
+			resp.Liked = value == 1
+			resp.Disliked = value == -1
 		}
 		responses[i] = resp
 	}
@@ -110,8 +111,9 @@ func (pc *PostController) GetPost(c *gin.Context) {
 
 	resp := post.ToResponse()
 	if userID, exists := c.Get("user_id"); exists {
-		liked, _ := pc.postService.HasLiked(userID.(string), id)
-		resp.Liked = liked
+		value, _ := pc.postService.GetPostReaction(userID.(string), id)
+		resp.Liked = value == 1
+		resp.Disliked = value == -1
 	}
 
 	c.JSON(http.StatusOK, resp)
@@ -139,8 +141,9 @@ func (pc *PostController) GetPostsByUser(c *gin.Context) {
 	for i, p := range posts {
 		resp := p.ToResponse()
 		if currentUserID != nil {
-			liked, _ := pc.postService.HasLiked(currentUserID.(string), p.ID)
-			resp.Liked = liked
+			value, _ := pc.postService.GetPostReaction(currentUserID.(string), p.ID)
+			resp.Liked = value == 1
+			resp.Disliked = value == -1
 		}
 		responses[i] = resp
 	}
@@ -278,18 +281,37 @@ func (pc *PostController) DeletePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Post deleted"})
 }
 
-// ToggleLike godoc
-// @Summary   Like or unlike a post
+// reactionInput is the body of the react endpoints: +1 likes, -1 dislikes.
+type reactionInput struct {
+	Value int `json:"value" binding:"required"`
+}
+
+// bindReactionValue decodes and validates a react request body, writing a 400
+// and returning ok=false when the value is missing or not exactly +1 / -1.
+func bindReactionValue(c *gin.Context) (int, bool) {
+	var input reactionInput
+	if err := c.ShouldBindJSON(&input); err != nil || (input.Value != 1 && input.Value != -1) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "value must be 1 (like) or -1 (dislike)"})
+		return 0, false
+	}
+	return input.Value, true
+}
+
+// React godoc
+// @Summary   Like or dislike a post
 // @Tags      posts
 // @Security  BearerAuth
+// @Accept    json
 // @Produce   json
-// @Param     id path string true "post id"
-// @Success   200 {object} models.LikeResponse
+// @Param     id   path string true "post id"
+// @Param     body body controllers.reactionInput true "reaction value: 1 like, -1 dislike"
+// @Success   200 {object} models.ReactionResponse
+// @Failure   400 {object} map[string]string
 // @Failure   401 {object} map[string]string
 // @Failure   404 {object} map[string]string
 // @Failure   500 {object} map[string]string
-// @Router    /posts/{id}/like [post]
-func (pc *PostController) ToggleLike(c *gin.Context) {
+// @Router    /posts/{id}/react [post]
+func (pc *PostController) React(c *gin.Context) {
 	postID := c.Param("id")
 
 	userID, exists := c.Get("user_id")
@@ -298,7 +320,12 @@ func (pc *PostController) ToggleLike(c *gin.Context) {
 		return
 	}
 
-	liked, post, err := pc.postService.ToggleLike(userID.(string), postID)
+	pressed, ok := bindReactionValue(c)
+	if !ok {
+		return
+	}
+
+	value, post, err := pc.postService.ReactToPost(userID.(string), postID, pressed)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": msgPostNotFound})
@@ -308,7 +335,7 @@ func (pc *PostController) ToggleLike(c *gin.Context) {
 		return
 	}
 
-	if liked && post.AuthorID != userID.(string) {
+	if value == 1 && post.AuthorID != userID.(string) {
 		username, _ := c.Get("username")
 		_ = pc.notificationService.SendNotification(
 			post.AuthorID,
@@ -320,10 +347,58 @@ func (pc *PostController) ToggleLike(c *gin.Context) {
 		)
 	}
 
-	c.JSON(http.StatusOK, models.LikeResponse{
-		PostID:     postID,
-		Liked:      liked,
-		LikesCount: post.LikesCount,
+	c.JSON(http.StatusOK, models.ReactionResponse{
+		PostID:        postID,
+		UserReaction:  value,
+		LikesCount:    post.LikesCount,
+		DislikesCount: post.DislikesCount,
+	})
+}
+
+// ReactComment godoc
+// @Summary   Like or dislike a comment
+// @Tags      posts
+// @Security  BearerAuth
+// @Accept    json
+// @Produce   json
+// @Param     id        path string true "post id"
+// @Param     commentId path string true "comment id"
+// @Param     body      body controllers.reactionInput true "reaction value: 1 like, -1 dislike"
+// @Success   200 {object} models.ReactionResponse
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Failure   404 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /posts/{id}/comments/{commentId}/react [post]
+func (pc *PostController) ReactComment(c *gin.Context) {
+	commentID := c.Param("commentId")
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	pressed, ok := bindReactionValue(c)
+	if !ok {
+		return
+	}
+
+	value, comment, err := pc.postService.ReactToComment(userID.(string), commentID, pressed)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Comment not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.ReactionResponse{
+		CommentID:     commentID,
+		UserReaction:  value,
+		LikesCount:    comment.LikesCount,
+		DislikesCount: comment.DislikesCount,
 	})
 }
 
@@ -349,9 +424,16 @@ func (pc *PostController) GetComments(c *gin.Context) {
 		return
 	}
 
+	userID, _ := c.Get("user_id")
 	responses := make([]models.CommentResponse, len(comments))
 	for i, cm := range comments {
-		responses[i] = cm.ToResponse()
+		resp := cm.ToResponse()
+		if userID != nil {
+			value, _ := pc.postService.GetCommentReaction(userID.(string), cm.ID)
+			resp.Liked = value == 1
+			resp.Disliked = value == -1
+		}
+		responses[i] = resp
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": responses, "total": len(responses)})

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -19,15 +20,17 @@ type PostRepository interface {
 	Update(id string, input models.UpdatePostInput) (*models.Post, error)
 	Delete(id string) error
 
-	LikePost(userID, postID string) error
-	UnlikePost(userID, postID string) error
-	HasLiked(userID, postID string) (bool, error)
+	SetPostReaction(userID, postID string, value int) error
+	GetPostReaction(userID, postID string) (int, error)
 
 	CreateComment(comment *models.Reply) error
 	GetCommentsByPostID(postID string) ([]models.Reply, error)
 	GetCommentByID(id string) (*models.Reply, error)
 	UpdateComment(id string, input models.UpdateCommentInput) (*models.Reply, error)
 	DeleteComment(id string) error
+
+	SetReplyReaction(userID, replyID string, value int) error
+	GetReplyReaction(userID, replyID string) (int, error)
 }
 
 type postRepository struct {
@@ -91,49 +94,92 @@ func (r *postRepository) Delete(id string) error {
 	return nil
 }
 
-func (r *postRepository) LikePost(userID, postID string) error {
+// reactionDelta is the change a reaction transition makes to a single counter:
+// +1 when the new value enters the bucket, -1 when the old value leaves it.
+func reactionDelta(oldValue, newValue, bucket int) int {
+	d := 0
+	if newValue == bucket {
+		d++
+	}
+	if oldValue == bucket {
+		d--
+	}
+	return d
+}
+
+// SetPostReaction reconciles a user's reaction on a post to value (+1 like, -1
+// dislike, 0 none), upserting/deleting the single reaction row and adjusting
+// the denormalized likes_count / dislikes_count by the transition delta. The
+// whole reconciliation runs in one transaction so a row and its counters can
+// never drift apart.
+func (r *postRepository) SetPostReaction(userID, postID string, value int) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		like := models.Like{
-			ID:     generateUUID(),
-			UserID: userID,
-			PostID: postID,
+		var existing models.PostReaction
+		err := tx.Where("user_id = ? AND post_id = ?", userID, postID).First(&existing).Error
+		found := err == nil
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
 		}
-		if err := tx.Create(&like).Error; err != nil {
-			return err // unique index violation if already liked
+
+		oldValue := 0
+		if found {
+			oldValue = existing.Value
 		}
-		return tx.Model(&models.Post{}).Where("id = ?", postID).
-			UpdateColumn("likes_count", gorm.Expr("likes_count + 1")).Error
+		if oldValue == value {
+			return nil
+		}
+
+		switch {
+		case value == 0:
+			if err := tx.Delete(&existing).Error; err != nil {
+				return err
+			}
+		case found:
+			if err := tx.Model(&existing).Update("value", value).Error; err != nil {
+				return err
+			}
+		default:
+			if err := tx.Create(&models.PostReaction{
+				ID: generateUUID(), UserID: userID, PostID: postID, Value: value,
+			}).Error; err != nil {
+				return err
+			}
+		}
+
+		return adjustReactionCounts(tx, &models.Post{}, postID, oldValue, value)
 	})
 	if err != nil {
-		return fmt.Errorf("like post: %w", err)
+		return fmt.Errorf("set post reaction: %w", err)
 	}
 	return nil
 }
 
-func (r *postRepository) UnlikePost(userID, postID string) error {
-	err := r.db.Transaction(func(tx *gorm.DB) error {
-		result := tx.Where("user_id = ? AND post_id = ?", userID, postID).Delete(&models.Like{})
-		if result.Error != nil {
-			return result.Error
-		}
-		if result.RowsAffected == 0 {
-			return gorm.ErrRecordNotFound
-		}
-		return tx.Model(&models.Post{}).Where("id = ? AND likes_count > 0", postID).
-			UpdateColumn("likes_count", gorm.Expr("likes_count - 1")).Error
-	})
-	if err != nil {
-		return fmt.Errorf("unlike post: %w", err)
+func (r *postRepository) GetPostReaction(userID, postID string) (int, error) {
+	var reaction models.PostReaction
+	err := r.db.Where("user_id = ? AND post_id = ?", userID, postID).First(&reaction).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, nil
 	}
-	return nil
+	return reaction.Value, err
 }
 
-func (r *postRepository) HasLiked(userID, postID string) (bool, error) {
-	var count int64
-	err := r.db.Model(&models.Like{}).
-		Where("user_id = ? AND post_id = ?", userID, postID).
-		Count(&count).Error
-	return count > 0, err
+// adjustReactionCounts moves the likes_count / dislikes_count columns of the
+// given model row by the like/dislike deltas implied by oldValue→newValue,
+// clamping at 0 so a stale row can never push a counter negative.
+func adjustReactionCounts(tx *gorm.DB, model any, id string, oldValue, newValue int) error {
+	if d := reactionDelta(oldValue, newValue, 1); d != 0 {
+		if err := tx.Model(model).Where("id = ?", id).
+			UpdateColumn("likes_count", gorm.Expr("GREATEST(likes_count + ?, 0)", d)).Error; err != nil {
+			return err
+		}
+	}
+	if d := reactionDelta(oldValue, newValue, -1); d != 0 {
+		if err := tx.Model(model).Where("id = ?", id).
+			UpdateColumn("dislikes_count", gorm.Expr("GREATEST(dislikes_count + ?, 0)", d)).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *postRepository) CreateComment(comment *models.Reply) error {
@@ -186,6 +232,9 @@ func (r *postRepository) DeleteComment(id string) error {
 		if err := tx.Delete(&models.Reply{}, "id = ?", id).Error; err != nil {
 			return err
 		}
+		if err := tx.Where("reply_id = ?", id).Delete(&models.ReplyReaction{}).Error; err != nil {
+			return err
+		}
 		return tx.Model(&models.Post{}).Where("id = ? AND comments_count > 0", comment.PostID).
 			UpdateColumn("comments_count", gorm.Expr("comments_count - 1")).Error
 	})
@@ -193,4 +242,58 @@ func (r *postRepository) DeleteComment(id string) error {
 		return fmt.Errorf("delete comment: %w", err)
 	}
 	return nil
+}
+
+// SetReplyReaction is the reply counterpart of SetPostReaction: it reconciles a
+// user's reaction on a reply and adjusts that reply's denormalized counters in
+// one transaction.
+func (r *postRepository) SetReplyReaction(userID, replyID string, value int) error {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		var existing models.ReplyReaction
+		err := tx.Where("user_id = ? AND reply_id = ?", userID, replyID).First(&existing).Error
+		found := err == nil
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+
+		oldValue := 0
+		if found {
+			oldValue = existing.Value
+		}
+		if oldValue == value {
+			return nil
+		}
+
+		switch {
+		case value == 0:
+			if err := tx.Delete(&existing).Error; err != nil {
+				return err
+			}
+		case found:
+			if err := tx.Model(&existing).Update("value", value).Error; err != nil {
+				return err
+			}
+		default:
+			if err := tx.Create(&models.ReplyReaction{
+				ID: generateUUID(), UserID: userID, ReplyID: replyID, Value: value,
+			}).Error; err != nil {
+				return err
+			}
+		}
+
+		return adjustReactionCounts(tx, &models.Reply{}, replyID, oldValue, value)
+	})
+	if err != nil {
+		return fmt.Errorf("set reply reaction: %w", err)
+	}
+	return nil
+}
+
+func (r *postRepository) GetReplyReaction(userID, replyID string) (int, error) {
+	var reaction models.ReplyReaction
+	err := r.db.Where("user_id = ? AND reply_id = ?", userID, replyID).First(&reaction).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, nil
+	}
+	return reaction.Value, err
 }

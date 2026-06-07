@@ -1,18 +1,40 @@
 package test
 
 import (
+	"bytes"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 )
 
+// postCommentForm creates a comment via multipart form (the endpoint accepts an
+// optional file alongside the content, so it binds form data, not JSON).
+func postCommentForm(t *testing.T, router *gin.Engine, token, postID, content string) *httptest.ResponseRecorder {
+	t.Helper()
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	if err := mw.WriteField("content", content); err != nil {
+		t.Fatalf("write content field: %v", err)
+	}
+	mw.Close()
+
+	req, _ := http.NewRequest("POST", "/api/posts/"+postID+"/comments", &body)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	return w
+}
+
 // createComment posts a comment on postID as the given user and returns its id.
 func createComment(t *testing.T, router *gin.Engine, token, postID, content string) string {
 	t.Helper()
-	w := authedRequest(t, router, "POST", "/api/posts/"+postID+"/comments", token, `{"content":"`+content+`"}`)
+	w := postCommentForm(t, router, token, postID, content)
 	if w.Code != http.StatusCreated {
 		t.Fatalf("create comment: expected 201, got %d - body: %s", w.Code, w.Body.String())
 	}
@@ -111,8 +133,7 @@ func TestComment_CreateOnMissingPost(t *testing.T) {
 	router, _ := SetupTestEnv()
 	u := registerAndLogin(t, router, "ccmp", "ccmp@test.com", "StrongPass123!")
 
-	w := authedRequest(t, router, "POST", "/api/posts/550e8400-e29b-41d4-a716-446655440000/comments",
-		u.Token, `{"content":"hi"}`)
+	w := postCommentForm(t, router, u.Token, "550e8400-e29b-41d4-a716-446655440000", "hi")
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("comment on missing post: expected 404, got %d", w.Code)
 	}
@@ -153,7 +174,7 @@ func TestPost_LikeMissingPost(t *testing.T) {
 	router, _ := SetupTestEnv()
 	u := registerAndLogin(t, router, "plnf", "plnf@test.com", "StrongPass123!")
 
-	w := authedRequest(t, router, "POST", "/api/posts/550e8400-e29b-41d4-a716-446655440000/like", u.Token, "")
+	w := authedRequest(t, router, "POST", "/api/posts/550e8400-e29b-41d4-a716-446655440000/react", u.Token, `{"value":1}`)
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("like missing post: expected 404, got %d", w.Code)
 	}
@@ -165,7 +186,7 @@ func TestPost_LikeNotifiesAuthor(t *testing.T) {
 	liker := registerAndLogin(t, router, "plna-l", "plna-l@test.com", "StrongPass123!")
 	postID := createPost(t, router, author.Token, "like and notify")
 
-	w := authedRequest(t, router, "POST", "/api/posts/"+postID+"/like", liker.Token, "")
+	w := authedRequest(t, router, "POST", "/api/posts/"+postID+"/react", liker.Token, `{"value":1}`)
 	if w.Code != http.StatusOK {
 		t.Fatalf("like: expected 200, got %d", w.Code)
 	}

@@ -15,13 +15,12 @@ ENGINE     ?= $(shell command -v podman >/dev/null 2>&1 && echo podman || echo d
 COMPOSE    ?= $(ENGINE) compose -f infra/docker-compose.yml
 GO_IMAGE   := golang:1.25
 
-.PHONY: help build up down stop restart re clean ps certs \
+.PHONY: help build up down stop restart re clean ps \
         logs logs-backend logs-frontend logs-nginx logs-db \
         test test-frontend seed \
         shell-backend shell-frontend shell-nginx shell-postgres shell-redis \
         fmt lint swagger prune version
 
-CERT_DIR := infra/certs
 .DEFAULT_GOAL := help
 
 # ==================== Help ====================
@@ -37,7 +36,6 @@ help:
 	@echo "  make re            Rebuild from clean state (down -v + build + up)"
 	@echo "  make clean         Stop and remove containers + volumes"
 	@echo "  make ps            Show container status"
-	@echo "  make certs         Generate the dev TLS cert once (auto-run by 'up')"
 	@echo ""
 	@echo "Logs (follow):"
 	@echo "  make logs          All services      make logs-backend   Backend"
@@ -71,7 +69,7 @@ help:
 
 # ==================== Stack ====================
 
-up: certs
+up:
 	@echo "Starting stack with $(ENGINE)..."
 	@$(COMPOSE) up -d --build
 	@echo "Up. App: https://localhost:3000 (self-signed cert). 'make ps' for ports, 'make logs' to follow."
@@ -92,23 +90,6 @@ clean:
 
 ps:
 	@$(COMPOSE) ps
-
-# Generate a self-signed cert ONCE into infra/certs/ (gitignored), bind-mounted
-# into the proxy. Stable across rebuilds, so the browser "accept the risk"
-# exception you grant once keeps working. Delete the files to force a new cert.
-# `up` depends on this, so a fresh checkout gets a cert automatically.
-certs:
-	@if [ -f $(CERT_DIR)/dev.crt ] && [ -f $(CERT_DIR)/dev.key ]; then \
-		echo "TLS cert already present in $(CERT_DIR)/ — skipping (rm them to regenerate)."; \
-	else \
-		echo "Generating self-signed dev TLS cert into $(CERT_DIR)/ ..."; \
-		mkdir -p $(CERT_DIR); \
-		openssl req -x509 -sha256 -nodes -days 3650 -newkey rsa:2048 \
-			-keyout $(CERT_DIR)/dev.key -out $(CERT_DIR)/dev.crt \
-			-subj "/C=FR/ST=Ile-de-France/L=Paris/O=42/OU=ft_transcendence/CN=ft_transcendence.42.fr" \
-			-addext "subjectAltName=DNS:ft_transcendence.42.fr,DNS:localhost,IP:127.0.0.1" >/dev/null 2>&1; \
-		echo "Done. On first visit to https://localhost:3000, accept the warning once — it now persists."; \
-	fi
 
 # ==================== Logs ====================
 

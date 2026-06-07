@@ -14,16 +14,18 @@ import (
 // (request binding rejects empty/over-long content before the service runs).
 // All other post/comment behaviour is covered end-to-end via the /posts API.
 type mockPostRepo struct {
-	posts    map[string]*models.Post
-	comments map[string]*models.Reply
-	liked    map[string]bool
+	posts         map[string]*models.Post
+	comments      map[string]*models.Reply
+	postReaction  map[string]int
+	replyReaction map[string]int
 }
 
 func newMockPostRepo() *mockPostRepo {
 	return &mockPostRepo{
-		posts:    map[string]*models.Post{},
-		comments: map[string]*models.Reply{},
-		liked:    map[string]bool{},
+		posts:         map[string]*models.Post{},
+		comments:      map[string]*models.Reply{},
+		postReaction:  map[string]int{},
+		replyReaction: map[string]int{},
 	}
 }
 
@@ -75,18 +77,17 @@ func (m *mockPostRepo) Delete(id string) error {
 	return nil
 }
 
-func (m *mockPostRepo) LikePost(userID, postID string) error {
-	m.liked[userID+"|"+postID] = true
+func (m *mockPostRepo) SetPostReaction(userID, postID string, value int) error {
+	if value == 0 {
+		delete(m.postReaction, userID+"|"+postID)
+		return nil
+	}
+	m.postReaction[userID+"|"+postID] = value
 	return nil
 }
 
-func (m *mockPostRepo) UnlikePost(userID, postID string) error {
-	delete(m.liked, userID+"|"+postID)
-	return nil
-}
-
-func (m *mockPostRepo) HasLiked(userID, postID string) (bool, error) {
-	return m.liked[userID+"|"+postID], nil
+func (m *mockPostRepo) GetPostReaction(userID, postID string) (int, error) {
+	return m.postReaction[userID+"|"+postID], nil
 }
 
 func (m *mockPostRepo) CreateComment(comment *models.Reply) error {
@@ -127,6 +128,19 @@ func (m *mockPostRepo) DeleteComment(id string) error {
 	}
 	delete(m.comments, id)
 	return nil
+}
+
+func (m *mockPostRepo) SetReplyReaction(userID, replyID string, value int) error {
+	if value == 0 {
+		delete(m.replyReaction, userID+"|"+replyID)
+		return nil
+	}
+	m.replyReaction[userID+"|"+replyID] = value
+	return nil
+}
+
+func (m *mockPostRepo) GetReplyReaction(userID, replyID string) (int, error) {
+	return m.replyReaction[userID+"|"+replyID], nil
 }
 
 func TestPostService_ContentValidationBranches(t *testing.T) {

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom"
 import axiosInstance from "../../services/axiosInstance"
 import RichText from "../../components/common/RichText"
 import CommentForm from "./CommentForm"
+import CommentItem from "./CommentItem"
 
 export default function PostPage() {
   const { id } = useParams()
@@ -117,46 +118,13 @@ export default function PostPage() {
 
       {/* COMMENTS */}
       <div className="px-4 pt-4">
-        {comments.map((comment,index) => (
-          <div
+        {comments.map((comment, index) => (
+          <CommentItem
             key={comment.id}
-            className="flex gap-3 mb-3"
-          >
-            {/* Avatar */}
-			<div className="flex flex-col items-center">
-				<div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold flex-shrink-0">
-					{comment.author?.avatar ? (
-					<img
-						src={comment.author.avatar}
-						alt={comment.author.username}
-						className="w-full h-full object-cover"
-					/>
-					) : (
-					<span>
-						{comment.author?.username?.charAt(0).toUpperCase() || 'U'}
-					</span>
-					)}
-				</div>
-				{index < comments.length - 1 && (
-				<div className="w-px flex-1 mt-1" style={{ background: '#ede8fd', minHeight: '16px' }} />
-				)}
-			</div>
-            <div className="flex-1 rounded-xl px-3 py-2 mb-1" style={{ background: 'white', border: '0.5px solid #f0ebfe' }} >
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-xs" style={{ color: '#2c2c2a' }}>
-                  {comment.author?.displayname}
-                </span>
-
-                <span className="text-xs" style={{ color: '#afa9ec' }}>
-                  @{comment.author?.username}
-                </span>
-              </div>
-
-              <p className="text-sm mt-1 whitespace-pre-wrap" style={{ color: '#5f5e5a' }}>
-                <RichText text={comment.content} />
-              </p>
-            </div>
-          </div>
+            postId={id}
+            comment={comment}
+            isLast={index === comments.length - 1}
+          />
         ))}
       </div>
 

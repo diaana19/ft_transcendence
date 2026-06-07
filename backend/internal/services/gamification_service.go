@@ -57,8 +57,9 @@ func (s *GamificationService) Compute(userID string) (GamificationStats, error) 
 	}
 
 	// Sum the denormalized LikesCount kept on each post rather than COUNTing
-	// the Like table joined to Post — the counter is maintained by
-	// PostService.ToggleLike and the SUM is cheaper.
+	// the reactions table joined to Post — the counter is maintained by
+	// PostService.ReactToPost and the SUM is cheaper. Dislikes are tracked
+	// separately and intentionally don't subtract from the score here.
 	var likesReceived int64
 	if err := s.db.Model(&models.Post{}).
 		Where("author_id = ?", userID).

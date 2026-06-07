@@ -63,10 +63,10 @@ func TestGamification_AggregatesPostsLikesFollowersFollowing(t *testing.T) {
 		t.Fatalf("alice follow bob: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 	// Bob likes two of alice's posts (alice gains 2 received likes).
-	if w := authedRequest(t, router, "POST", "/api/posts/"+post1+"/like", bob.Token, ""); w.Code != http.StatusOK {
+	if w := authedRequest(t, router, "POST", "/api/posts/"+post1+"/react", bob.Token, `{"value":1}`); w.Code != http.StatusOK {
 		t.Fatalf("bob like post1: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
-	if w := authedRequest(t, router, "POST", "/api/posts/"+post2+"/like", bob.Token, ""); w.Code != http.StatusOK {
+	if w := authedRequest(t, router, "POST", "/api/posts/"+post2+"/react", bob.Token, `{"value":1}`); w.Code != http.StatusOK {
 		t.Fatalf("bob like post2: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 
@@ -129,7 +129,7 @@ func TestLeaderboard_ListsUsersWithStats(t *testing.T) {
 
 	// Alice: 1 post + 1 like received = total 2 → level 1. Bob stays at 0.
 	post := createPost(t, router, alice.Token, "hello")
-	if w := authedRequest(t, router, "POST", "/api/posts/"+post+"/like", bob.Token, ""); w.Code != http.StatusOK {
+	if w := authedRequest(t, router, "POST", "/api/posts/"+post+"/react", bob.Token, `{"value":1}`); w.Code != http.StatusOK {
 		t.Fatalf("bob like alice post: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 

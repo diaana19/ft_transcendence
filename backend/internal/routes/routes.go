@@ -120,14 +120,15 @@ func registerPostRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controllers.
 	posts.GET("", middleware.OptionalAuthMiddleware(rdb), c.GetPosts)
 	posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(rdb), c.GetPostsByUser)
 	posts.GET("/:id", middleware.OptionalAuthMiddleware(rdb), c.GetPost)
-	posts.GET("/:id/comments", c.GetComments)
+	posts.GET("/:id/comments", middleware.OptionalAuthMiddleware(rdb), c.GetComments)
 
 	protected := posts.Group("", middleware.AuthMiddleware(rdb))
 	protected.POST("", c.CreatePost)
 	protected.PUT("/:id", c.UpdatePost)
 	protected.DELETE("/:id", c.DeletePost)
-	protected.POST("/:id/like", c.ToggleLike)
+	protected.POST("/:id/react", c.React)
 	protected.POST("/:id/comments", c.CreateComment)
 	protected.PUT("/:id/comments/:commentId", c.UpdateComment)
 	protected.DELETE("/:id/comments/:commentId", c.DeleteComment)
+	protected.POST("/:id/comments/:commentId/react", c.ReactComment)
 }

@@ -137,7 +137,7 @@ func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 	db.Exec("DROP TABLE IF EXISTS messages CASCADE")
 	db.Exec("DROP TABLE IF EXISTS users CASCADE")
 	db.AutoMigrate(&models.User{}, &models.Message{})
-	db.Exec("TRUNCATE TABLE posts, likes, replies, reposts, notifications, friends RESTART IDENTITY CASCADE")
+	db.Exec("TRUNCATE TABLE posts, likes, replies, reply_reactions, reposts, notifications, friends RESTART IDENTITY CASCADE")
 
 	router := gin.Default()
 	ctrl := routes.Wire(db, rdb, cfg)

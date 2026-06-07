@@ -70,37 +70,69 @@ func (s *PostService) DeletePost(id string, authorID string) error {
 	return s.repo.Delete(id)
 }
 
-func (s *PostService) ToggleLike(userID, postID string) (bool, *models.Post, error) {
-	post, err := s.repo.GetByID(postID)
-	if err != nil {
-		return false, nil, err
+// resolveReaction maps a pressed button (+1 like, -1 dislike) against the
+// caller's current reaction into the resulting value: pressing the button you
+// already have clears it (toggle off), otherwise it becomes your new reaction.
+func resolveReaction(current, pressed int) int {
+	if current == pressed {
+		return 0
 	}
-
-	alreadyLiked, err := s.repo.HasLiked(userID, postID)
-	if err != nil {
-		return false, nil, err
-	}
-
-	if alreadyLiked {
-		if err := s.repo.UnlikePost(userID, postID); err != nil {
-			return false, nil, err
-		}
-		post.LikesCount--
-		if post.LikesCount < 0 {
-			post.LikesCount = 0
-		}
-		return false, post, nil
-	}
-
-	if err := s.repo.LikePost(userID, postID); err != nil {
-		return false, nil, err
-	}
-	post.LikesCount++
-	return true, post, nil
+	return pressed
 }
 
-func (s *PostService) HasLiked(userID, postID string) (bool, error) {
-	return s.repo.HasLiked(userID, postID)
+// ReactToPost applies a like/dislike press to a post and returns the caller's
+// resulting reaction (+1/-1/0) along with the post carrying fresh counts.
+func (s *PostService) ReactToPost(userID, postID string, pressed int) (int, *models.Post, error) {
+	if _, err := s.repo.GetByID(postID); err != nil {
+		return 0, nil, err
+	}
+
+	current, err := s.repo.GetPostReaction(userID, postID)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	value := resolveReaction(current, pressed)
+	if err := s.repo.SetPostReaction(userID, postID, value); err != nil {
+		return 0, nil, err
+	}
+
+	post, err := s.repo.GetByID(postID)
+	if err != nil {
+		return 0, nil, err
+	}
+	return value, post, nil
+}
+
+func (s *PostService) GetPostReaction(userID, postID string) (int, error) {
+	return s.repo.GetPostReaction(userID, postID)
+}
+
+// ReactToComment is the reply counterpart of ReactToPost.
+func (s *PostService) ReactToComment(userID, commentID string, pressed int) (int, *models.Reply, error) {
+	if _, err := s.repo.GetCommentByID(commentID); err != nil {
+		return 0, nil, err
+	}
+
+	current, err := s.repo.GetReplyReaction(userID, commentID)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	value := resolveReaction(current, pressed)
+	if err := s.repo.SetReplyReaction(userID, commentID, value); err != nil {
+		return 0, nil, err
+	}
+
+	comment, err := s.repo.GetCommentByID(commentID)
+	if err != nil {
+		return 0, nil, err
+	}
+	return value, comment, nil
+}
+
+func (s *PostService) GetCommentReaction(userID, commentID string) (int, error) {
+	return s.repo.GetReplyReaction(userID, commentID)
 }
 
 func (s *PostService) CreateComment(content, authorID, postID string, fileID *string) (*models.Reply, error) {

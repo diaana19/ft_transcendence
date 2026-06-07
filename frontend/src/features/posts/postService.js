@@ -52,6 +52,22 @@ export async function deletePost(id) {
     return response.data
 }
 
+// React to a post: value 1 likes, -1 dislikes. Pressing the reaction you
+// already have clears it. Returns { user_reaction, likes_count, dislikes_count }.
+export async function reactToPost(postId, value) {
+    const response = await axiosInstance.post(`/api/posts/${postId}/react`, { value })
+    return response.data
+}
+
+// React to a comment, same contract as reactToPost.
+export async function reactToComment(postId, commentId, value) {
+    const response = await axiosInstance.post(
+        `/api/posts/${postId}/comments/${commentId}/react`,
+        { value }
+    )
+    return response.data
+}
+
 export async function createComment(postId, content) {
     const response = await axiosInstance.post(
         `/api/posts/${postId}/comments`,

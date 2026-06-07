@@ -10,8 +10,8 @@
 */
 
 import { useState } from 'react'
-import { deletePost, updatePost } from './postService.js'
-import { Pencil, Trash2, MessageCircle, Heart } from 'lucide-react'
+import { deletePost, updatePost, reactToPost } from './postService.js'
+import { Pencil, Trash2, MessageCircle, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import axiosInstance from '../../services/axiosInstance'
 import LoginModal from '../../components/common/LoginModal'
@@ -26,8 +26,9 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
   const [editMediaUrl, setEditMediaUrl] = useState(post.media_url || null)
   const [editFile, setEditFile] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [liked, setLiked] = useState(post.liked || false)
+  const [userReaction, setUserReaction] = useState(post.liked ? 1 : post.disliked ? -1 : 0)
   const [likesCount, setLikesCount] = useState(post.likes_count || 0)
+  const [dislikesCount, setDislikesCount] = useState(post.dislikes_count || 0)
   const [showLoginModal, setShowLoginModal] = useState(false)
 
   const handleDelete = async () => {
@@ -63,17 +64,18 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
     }
   }
 
-  const handleLike = async () => {
+  const handleReact = async (value) => {
     if (!user) {
       setShowLoginModal(true)
       return
     }
     try {
-      const res = await axiosInstance.post(`/api/posts/${post.id}/like`)
-      setLiked(res.data.liked)
-      setLikesCount(res.data.likes_count)
+      const res = await reactToPost(post.id, value)
+      setUserReaction(res.user_reaction)
+      setLikesCount(res.likes_count)
+      setDislikesCount(res.dislikes_count)
     } catch (err) {
-      console.error('Error liking post:', err)
+      console.error('Error reacting to post:', err)
     }
   }
 
@@ -179,14 +181,18 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
               <MessageCircle size={16} />{post.comments_count}
             </span>
             <span
-              onClick={post.author_id !== currentUserId ? handleLike : undefined}
-              className={`flex items-center gap-1 ${post.author_id !== currentUserId
-                  ? 'cursor-pointer hover:text-red-400'
-                  : 'cursor-default'
-                } ${liked ? 'text-red-500' : ''}`}
+              onClick={() => handleReact(1)}
+              className={`flex items-center gap-1 cursor-pointer hover:text-green-500 ${userReaction === 1 ? 'text-green-600' : ''}`}
             >
-              <Heart size={16} fill={liked ? 'currentColor' : 'none'} />
+              <ThumbsUp size={16} fill={userReaction === 1 ? 'currentColor' : 'none'} />
               {likesCount}
+            </span>
+            <span
+              onClick={() => handleReact(-1)}
+              className={`flex items-center gap-1 cursor-pointer hover:text-red-400 ${userReaction === -1 ? 'text-red-500' : ''}`}
+            >
+              <ThumbsDown size={16} fill={userReaction === -1 ? 'currentColor' : 'none'} />
+              {dislikesCount}
             </span>
             {post.author_id === currentUserId && (
               <div className="flex gap-3 ml-auto">
