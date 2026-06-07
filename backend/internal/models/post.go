@@ -17,7 +17,7 @@ type Post struct {
 	DeletedAt     gorm.DeletedAt `gorm:"index"`
 	LikesCount    int            `json:"likes_count" gorm:"default:0"`
 	CommentsCount int            `json:"comments_count" gorm:"default:0"`
-	Comments []Reply `gorm:"foreignKey:PostID" json:"comments,omitempty"`
+	Comments      []Reply        `gorm:"foreignKey:PostID" json:"comments,omitempty"`
 }
 
 type UpdatePostInput struct {

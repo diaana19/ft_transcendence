@@ -110,7 +110,7 @@ func registerTwoFARoutes(protected *gin.RouterGroup, c *controllers.TwoFAControl
 
 func registerGamificationRoutes(protected *gin.RouterGroup, c *controllers.GamificationController) {
 	protected.GET("/users/:id/gamification", c.Get)
-	protected.GET("/leaderboard", c.GetLeaderboard) 
+	protected.GET("/leaderboard", c.GetLeaderboard)
 }
 
 // Posts have mixed visibility: list / single / comments are public with optional
