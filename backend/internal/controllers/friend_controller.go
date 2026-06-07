@@ -114,6 +114,13 @@ func (fc *FriendController) FollowUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	username, _ := c.Get("username")
+	_ = fc.NotificationService.SendNotification(
+		targetID, "",
+		userID.(string), username.(string),
+		"follow", username.(string)+" started following you",
+		"",
+	)
 	c.JSON(http.StatusOK, gin.H{"message": "user followed"})
 }
 
@@ -162,6 +169,13 @@ func (fc *FriendController) RemoveFriend(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	username, _ := c.Get("username")
+	_ = fc.NotificationService.SendNotification(
+		targetID, "",
+		userID.(string), username.(string),
+		"unfriend", username.(string)+" removed you from friends",
+		"",
+	)
 	c.JSON(http.StatusOK, gin.H{"message": "friend removed"})
 }
 
