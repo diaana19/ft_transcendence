@@ -108,6 +108,81 @@ func TestGamification_AggregatesPostsLikesFollowersFollowing(t *testing.T) {
 	}
 }
 
+type leaderboardEntry struct {
+	ID       string               `json:"id"`
+	Username string               `json:"username"`
+	Avatar   string               `json:"avatar"`
+	Stats    gamificationResponse `json:"stats"`
+}
+
+func TestLeaderboard_ListsUsersWithStats(t *testing.T) {
+	router, _ := SetupTestEnv()
+	alice := registerAndLogin(t, router, "boardalice", "boardalice@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "boardbob", "boardbob@test.com", "StrongPass123!")
+
+	// Give alice an avatar so the non-nil branch of stringVal is exercised; bob
+	// keeps the default empty avatar (nil → "").
+	avatarBody := `{"displayname":"Alice","username":"boardalice","bio":"","avatar":"https://example.com/alice.png"}`
+	if w := authedRequest(t, router, "PUT", "/api/users/"+alice.ID, alice.Token, avatarBody); w.Code != http.StatusOK {
+		t.Fatalf("set alice avatar: expected 200, got %d - body: %s", w.Code, w.Body.String())
+	}
+
+	// Alice: 1 post + 1 like received = total 2 → level 1. Bob stays at 0.
+	post := createPost(t, router, alice.Token, "hello")
+	if w := authedRequest(t, router, "POST", "/api/posts/"+post+"/like", bob.Token, ""); w.Code != http.StatusOK {
+		t.Fatalf("bob like alice post: expected 200, got %d - body: %s", w.Code, w.Body.String())
+	}
+
+	w := authedRequest(t, router, "GET", "/api/leaderboard", alice.Token, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("leaderboard: expected 200, got %d - body: %s", w.Code, w.Body.String())
+	}
+
+	var entries []leaderboardEntry
+	if err := json.Unmarshal(w.Body.Bytes(), &entries); err != nil {
+		t.Fatalf("decode leaderboard: %v", err)
+	}
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 leaderboard entries, got %d - body: %s", len(entries), w.Body.String())
+	}
+
+	byID := map[string]leaderboardEntry{}
+	for _, e := range entries {
+		byID[e.ID] = e
+	}
+
+	gotAlice, ok := byID[alice.ID]
+	if !ok {
+		t.Fatal("alice missing from leaderboard")
+	}
+	if gotAlice.Username != "boardalice" || gotAlice.Avatar != "https://example.com/alice.png" {
+		t.Errorf("alice entry = %+v, want username=boardalice avatar set", gotAlice)
+	}
+	if gotAlice.Stats.Total != 2 || gotAlice.Stats.Level != 1 {
+		t.Errorf("alice stats = %+v, want total=2 level=1", gotAlice.Stats)
+	}
+
+	gotBob, ok := byID[bob.ID]
+	if !ok {
+		t.Fatal("bob missing from leaderboard")
+	}
+	if gotBob.Avatar != "" {
+		t.Errorf("bob avatar = %q, want empty string", gotBob.Avatar)
+	}
+	if gotBob.Stats.Total != 0 {
+		t.Errorf("bob total = %d, want 0", gotBob.Stats.Total)
+	}
+}
+
+func TestLeaderboard_RequiresAuth(t *testing.T) {
+	router, _ := SetupTestEnv()
+
+	w := authedRequest(t, router, "GET", "/api/leaderboard", "", "")
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 without token, got %d - body: %s", w.Code, w.Body.String())
+	}
+}
+
 func TestGamification_RequiresAuth(t *testing.T) {
 	router, _ := SetupTestEnv()
 	u := registerAndLogin(t, router, "gameranon", "gameranon@test.com", "StrongPass123!")

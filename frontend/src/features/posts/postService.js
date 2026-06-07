@@ -37,10 +37,10 @@ export async function createPost(content, mediaUrl = null) {
     return response.data
 }
 
-export async function updatePost(id, content) {
+export async function updatePost(id, content,  mediaUrl = undefined) {
     const response = await axiosInstance.put(
         `/api/posts/${id}`,
-        { content }
+        { content, ...(mediaUrl !== undefined && { media_url: mediaUrl }) }
     )
     return response.data
 }

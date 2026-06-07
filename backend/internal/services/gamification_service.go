@@ -96,3 +96,39 @@ func Level(total int64) int {
 	}
 	return bits.Len64(uint64(total)) - 1
 }
+
+type LeaderboardEntry struct {
+	ID       string            `json:"id"`
+	Username string            `json:"username"`
+	Avatar   string            `json:"avatar"`
+	Stats    GamificationStats `json:"stats"`
+}
+
+func stringVal(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func (s *GamificationService) Leaderboard() ([]LeaderboardEntry, error) {
+	var users []models.User
+	if err := s.db.Find(&users).Error; err != nil {
+		return nil, err
+	}
+
+	entries := make([]LeaderboardEntry, 0, len(users))
+	for _, u := range users {
+		stats, err := s.Compute(u.ID)
+		if err != nil {
+			continue
+		}
+		entries = append(entries, LeaderboardEntry{
+			ID:       u.ID,
+			Username: u.Username,
+			Avatar:   stringVal(u.Avatar),
+			Stats:    stats,
+		})
+	}
+	return entries, nil
+}

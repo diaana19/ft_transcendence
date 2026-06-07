@@ -17,9 +17,11 @@ import FollowButton from "../../components/common/FollowButton";
 import PostCard from '../posts/PostCard';
 import { getPostsByAuthor } from '../posts/postService'
 import { sendFriendRequest } from '../../features/user/userService'
+import FollowersModal from './FollowersModal'
+import ProfileBadges from '../gamification/ProfileBadge'
 
 export default function Profile() {
-  const { user: authUser } = useAuth();
+  const { user: authUser, updateUser } = useAuth();
   const { id, username } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("posts");
@@ -40,6 +42,7 @@ export default function Profile() {
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [friendRequested, setFriendRequested] = useState(false)
   const [isFriend, setIsFriend] = useState(false)
+  const [followModal, setFollowModal] = useState(null)
 
   useEffect(() => {
     let active = true;
@@ -101,6 +104,9 @@ export default function Profile() {
     try {
       const { data: updatedUser } = await api.put(`/api/users/${userId}`, form);
       setUser({ ...user, ...updatedUser });
+	  if (authUser?.userId === userId) {
+		updateUser({ avatar: updatedUser.avatar, displayname: updatedUser.displayname })
+	  }
       setShowEdit(false);
     } catch (err) {
       console.error(err);
@@ -197,11 +203,11 @@ export default function Profile() {
             <div className="flex gap-4 mt-3">
               <span className="text-sm cursor-pointer hover:underline">
                 <strong style={{ color: '#534ab7' }}>{user.following_count ?? 0} </strong>
-                <span className="ml-1" style={{ color: '#b4b2a9' }}>Following</span>
+                <span onClick={() => setFollowModal('following')} className="ml-1" style={{ color: '#b4b2a9' }}>Following</span>
               </span>
               <span className="text-sm cursor-pointer hover:underline">
                 <strong className="text-black">{user.followers_count ?? 0}</strong>
-                <span className="text-gray-500 ml-1">Followers</span>
+                <span  onClick={() => setFollowModal('followers')} className="text-gray-500 ml-1">Followers</span>
               </span>
             </div>
           </div>
@@ -209,7 +215,7 @@ export default function Profile() {
 
         {/* Posts tab */}
         <div className="flex border-b" style={{ borderColor: '#ede8fd' }}>
-          {['posts', 'replies', 'media'].map(tab => (
+          {['posts', 'replies', 'badges'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -248,8 +254,8 @@ export default function Profile() {
         {activeTab === 'replies' && (
           <p className="text-center py-8" style={{ color: '#b4b2a9' }}>No replies yet</p>
         )}
-        {activeTab === 'media' && (
-          <p className="text-center py-8" style={{ color: '#b4b2a9' }}>No media yet</p>
+        {activeTab === 'badges' && (
+			<ProfileBadges userId={userId} />
         )}
       </div>
 
@@ -343,7 +349,13 @@ export default function Profile() {
           </div>
         </div>
       )}
-
+	{followModal && (
+	<FollowersModal
+		userId={userId}
+		type={followModal}
+		onClose={() => setFollowModal(null)}
+	/>
+	)}
     </div>
   )
 }

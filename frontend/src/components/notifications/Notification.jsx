@@ -70,9 +70,9 @@ function NotificationsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full min-h-screen" style={{ background: 'linear-gradient(135deg, #faf5ff 0%, #eef2ff 100%)' }}>
       {/* Header */}
-      <div className="sticky top-0 bg-white px-4 py-3 z-10 flex items-center justify-between" style={{ borderBottom: '1px solid #ede8fd' }}>
+      <div className="sticky top-0 px-4 py-3 z-10 flex items-center justify-between" style={{ background: 'linear-gradient(135deg, #faf5ff 0%, #eef2ff 100%)', borderBottom: '1px solid #ede8fd' }}>
         <h1 className="text-xl font-bold" style={{ color: '#2c2c2a' }}>Notifications</h1>
         {notifications.length > 0 && (
           <button

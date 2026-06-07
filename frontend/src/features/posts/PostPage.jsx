@@ -17,10 +17,13 @@ export default function PostPage() {
 
   const fetchPost = async () => {
     try {
-      const res = await axiosInstance.get(`/api/posts/${id}`)
+      const [postRes, commentsRes] = await Promise.all([
+      axiosInstance.get(`/api/posts/${id}`),
+      axiosInstance.get(`/api/posts/${id}/comments`)
+    ])
 
-      setPost(res.data)
-      setComments(res.data.comments || [])
+      setPost(postRes.data)
+      setComments(commentsRes.data.data || [])
     } catch (err) {
       console.error(err)
     } finally {

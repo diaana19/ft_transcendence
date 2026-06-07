@@ -13,7 +13,9 @@ import CookiesBanner from '../components/common/CookiesBanner'
 import HelpCenter from '../features/help/HelpCenter.jsx'
 import SettingsPage from '../features/settings/SettingsPage.jsx'
 import MessagesPage from '../features/chat/MessagesPage'
-import BadgePage from '../features/gamification/BadgePage.jsx'
+import Gamification from '../features/gamification/Gamification.jsx'
+import TermsOfService from '../features/auth/TermsofService.jsx'
+import PrivacyPolicy from '../features/auth/PrivacyPolicy.jsx'
 
 function App() {
     return (
@@ -24,11 +26,13 @@ function App() {
                 <Route element={<Layout />}>
                     <Route path="/" element={<Feed />} />
                     <Route path="/help" element={<HelpCenter />} />
-					<Route path="/badge" element={<BadgePage />} />
+					<Route path="/badge" element={<Gamification />} />
                 </Route>
                 <Route path="/register" element={<RegisterForm />} />
                 <Route path="/login" element={<LoginForm />} />
                 <Route path="/login/2fa" element={<TwoFAVerify />} />
+				<Route path="/terms" element={<TermsOfService />} />
+				<Route path="/privacy" element={<PrivacyPolicy />} />
 
                 {/* PRIVATE */}
                 <Route

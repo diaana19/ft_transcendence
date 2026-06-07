@@ -70,7 +70,10 @@ func (r *postRepository) Update(id string, input models.UpdatePostInput) (*model
 	if err := r.db.First(&post, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
-	if err := r.db.Model(&post).Updates(input).Error; err != nil {
+	if err := r.db.Model(&post).Select("content", "media_url").Updates(map[string]any{
+		"content":   input.Content,
+		"media_url": input.MediaURL,
+	}).Error; err != nil {
 		return nil, err
 	}
 	r.db.Preload("Author").First(&post, "id = ?", id)

@@ -44,3 +44,12 @@ func (gc *GamificationController) Get(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, stats)
 }
+
+func (gc *GamificationController) GetLeaderboard(c *gin.Context) {
+	entries, err := gc.service.Leaderboard()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch leaderboard"})
+		return
+	}
+	c.JSON(http.StatusOK, entries)
+}
