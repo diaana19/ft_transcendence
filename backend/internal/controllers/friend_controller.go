@@ -50,6 +50,7 @@ func (fc *FriendController) SendFriendRequest(c *gin.Context) {
 		userUsername.(string),
 		"friend_request",
 		userUsername.(string)+" sent you a friend request",
+		"",
 	)
 	c.JSON(http.StatusOK, gin.H{"message": "request sent"})
 }
@@ -87,6 +88,7 @@ func (fc *FriendController) AcceptFriend(c *gin.Context) {
 		userUsername.(string),
 		"friend_accept",
 		userUsername.(string)+" accepted your friend request",
+		"",
 	)
 	c.JSON(http.StatusOK, gin.H{"message": "friend request accepted"})
 }

@@ -11,5 +11,6 @@ type Notification struct {
 	ActorUsername string    `gorm:"column:actor_username" json:"actor_username"`
 	Type          string    `gorm:"not null" json:"type"` // "friend_request", "like", "message", "reply"
 	Content       string    `json:"content"`              // "testuser sent you a friend request"
+	PostID        string    `gorm:"column:post_id" json:"post_id"` // relevant post for like/comment notifications
 	Read          bool      `gorm:"default:false" json:"read"`
 }

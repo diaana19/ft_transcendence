@@ -404,6 +404,7 @@ func (pc *PostController) React(c *gin.Context) {
 			username.(string),
 			"like",
 			username.(string)+" liked your post",
+			postID,
 		)
 	}
 

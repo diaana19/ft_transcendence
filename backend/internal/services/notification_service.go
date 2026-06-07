@@ -26,7 +26,7 @@ func NewNotificationService(
 }
 
 func (s *NotificationService) SendNotification(
-	userID, userUsername, actorID, actorUsername, notifType, content string,
+	userID, userUsername, actorID, actorUsername, notifType, content, postID string,
 ) error {
 	// Use the provided username if available, otherwise fetch from DB.
 	if userUsername == "" {
@@ -46,6 +46,7 @@ func (s *NotificationService) SendNotification(
 		ActorUsername: actorUsername,
 		Type:          notifType,
 		Content:       content,
+		PostID:        postID,
 		Read:          false,
 	}
 
@@ -84,7 +85,7 @@ func (s *NotificationService) MarkRead(userID, notifID string) error {
 // }
 
 func (s *NotificationService) SendCommentNotification(
-	receiverID, actorID, actorUsername, _, commentPreview string,
+	receiverID, actorID, actorUsername, postID, commentPreview string,
 ) error {
 	receiverUsername, err := s.repo.GetUsernameByID(receiverID)
 	if err != nil {
@@ -94,5 +95,5 @@ func (s *NotificationService) SendCommentNotification(
 		commentPreview = commentPreview[:50] + "..."
 	}
 	content := actorUsername + " comment on your post \"" + commentPreview + "\""
-	return s.SendNotification(receiverID, receiverUsername, actorID, actorUsername, "comment", content)
+	return s.SendNotification(receiverID, receiverUsername, actorID, actorUsername, "comment", content, postID)
 }

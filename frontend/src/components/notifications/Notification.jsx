@@ -52,7 +52,11 @@ function NotificationsPage() {
     if (notif.type === 'message') {
       navigate(`/messages/${notif.actor_id}`)
     } else if (notif.type === 'like' || notif.type === 'comment') {
-      navigate(`/profile/${notif.actor_id}`)
+      if (notif.post_id) {
+        navigate(`/post/${notif.post_id}`)
+      } else {
+        navigate(`/profile/${notif.actor_id}`)
+      }
     } else if (notif.type === 'friend_request') {
       navigate(`/profile/${notif.actor_id}`)
     }

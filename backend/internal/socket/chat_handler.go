@@ -280,6 +280,7 @@ func (h *ChatHandler) handleDM(client *Client, incoming IncomingMessage) {
 	_ = h.notificationService.SendNotification(
 		incoming.RecipientID, "", client.ID, client.Username,
 		"message", client.Username+" sent you a message",
+		"",
 	)
 }
 
