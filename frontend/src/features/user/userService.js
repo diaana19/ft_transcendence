@@ -30,3 +30,8 @@ export const acceptFriendRequest = async (requesterId) => {
   return res.data
 }
 
+export const removeFriend = async (friendId) => {
+  const res = await axiosInstance.delete(`/api/friends/${friendId}`)
+  return res.data
+}
+

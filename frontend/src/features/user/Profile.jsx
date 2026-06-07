@@ -16,7 +16,7 @@ import FriendsList from './FriendsList'
 import FollowButton from "../../components/common/FollowButton";
 import PostCard from '../posts/PostCard';
 import { getPostsByAuthor } from '../posts/postService'
-import { sendFriendRequest } from '../../features/user/userService'
+import { sendFriendRequest, removeFriend } from '../../features/user/userService'
 import FollowersModal from './FollowersModal'
 import ProfileBadges from '../gamification/ProfileBadge'
 
@@ -104,9 +104,9 @@ export default function Profile() {
     try {
       const { data: updatedUser } = await api.put(`/api/users/${userId}`, form);
       setUser({ ...user, ...updatedUser });
-	  if (authUser?.userId === userId) {
-		updateUser({ avatar: updatedUser.avatar, displayname: updatedUser.displayname })
-	  }
+      if (authUser?.userId === userId) {
+        updateUser({ avatar: updatedUser.avatar, displayname: updatedUser.displayname })
+      }
       setShowEdit(false);
     } catch (err) {
       console.error(err);
@@ -124,6 +124,15 @@ export default function Profile() {
 
   if (loading) return <p>Loading profile...</p>;
 
+  const handleRemoveFriend = async () => {
+    try {
+      await removeFriend(userId)
+      setIsFriend(false)
+    } catch (err) {
+      console.error('Error removing friend:', err)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-transparent">
       {/* Banner */}
@@ -133,11 +142,9 @@ export default function Profile() {
         )}
       </div>
 
-      {/* Card */}
       <div className="border-b border-gray-200">
         <div className="relative px-4">
 
-          {/* Avatar */}
           <div className="absolute -top-16">
             <div className="relative w-32 h-32">
               <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-300 overflow-hidden">
@@ -150,7 +157,6 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Botones top-right */}
           <div className="flex justify-end pt-3 pb-2 gap-2 flex-wrap">
             {authUser?.userId === userId ? (
               <>
@@ -173,12 +179,16 @@ export default function Profile() {
               <div className="flex gap-2">
                 <FollowButton onFollow={fetchUser} targetId={userId} isFollowing={isFollowing} />
                 <button
-                  onClick={handleFriendRequest}
-                  disabled={friendRequested || isFriend}
-                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors hover:bg-[#faf8f5]"
-                  style={{ border: '1px solid #ede8fd', color: '#534ab7', background: 'white' }}
+                  onClick={isFriend ? handleRemoveFriend : handleFriendRequest}
+                  disabled={!isFriend && friendRequested}
+                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors"
+                  style={{
+                    border: isFriend ? '1px solid #fde8f0' : '1px solid #ede8fd',
+                    color: isFriend ? '#d4537e' : '#534ab7',
+                    background: 'white'
+                  }}
                 >
-                  {isFriend ? 'Friends ✓' : friendRequested ? 'Requested' : 'Add friend'}
+                  {isFriend ? 'Remove friend' : friendRequested ? 'Requested' : 'Add friend'}
                 </button>
                 <button
                   onClick={() => navigate(`/messages/${id}`)}
@@ -191,7 +201,6 @@ export default function Profile() {
             )}
           </div>
 
-          {/* Info */}
           <div className="mt-12 pb-3">
             <h2 className="text-xl font-bold" style={{ color: '#2c2c2a' }}>{user.displayname}</h2>
             <p className="text-sm" style={{ color: '#afa9ec' }}>@{user.username}</p>
@@ -207,13 +216,12 @@ export default function Profile() {
               </span>
               <span className="text-sm cursor-pointer hover:underline">
                 <strong className="text-black">{user.followers_count ?? 0}</strong>
-                <span  onClick={() => setFollowModal('followers')} className="text-gray-500 ml-1">Followers</span>
+                <span onClick={() => setFollowModal('followers')} className="text-gray-500 ml-1">Followers</span>
               </span>
             </div>
           </div>
         </div>
 
-        {/* Posts tab */}
         <div className="flex border-b" style={{ borderColor: '#ede8fd' }}>
           {['posts', 'replies', 'badges'].map(tab => (
             <button
@@ -232,7 +240,6 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Posts list */}
       <div className="mt-6">
         {activeTab === 'posts' && (
           loadingPosts ? (
@@ -255,11 +262,10 @@ export default function Profile() {
           <p className="text-center py-8" style={{ color: '#b4b2a9' }}>No replies yet</p>
         )}
         {activeTab === 'badges' && (
-			<ProfileBadges userId={userId} />
+          <ProfileBadges userId={userId} />
         )}
       </div>
 
-      {/* Modal Edit */}
       {showEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(237, 232, 253, 0.4)', backdropFilter: 'blur(4px)' }}>
           <div className="absolute inset-0" onClick={() => setShowEdit(false)} />
@@ -349,13 +355,13 @@ export default function Profile() {
           </div>
         </div>
       )}
-	{followModal && (
-	<FollowersModal
-		userId={userId}
-		type={followModal}
-		onClose={() => setFollowModal(null)}
-	/>
-	)}
+      {followModal && (
+        <FollowersModal
+          userId={userId}
+          type={followModal}
+          onClose={() => setFollowModal(null)}
+        />
+      )}
     </div>
   )
 }
