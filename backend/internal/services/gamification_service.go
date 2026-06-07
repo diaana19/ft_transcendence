@@ -110,6 +110,7 @@ func stringVal(s *string) string {
 	}
 	return *s
 }
+
 func (s *GamificationService) Leaderboard() ([]LeaderboardEntry, error) {
 	var users []models.User
 	if err := s.db.Find(&users).Error; err != nil {
