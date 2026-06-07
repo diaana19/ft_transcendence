@@ -48,14 +48,16 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
     setLoading(true)
     try {
     let mediaUrl = editMediaUrl
+    let mediaMime = post.media_mime
 		if (editFile) {
 		const formData = new FormData()
 		formData.append('file', editFile)
 		const res = await axiosInstance.post('/api/upload', formData)
 		mediaUrl = res.data.url
+		mediaMime = res.data.mime_type
 		}
-      const updatedPost = await updatePost(post.id, editContent,  mediaUrl)
-      onUpdate({ ...updatedPost, media_url: mediaUrl})
+      const updatedPost = await updatePost(post.id, editContent, mediaUrl, mediaMime)
+      onUpdate({ ...updatedPost, media_url: mediaUrl, media_mime: mediaMime})
       setIsEditing(false)
 	  setEditFile(null)
     } catch (err) {
@@ -82,7 +84,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
 
 	const handleEditFileChange = (e) => {
 	const selected = e.target.files[0]
-	if (selected) {
+	if (!selected) {
 		return
 	}
 	setEditError(null)
@@ -133,7 +135,11 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
               />
 			{editMediaUrl && (
 			<div className="relative mt-2 mb-2">
-				<img src={editMediaUrl} alt="preview" className="rounded-xl max-h-48 w-full object-cover" />
+				{(post.media_mime?.startsWith('video/') && !editFile) || editFile?.type?.startsWith('video/') ? (
+					<video src={editMediaUrl} controls className="rounded-xl max-h-48 w-full object-cover" />
+				) : (
+					<img src={editMediaUrl} alt="preview" className="rounded-xl max-h-48 w-full object-cover" />
+				)}
 				<button
 				onClick={() => { setEditMediaUrl(null); setEditFile(null) }}
 				className="absolute top-2 right-2 w-6 h-6 rounded-full text-xs text-white flex items-center justify-center"
@@ -143,8 +149,8 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
 			)}
 			<div className="flex items-center gap-2 mt-2">
 				<label className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 flex-1">
-				+ Change image
-				<input type="file" accept="image/*" onChange={handleEditFileChange} className="hidden" />
+				+ Change media
+				<input type="file" accept="image/*,video/*" onChange={handleEditFileChange} className="hidden" />
 				</label>
 				{editError && <span className="text-xs" style={{ color: '#d4537e' }}>{editError}</span>}
                 <button
@@ -167,11 +173,19 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
               <p className="text-black mt-1"><RichText text={post.content} /></p>
               {post.media_url && (
                 <div className="mt-3 overflow-hidden rounded-2xl">
-                  <img
-                    src={post.media_url}
-                    alt="Post media"
-                    className="w-full max-h-96 object-cover"
-                  />
+                  {post.media_mime?.startsWith('video/') ? (
+                    <video
+                      src={post.media_url}
+                      controls
+                      className="w-full max-h-96 object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={post.media_url}
+                      alt="Post media"
+                      className="w-full max-h-96 object-cover"
+                    />
+                  )}
                 </div>
               )}
             </>

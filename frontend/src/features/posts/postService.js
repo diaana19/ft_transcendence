@@ -36,19 +36,20 @@ export async function getPostsByTag(tag, limit = 10, offset = 0) {
     return response.data.data
 }
 
-export async function createPost(content, mediaUrl = null) {
+export async function createPost(content, mediaUrl = null, mediaMime = null) {
     const response = await axiosInstance.post(
         '/api/posts',
         {content,
-        media_url: mediaUrl }
+        media_url: mediaUrl,
+        media_mime: mediaMime }
     )
     return response.data
 }
 
-export async function updatePost(id, content,  mediaUrl = undefined) {
+export async function updatePost(id, content, mediaUrl = undefined, mediaMime = undefined) {
     const response = await axiosInstance.put(
         `/api/posts/${id}`,
-        { content, ...(mediaUrl !== undefined && { media_url: mediaUrl }) }
+        { content, ...(mediaUrl !== undefined && { media_url: mediaUrl }), ...(mediaMime !== undefined && { media_mime: mediaMime }) }
     )
     return response.data
 }

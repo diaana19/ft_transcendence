@@ -34,8 +34,8 @@ function CommentForm({ postId, onCommentAdded }) {
 	const handleFileChange = (e) => {
 	const selectedFile = e.target.files[0]
 	if (!selectedFile) return
-	if (!selectedFile.type.startsWith('image/')) {
-		setError('Only image files are allowed')
+	if (!selectedFile.type.startsWith('image/') && !selectedFile.type.startsWith('video/')) {
+		setError('Only image and video files are allowed')
 		setFile(null)
 		return
 		}
@@ -101,7 +101,7 @@ function CommentForm({ postId, onCommentAdded }) {
 				<PhotoIcon className="w-5 h-5" />
 				<input
 					type="file"
-					accept="image/*"
+					accept="image/*,video/*"
 					onChange={handleFileChange}
 					className="hidden"
 				/>

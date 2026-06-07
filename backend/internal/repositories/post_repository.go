@@ -93,10 +93,11 @@ func (r *postRepository) Update(id string, input models.UpdatePostInput) (*model
 	if err := r.db.First(&post, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
-	if err := r.db.Model(&post).Select("content", "media_url", "tags").Updates(map[string]any{
-		"content":   input.Content,
-		"media_url": input.MediaURL,
-		"tags":      pq.StringArray(utils.ExtractHashtags(input.Content)),
+	if err := r.db.Model(&post).Select("content", "media_url", "media_mime", "tags").Updates(map[string]any{
+		"content":    input.Content,
+		"media_url":  input.MediaURL,
+		"media_mime": input.MediaMIME,
+		"tags":       pq.StringArray(utils.ExtractHashtags(input.Content)),
 	}).Error; err != nil {
 		return nil, err
 	}

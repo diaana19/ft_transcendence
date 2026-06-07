@@ -44,13 +44,15 @@ function CreatePost({ onPostCreated }) {
     setError(null)
     try {
       let mediaUrl = null
+      let mediaMime = null
       if (file) {
         const formData = new FormData()
         formData.append('file', file)
         const res = await axiosInstance.post('/api/upload', formData)
         mediaUrl = res.data.url
+        mediaMime = res.data.mime_type
       }
-      const newPost = await createPost(content, mediaUrl)
+      const newPost = await createPost(content, mediaUrl, mediaMime)
       onPostCreated(newPost)
       setContent('')
       setFile(null)

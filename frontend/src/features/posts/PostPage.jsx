@@ -98,7 +98,7 @@ export default function PostPage() {
             </p>
             {post.media_url && (
             <div className="mt-3 overflow-hidden rounded-2xl " style={{ border: '0.5px solid #ede8fd' }}>
-              {post.media_url.match(/\.(mp4|webm|ogg)$/i) ? (
+              {post.media_mime?.startsWith('video/') ? (
                 <video
                   src={post.media_url}
                   controls

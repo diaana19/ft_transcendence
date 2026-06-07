@@ -13,6 +13,7 @@ type Post struct {
 	Author   User    `gorm:"foreignKey:AuthorID;references:ID"`
 	Content  string  `gorm:"type:text;not null"`
 	MediaURL *string `gorm:"type:text" json:"media_url,omitempty"`
+	MediaMIME *string `gorm:"type:varchar(100)" json:"media_mime,omitempty"`
 	// Tags holds the distinct lowercased hashtags extracted from Content at
 	// write time (see utils.ExtractHashtags). Stored as a Postgres text[] with a
 	// GIN index so trends can be aggregated with unnest() without re-scanning
@@ -36,14 +37,16 @@ type TagCount struct {
 }
 
 type UpdatePostInput struct {
-	Content  string  `json:"content" binding:"required,min=1,max=280"`
-	MediaURL *string `gorm:"type:text" json:"media_url,omitempty"`
+	Content   string  `json:"content" binding:"required,min=1,max=280"`
+	MediaURL  *string `json:"media_url,omitempty"`
+	MediaMIME *string `json:"media_mime,omitempty"`
 }
 
 type PostResponse struct {
 	ID            string       `json:"id"`
 	Content       string       `json:"content"`
-	MediaURL      *string      `gorm:"type:text" json:"media_url,omitempty"`
+	MediaURL      *string      `json:"media_url,omitempty"`
+	MediaMIME     *string      `json:"media_mime,omitempty"`
 	AuthorID      string       `json:"author_id"`
 	Author        UserResponse `json:"author"`
 	LikesCount    int          `json:"likes_count"`
@@ -60,6 +63,7 @@ func (p *Post) ToResponse() PostResponse {
 		ID:            p.ID,
 		Content:       p.Content,
 		MediaURL:      p.MediaURL,
+		MediaMIME:     p.MediaMIME,
 		AuthorID:      p.AuthorID,
 		Author:        p.Author.ToResponse(),
 		LikesCount:    p.LikesCount,

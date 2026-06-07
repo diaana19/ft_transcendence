@@ -18,13 +18,14 @@ const (
 	MaxFileSize = 25 * 1024 * 1024
 )
 
-// Only image types are accepted — videos are intentionally disallowed.
+// Allowed MIME types for upload — images and videos.
 var allowedMimeTypes = map[string]bool{
 	"image/jpeg": true,
 	"image/png":  true,
 	"image/gif":  true,
 	"image/webp": true,
 	"video/mp4":  true,
+	"video/webm": true,
 }
 
 var allowedExtensions = map[string]bool{
@@ -34,6 +35,7 @@ var allowedExtensions = map[string]bool{
 	".gif":  true,
 	".webp": true,
 	".mp4":  true,
+	".webm": true,
 }
 
 type UploadService struct {

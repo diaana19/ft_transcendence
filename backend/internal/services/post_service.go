@@ -35,7 +35,7 @@ func (s *PostService) GetPostsByTag(tag string, limit, offset int) ([]models.Pos
 	return s.repo.GetByTag(tag, limit, offset)
 }
 
-func (s *PostService) CreatePost(content, authorID string, media *string) (*models.Post, error) {
+func (s *PostService) CreatePost(content, authorID string, media *string, mediaMIME *string) (*models.Post, error) {
 	if content == "" {
 		return nil, errors.New("content is required")
 	}
@@ -44,11 +44,12 @@ func (s *PostService) CreatePost(content, authorID string, media *string) (*mode
 	}
 
 	post := &models.Post{
-		ID:       utils.NewID(),
-		Content:  content,
-		MediaURL: media,
-		AuthorID: authorID,
-		Tags:     utils.ExtractHashtags(content),
+		ID:        utils.NewID(),
+		Content:   content,
+		MediaURL:  media,
+		MediaMIME: mediaMIME,
+		AuthorID:  authorID,
+		Tags:      utils.ExtractHashtags(content),
 	}
 
 	err := s.repo.Create(post)

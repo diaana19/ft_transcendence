@@ -224,8 +224,9 @@ func (pc *PostController) GetPostsByUser(c *gin.Context) {
 // @Router    /posts [post]
 func (pc *PostController) CreatePost(c *gin.Context) {
 	var req struct {
-		Content  string  `json:"content" binding:"required"`
-		MediaURL *string `json:"media_url"`
+		Content   string  `json:"content" binding:"required"`
+		MediaURL  *string `json:"media_url"`
+		MediaMIME *string `json:"media_mime"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -250,7 +251,7 @@ func (pc *PostController) CreatePost(c *gin.Context) {
 
 	log.Printf("AuthorID: %q", authorID.(string))
 
-	post, err := pc.postService.CreatePost(req.Content, authorID.(string), req.MediaURL)
+	post, err := pc.postService.CreatePost(req.Content, authorID.(string), req.MediaURL, req.MediaMIME)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

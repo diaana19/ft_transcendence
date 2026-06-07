@@ -117,11 +117,11 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
 			/>
 			{(editFileUrl || comment.file_url) && !editFile?.cleared && (
 				<div className="relative mt-2 mb-1">
-				<img
-					src={editFileUrl || comment.file_url}
-					alt="preview"
-					className="rounded-xl max-h-48 w-full object-cover"
-				/>
+				{(editFileUrl || comment.file_url).match(/\.(mp4|webm|ogg)$/i) || editFile?.type?.startsWith('video/') ? (
+					<video src={editFileUrl || comment.file_url} controls className="rounded-xl max-h-48 w-full object-cover" />
+				) : (
+					<img src={editFileUrl || comment.file_url} alt="preview" className="rounded-xl max-h-48 w-full object-cover" />
+				)}
 				<button
 					onClick={() => { setEditFileUrl('removed'); setEditFile({ cleared: true }) }}
 					className="absolute top-2 right-2 w-5 h-5 rounded-full text-xs text-white flex items-center justify-center"
@@ -131,8 +131,8 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
 			)}
 			<div className="flex items-center gap-2 mt-1">
 				<label className="cursor-pointer text-xs flex items-center gap-1 flex-1" style={{ color: '#afa9ec' }}>
-				+ Change image
-				<input type="file" accept="image/*" onChange={handleEditFileChange} className="hidden" />
+				+ Change media
+				<input type="file" accept="image/*,video/*" onChange={handleEditFileChange} className="hidden" />
 				</label>
 				<button
 				onClick={() => { setIsEditing(false); setEditContent(comment.content); setEditFileUrl(null); setEditFile(null) }}
