@@ -152,7 +152,7 @@ func (r *postRepository) CreateComment(comment *models.Reply) error {
 
 func (r *postRepository) GetCommentsByPostID(postID string) ([]models.Reply, error) {
 	var comments []models.Reply
-	result := r.db.Preload("Author").
+	result := r.db.Preload("Author").Preload("File").
 		Where("post_id = ?", postID).
 		Order("created_at ASC").
 		Find(&comments)
@@ -161,7 +161,7 @@ func (r *postRepository) GetCommentsByPostID(postID string) ([]models.Reply, err
 
 func (r *postRepository) GetCommentByID(id string) (*models.Reply, error) {
 	var comment models.Reply
-	result := r.db.Preload("Author").First(&comment, "id = ?", id)
+	result := r.db.Preload("Author").Preload("File").First(&comment, "id = ?", id)
 	return &comment, result.Error
 }
 
@@ -173,7 +173,7 @@ func (r *postRepository) UpdateComment(id string, input models.UpdateCommentInpu
 	if err := r.db.Model(&comment).Update("content", input.Content).Error; err != nil {
 		return nil, err
 	}
-	r.db.Preload("Author").First(&comment, "id = ?", id)
+	r.db.Preload("Author").Preload("File").First(&comment, "id = ?", id)
 	return &comment, nil
 }
 

@@ -74,13 +74,15 @@ type Reply struct {
 	AuthorID  string `gorm:"type:uuid;not null"`
 	Author    User   `gorm:"foreignKey:AuthorID;references:ID"`
 	Content   string `gorm:"type:text;not null"`
+	FileID    *string `gorm:"type:uuid"`
+	File      *File   `gorm:"foreignKey:FileID;references:ID"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type CreateCommentInput struct {
-	Content string `json:"content" binding:"required,min=1,max=280"`
+	Content string `form:"content" binding:"required,min=1,max=280"`
 }
 
 type UpdateCommentInput struct {
@@ -95,10 +97,13 @@ type CommentResponse struct {
 	Author    UserResponse `json:"author"`
 	CreatedAt time.Time    `json:"created_at"`
 	UpdatedAt time.Time    `json:"updated_at"`
+	FileID    *string      `json:"file_id,omitempty"`
+	FileURL   *string      `json:"file_url,omitempty"`
+	FileMIME  *string      `json:"file_mime,omitempty"`
 }
 
 func (r *Reply) ToResponse() CommentResponse {
-	return CommentResponse{
+	resp := CommentResponse{
 		ID:        r.ID,
 		PostID:    r.PostID,
 		Content:   r.Content,
@@ -107,6 +112,17 @@ func (r *Reply) ToResponse() CommentResponse {
 		CreatedAt: r.CreatedAt,
 		UpdatedAt: r.UpdatedAt,
 	}
+
+	if r.FileID != nil {
+		resp.FileID = r.FileID
+		url := "/api/files/" + *r.FileID
+		resp.FileURL = &url
+		if r.File != nil {
+			resp.FileMIME = &r.File.MimeType
+		}
+	}
+
+	return resp
 }
 
 type Repost struct {

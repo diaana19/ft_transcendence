@@ -103,7 +103,7 @@ func (s *PostService) HasLiked(userID, postID string) (bool, error) {
 	return s.repo.HasLiked(userID, postID)
 }
 
-func (s *PostService) CreateComment(content, authorID, postID string) (*models.Reply, error) {
+func (s *PostService) CreateComment(content, authorID, postID string, fileID *string) (*models.Reply, error) {
 	if content == "" {
 		return nil, errors.New("content is required")
 	}
@@ -120,6 +120,7 @@ func (s *PostService) CreateComment(content, authorID, postID string) (*models.R
 		PostID:   postID,
 		AuthorID: authorID,
 		Content:  content,
+		FileID:   fileID,
 	}
 
 	if err := s.repo.CreateComment(comment); err != nil {

@@ -132,15 +132,13 @@ func (m *mockPostRepo) DeleteComment(id string) error {
 func TestPostService_ContentValidationBranches(t *testing.T) {
 	s := NewPostService(newMockPostRepo())
 
-	// CreateCommentInput binds min=1/max=280, so these service guards are only
-	// reachable below the controller.
 	if _, err := s.CreatePost("", "a1", nil); err == nil {
 		t.Fatal("empty post content should error")
 	}
-	if _, err := s.CreateComment("", "u1", "p1"); err == nil {
+	if _, err := s.CreateComment("", "u1", "p1", nil); err == nil {
 		t.Fatal("empty comment content should error")
 	}
-	if _, err := s.CreateComment(strings.Repeat("x", 281), "u1", "p1"); err == nil {
+	if _, err := s.CreateComment(strings.Repeat("x", 281), "u1", "p1", nil); err == nil {
 		t.Fatal("comment over 280 chars should error")
 	}
 }

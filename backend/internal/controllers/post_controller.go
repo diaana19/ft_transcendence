@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 	"strings"
@@ -18,18 +19,18 @@ import (
 type PostController struct {
 	postService         *services.PostService
 	notificationService *services.NotificationService
-	uploadService       *services.UploadService // ← AJOUTER
+	uploadService       *services.UploadService
 }
 
 func NewPostController(
 	postService *services.PostService,
 	notifService *services.NotificationService,
-	uploadService *services.UploadService, // ← AJOUTER
+	uploadService *services.UploadService,
 ) *PostController {
 	return &PostController{
 		postService:         postService,
 		notificationService: notifService,
-		uploadService:       uploadService, // ← AJOUTER
+		uploadService:       uploadService,
 	}
 }
 
@@ -191,8 +192,6 @@ func (pc *PostController) CreatePost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	// LOG: Voir le post créé
 	log.Printf("=== Post CREATED ===")
 	log.Printf("PostID: %q", post.ID)
 	log.Printf("PostMediaURL: %v", post.MediaURL)
@@ -362,10 +361,12 @@ func (pc *PostController) GetComments(c *gin.Context) {
 // @Summary   Add a comment to a post
 // @Tags      posts
 // @Security  BearerAuth
-// @Accept    json
+// @Accept    multipart/form-data
 // @Produce   json
-// @Param     id   path string                     true "post id"
-// @Param     body body models.CreateCommentInput true "comment content"
+// @Param     id         path     string true  "post id"
+// @Param     content    formData string true  "comment content"
+// @Param     file       formData file   false "optional image/media attachment"
+// @Param     visibility formData string false "file visibility (public/friends/private)"
 // @Success   201 {object} models.CommentResponse
 // @Failure   400 {object} map[string]string
 // @Failure   401 {object} map[string]string
@@ -374,9 +375,13 @@ func (pc *PostController) GetComments(c *gin.Context) {
 func (pc *PostController) CreateComment(c *gin.Context) {
 	postID := c.Param("id")
 
-	var input models.CreateCommentInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	content := c.PostForm("content")
+	if content == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "content is required"})
+		return
+	}
+	if len(content) > 280 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "content must not exceed 280 characters"})
 		return
 	}
 
@@ -385,6 +390,7 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	userIDStr := authorID.(string)
 
 	post, err := pc.postService.GetPost(postID)
 	if err != nil {
@@ -392,7 +398,26 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 		return
 	}
 
-	comment, err := pc.postService.CreateComment(input.Content, authorID.(string), postID)
+	var fileID *string
+	fileHeader, err := c.FormFile("file")
+	if err == nil && fileHeader != nil {
+		visibility := c.DefaultPostForm("visibility", models.FileVisibilityPublic)
+
+		saveFn := func(fh *multipart.FileHeader, dst string) error {
+			return c.SaveUploadedFile(fh, dst)
+		}
+
+		file, uploadErr := pc.uploadService.SaveFile(fileHeader, userIDStr, visibility, saveFn)
+		if uploadErr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "file upload failed: " + uploadErr.Error()})
+			return
+		}
+		fileID = &file.ID
+	} else if err != http.ErrMissingFile {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file error: " + err.Error()})
+		return
+	}
+	comment, err := pc.postService.CreateComment(content, userIDStr, postID, fileID)
 	if err != nil {
 		if err.Error() == "post not found" {
 			c.JSON(http.StatusNotFound, gin.H{"error": msgPostNotFound})
@@ -402,14 +427,14 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 		return
 	}
 
-	if post.AuthorID != authorID.(string) {
+	if post.AuthorID != userIDStr {
 		username, _ := c.Get("username")
 		_ = pc.notificationService.SendCommentNotification(
 			post.AuthorID,
-			authorID.(string),
+			userIDStr,
 			username.(string),
 			postID,
-			comment.Content,
+			content,
 		)
 	}
 
