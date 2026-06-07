@@ -8,11 +8,11 @@ import (
 )
 
 type Post struct {
-	ID       string  `gorm:"primaryKey;type:uuid"`
-	AuthorID string  `gorm:"type:uuid;not null"`
-	Author   User    `gorm:"foreignKey:AuthorID;references:ID"`
-	Content  string  `gorm:"type:text;not null"`
-	MediaURL *string `gorm:"type:text" json:"media_url,omitempty"`
+	ID        string  `gorm:"primaryKey;type:uuid"`
+	AuthorID  string  `gorm:"type:uuid;not null"`
+	Author    User    `gorm:"foreignKey:AuthorID;references:ID"`
+	Content   string  `gorm:"type:text;not null"`
+	MediaURL  *string `gorm:"type:text" json:"media_url,omitempty"`
 	MediaMIME *string `gorm:"type:varchar(100)" json:"media_mime,omitempty"`
 	// Tags holds the distinct lowercased hashtags extracted from Content at
 	// write time (see utils.ExtractHashtags). Stored as a Postgres text[] with a
