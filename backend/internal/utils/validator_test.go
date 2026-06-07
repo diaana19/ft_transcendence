@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -148,16 +149,20 @@ func TestCheckPasswordFormat_ExactlyMinLength(t *testing.T) {
 }
 
 func TestCheckUsernameFormat(t *testing.T) {
-	valid := []string{"a", "0", "a-b", "a-b-123", "john", "john-due", "llp-dev",
-		repeatStr("a", 39)}
+	valid := []string{
+		"a", "0", "a-b", "a-b-123", "john", "john-due", "llp-dev",
+		repeatStr("a", 39),
+	}
 	for _, u := range valid {
 		if !CheckUsernameFormat(u) {
 			t.Errorf("expected %q to be a valid username", u)
 		}
 	}
 
-	invalid := []string{"", "a_b", "a--b", "a-b-", "-a-b", "john due", "café",
-		repeatStr("a", 40)}
+	invalid := []string{
+		"", "a_b", "a--b", "a-b-", "-a-b", "john due", "café",
+		repeatStr("a", 40),
+	}
 	for _, u := range invalid {
 		if CheckUsernameFormat(u) {
 			t.Errorf("expected %q to be an invalid username", u)
@@ -166,9 +171,9 @@ func TestCheckUsernameFormat(t *testing.T) {
 }
 
 func repeatStr(s string, n int) string {
-	out := ""
-	for i := 0; i < n; i++ {
-		out += s
+	var out strings.Builder
+	for range n {
+		out.WriteString(s)
 	}
-	return out
+	return out.String()
 }
