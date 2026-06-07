@@ -29,6 +29,40 @@ func BodySizeLimit() gin.HandlerFunc {
 	}
 }
 
+// SecurityHeaders middleware adds common security headers including CSP.
+func SecurityHeaders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Content-Security-Policy restricts where resources can be loaded from.
+		// - default-src 'self': only allow resources from our domain
+		// - script-src 'self': only run scripts from our domain (blocks inline JS)
+		// - style-src 'self' 'unsafe-inline': styles from our domain + inline styles (React needs this)
+		// - img-src 'self' data: blob: images from our domain, data URIs, and blob URLs (for previews)
+		// - media-src 'self' blob: videos/audio from our domain and blob URLs
+		// - connect-src 'self' wss: ws: API calls to our domain + WebSocket connections
+		// - frame-ancestors 'none': prevents page from being embedded in iframes (clickjacking)
+		c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' wss: ws:; frame-ancestors 'none'")
+
+		// Prevents browsers from MIME-sniffing a response away from declared content-type.
+		// Stops a file labeled as image.jpg from being executed as JavaScript.
+		c.Header("X-Content-Type-Options", "nosniff")
+
+		// Blocks the page from being loaded in <iframe> or <frame>, preventing clickjacking attacks.
+		c.Header("X-Frame-Options", "DENY")
+
+		// Enables the browser's built-in XSS filter and blocks the page if an attack is detected.
+		c.Header("X-XSS-Protection", "1; mode=block")
+
+		// Controls how much referrer info is sent with requests:
+		// - Same origin: full URL
+		// - Cross origin: only the origin (not the full path)
+		// - Downgrade (HTTPS→HTTP): nothing
+		// Prevents leaking sensitive URL paths to external sites.
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+
+		c.Next()
+	}
+}
+
 // @title                       ft_transcendence API
 // @version                     1.0
 // @description                 Backend API for ft_transcendence (Pong + social platform).
@@ -62,6 +96,7 @@ func main() {
 		ExposeHeaders:    []string{"X-Request-Id", "X-RateLimit-Remaining", "Location"},
 		AllowCredentials: true,
 	}))
+	router.Use(SecurityHeaders())
 	router.Use(BodySizeLimit())
 
 	api := router.Group("/api")
