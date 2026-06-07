@@ -43,9 +43,9 @@ func main() {
 	_ = router.SetTrustedProxies(nil)
 
 	router.Use(cors.New(cors.Config{
-		AllowOriginFunc:  func(_ string) bool { return true },
+		AllowOrigins:     []string{"https://localhost:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With", "X-CSRF-Token"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With"},
 		ExposeHeaders:    []string{"X-Request-Id", "X-RateLimit-Remaining", "Location"},
 		AllowCredentials: true,
 	}))

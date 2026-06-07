@@ -181,8 +181,8 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 		int((24 * time.Hour).Seconds()),
 		"/",
 		"",
-		false,
-		true,
+		true, // Secure: only send over HTTPS
+		true, // HttpOnly: not accessible via JavaScript
 	)
 	c.JSON(http.StatusOK, gin.H{"token": token, "user": user.ToResponse()})
 }
@@ -275,7 +275,7 @@ func (ac *AuthController) LogoutUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.SetCookie("auth_token", "", -1, "/", "", false, true)
+	c.SetCookie("auth_token", "", -1, "/", "", true, true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }
@@ -342,8 +342,8 @@ func (ac *AuthController) Verify2FA(c *gin.Context) {
 		int((24 * time.Hour).Seconds()),
 		"/",
 		"",
-		false,
-		true,
+		true, // Secure: only send over HTTPS
+		true, // HttpOnly: not accessible via JavaScript
 	)
 
 	c.JSON(http.StatusOK, gin.H{

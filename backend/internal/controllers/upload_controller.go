@@ -5,6 +5,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -117,7 +118,14 @@ func (uc *UploadController) ServeFile(c *gin.Context) {
 // streamFile writes the file to the response with inline content headers.
 func (uc *UploadController) streamFile(c *gin.Context, file *models.File) {
 	c.Header("Content-Type", file.MimeType)
-	c.Header("Content-Disposition", `inline; filename="`+file.Filename+`"`)
+	// Sanitize filename to prevent header injection - only allow safe characters
+	safeFilename := strings.NewReplacer(
+		"\n", "_",
+		"\r", "_",
+		"\"", "_",
+		";", "_",
+	).Replace(file.Filename)
+	c.Header("Content-Disposition", `inline; filename="`+safeFilename+`"`)
 	c.File(file.Path)
 }
 
