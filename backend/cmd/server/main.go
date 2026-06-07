@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -15,6 +16,18 @@ import (
 	"ft_transcendence/backend/internal/redis"
 	"ft_transcendence/backend/internal/routes"
 )
+
+// maxBodySize is the maximum request body size for JSON endpoints (1MB).
+// File uploads have their own 25MB limit in the upload service.
+const maxBodySize = 1 << 20 // 1MB
+
+// BodySizeLimit middleware rejects requests with a body larger than maxBodySize.
+func BodySizeLimit() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodySize)
+		c.Next()
+	}
+}
 
 // @title                       ft_transcendence API
 // @version                     1.0
@@ -49,6 +62,7 @@ func main() {
 		ExposeHeaders:    []string{"X-Request-Id", "X-RateLimit-Remaining", "Location"},
 		AllowCredentials: true,
 	}))
+	router.Use(BodySizeLimit())
 
 	api := router.Group("/api")
 	api.GET("/", func(ctx *gin.Context) {
