@@ -1,6 +1,7 @@
 package services
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -56,14 +57,11 @@ func (m *mockPostRepo) GetByAuthorID(authorID string) ([]models.Post, error) {
 	return out, nil
 }
 
-func (m *mockPostRepo) GetByTag(tag string, limit, offset int) ([]models.Post, int64, error) {
+func (m *mockPostRepo) GetByTag(tag string, _, _ int) ([]models.Post, int64, error) {
 	out := make([]models.Post, 0, len(m.posts))
 	for _, p := range m.posts {
-		for _, t := range p.Tags {
-			if t == tag {
-				out = append(out, *p)
-				break
-			}
+		if slices.Contains(p.Tags, tag) {
+			out = append(out, *p)
 		}
 	}
 	return out, int64(len(out)), nil
@@ -164,7 +162,7 @@ func (m *mockPostRepo) TopTags(_ time.Time, _ int) ([]models.TagCount, error) {
 func TestPostService_ContentValidationBranches(t *testing.T) {
 	s := NewPostService(newMockPostRepo())
 
-	if _, err := s.CreatePost("", "a1", nil); err == nil {
+	if _, err := s.CreatePost("", "a1", nil, nil); err == nil {
 		t.Fatal("empty post content should error")
 	}
 	if _, err := s.CreateComment("", "u1", "p1", nil); err == nil {

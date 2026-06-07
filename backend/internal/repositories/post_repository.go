@@ -93,10 +93,11 @@ func (r *postRepository) Update(id string, input models.UpdatePostInput) (*model
 	if err := r.db.First(&post, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
-	if err := r.db.Model(&post).Select("content", "media_url", "tags").Updates(map[string]any{
-		"content":   input.Content,
-		"media_url": input.MediaURL,
-		"tags":      pq.StringArray(utils.ExtractHashtags(input.Content)),
+	if err := r.db.Model(&post).Select("content", "media_url", "media_mime", "tags").Updates(map[string]any{
+		"content":    input.Content,
+		"media_url":  input.MediaURL,
+		"media_mime": input.MediaMIME,
+		"tags":       pq.StringArray(utils.ExtractHashtags(input.Content)),
 	}).Error; err != nil {
 		return nil, err
 	}
@@ -149,6 +150,8 @@ func reactionDelta(oldValue, newValue, bucket int) int {
 // the denormalized likes_count / dislikes_count by the transition delta. The
 // whole reconciliation runs in one transaction so a row and its counters can
 // never drift apart.
+//
+//nolint:dupl // Intentionally parallel to SetReplyReaction; different model types.
 func (r *postRepository) SetPostReaction(userID, postID string, value int) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		var existing models.PostReaction
@@ -284,6 +287,8 @@ func (r *postRepository) DeleteComment(id string) error {
 // SetReplyReaction is the reply counterpart of SetPostReaction: it reconciles a
 // user's reaction on a reply and adjusts that reply's denormalized counters in
 // one transaction.
+//
+//nolint:dupl // Intentionally parallel to SetPostReaction; different model types.
 func (r *postRepository) SetReplyReaction(userID, replyID string, value int) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		var existing models.ReplyReaction

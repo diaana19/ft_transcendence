@@ -24,13 +24,13 @@ function CreatePost({ onPostCreated }) {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0]
     if (!selectedFile) return
-    if (!selectedFile.type.startsWith('image/')) {
-      setError('Only image files are allowed')
-      setFile(null)
-      return
-    }
-    if (selectedFile.size > 20 * 1024 * 1024) {
-      setError('File too large. Maximum size is 20MB')
+    // if (!selectedFile.type.startsWith('image/')) {
+    //   setError('Only image files are allowed')
+    //   setFile(null)
+    //   return
+    // }
+    if (selectedFile.size > 25 * 1024 * 1024) {
+      setError('File too large. Maximum size is 25MB')
       setFile(null)
       return
     }
@@ -44,13 +44,15 @@ function CreatePost({ onPostCreated }) {
     setError(null)
     try {
       let mediaUrl = null
+      let mediaMime = null
       if (file) {
         const formData = new FormData()
         formData.append('file', file)
         const res = await axiosInstance.post('/api/upload', formData)
         mediaUrl = res.data.url
+        mediaMime = res.data.mime_type
       }
-      const newPost = await createPost(content, mediaUrl)
+      const newPost = await createPost(content, mediaUrl, mediaMime)
       onPostCreated(newPost)
       setContent('')
       setFile(null)
@@ -96,13 +98,13 @@ function CreatePost({ onPostCreated }) {
                 <video
                   src={URL.createObjectURL(file)}
                   controls
-                  className="rounded-xl max-h-64 w-full object-cover"
+                  className="rounded-xl max-h-64 w-full object-contain"
                 />
               ) : (
                 <img
                   src={URL.createObjectURL(file)}
                   alt="preview"
-                  className="rounded-xl max-h-64 w-full object-cover"
+                  className="rounded-xl max-h-64 w-full object-contain"
                 />
               )}
               <button
@@ -127,7 +129,7 @@ function CreatePost({ onPostCreated }) {
               <span className="text-xs font-medium">Image / Video</span>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,video/*"
                 onChange={handleFileChange}
                 className="hidden"
               />

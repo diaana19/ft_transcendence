@@ -20,13 +20,13 @@ function FileUploader({ onUploadSuccess }) {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0]
     if (!selectedFile) return
-    if (!selectedFile.type.startsWith('image/')) {
-      setError('Only image files are allowed')
-      setFile(null)
-      return
-    }
-    if (selectedFile.size > 20 * 1024 * 1024) {
-      setError('File too large. Maximum size is 20MB')
+    // if (!selectedFile.type.startsWith('image/')) {
+    //   setError('Only image files are allowed')
+    //   setFile(null)
+    //   return
+    // }
+    if (selectedFile.size > 25 * 1024 * 1024) {
+      setError('File too large. Maximum size is 25MB')
       setFile(null)
       return
     }
@@ -78,11 +78,19 @@ function FileUploader({ onUploadSuccess }) {
       <label className="cursor-pointer w-full">
         <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center gap-2 hover:border-blue-400 transition-colors">
           {file ? (
-            <img
-              src={URL.createObjectURL(file)}
-              alt="preview"
-              className="w-32 h-32 rounded-full object-cover"
-            />
+            file.type.startsWith('video/') ? (
+              <video
+                src={URL.createObjectURL(file)}
+                controls
+                className="w-32 h-32 rounded-full object-cover"
+              />
+            ) : (
+              <img
+                src={URL.createObjectURL(file)}
+                alt="preview"
+                className="w-32 h-32 rounded-full object-cover"
+              />
+            )
           ) : (
             <div className="w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center">
               <span className="text-gray-400 text-sm">Click to upload</span>
@@ -96,7 +104,7 @@ function FileUploader({ onUploadSuccess }) {
         </div>
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           onChange={handleFileChange}
           className="hidden"
         />
@@ -107,7 +115,7 @@ function FileUploader({ onUploadSuccess }) {
         disabled={loading || !file}
         className="px-4 py-2 bg-blue-400 hover:bg-blue-500 text-white font-bold rounded-full disabled:opacity-50 w-full"
       >
-        {loading ? 'Uploading...' : 'Save photo'}
+        {loading ? 'Uploading...' : 'Upload file'}
       </button>
 
     </div>

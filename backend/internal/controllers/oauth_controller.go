@@ -124,8 +124,8 @@ func (oc *OAuthController) OAuthCallback(c *gin.Context) {
 		24*3600,
 		"/",
 		"",
-		false,
-		true,
+		true, // Secure: only send over HTTPS
+		true, // HttpOnly: not accessible via JavaScript
 	)
 	c.Redirect(http.StatusTemporaryRedirect, oc.frontendURL+"/")
 }

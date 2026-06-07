@@ -1,9 +1,7 @@
 package controllers
 
 import (
-	"encoding/json"
 	"errors"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -224,23 +222,14 @@ func (pc *PostController) GetPostsByUser(c *gin.Context) {
 // @Router    /posts [post]
 func (pc *PostController) CreatePost(c *gin.Context) {
 	var req struct {
-		Content  string  `json:"content" binding:"required"`
-		MediaURL *string `json:"media_url"`
+		Content   string  `json:"content" binding:"required"`
+		MediaURL  *string `json:"media_url"`
+		MediaMIME *string `json:"media_mime"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	// LOG: Voir la structure reçue
-	log.Printf("=== CreatePost REQUEST ===")
-	log.Printf("Content: %q", req.Content)
-	log.Printf("MediaURL: %v", req.MediaURL)
-	if req.MediaURL != nil {
-		log.Printf("MediaURL value: %q", *req.MediaURL)
-	}
-	reqData, _ := json.MarshalIndent(req, "", "  ")
-	log.Printf("Full request body:\n%s", string(reqData))
 
 	authorID, exists := c.Get("user_id")
 	if !exists {
@@ -248,27 +237,11 @@ func (pc *PostController) CreatePost(c *gin.Context) {
 		return
 	}
 
-	log.Printf("AuthorID: %q", authorID.(string))
-
-	post, err := pc.postService.CreatePost(req.Content, authorID.(string), req.MediaURL)
+	post, err := pc.postService.CreatePost(req.Content, authorID.(string), req.MediaURL, req.MediaMIME)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	log.Printf("=== Post CREATED ===")
-	log.Printf("PostID: %q", post.ID)
-	log.Printf("PostMediaURL: %v", post.MediaURL)
-	if post.MediaURL != nil {
-		log.Printf("PostMediaURL value: %q", *post.MediaURL)
-	}
-	data, err := json.MarshalIndent(post, "", "  ")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println(string(data))
-	postData, _ := json.MarshalIndent(post, "", "  ")
-	log.Printf("Full post object:\n%s", string(postData))
 
 	c.JSON(http.StatusCreated, post.ToResponse())
 }

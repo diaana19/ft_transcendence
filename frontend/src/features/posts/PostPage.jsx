@@ -98,17 +98,17 @@ export default function PostPage() {
             </p>
             {post.media_url && (
             <div className="mt-3 overflow-hidden rounded-2xl " style={{ border: '0.5px solid #ede8fd' }}>
-              {post.media_url.match(/\.(mp4|webm|ogg)$/i) ? (
+              {post.media_mime?.startsWith('video/') ? (
                 <video
                   src={post.media_url}
                   controls
-                  className="w-full max-h-[500px] object-cover"
+                  className="w-full max-h-[500px] object-contain"
                 />
               ) : (
                 <img
                   src={post.media_url}
                   alt="Post media"
-                  className="w-full max-h-[500px] object-cover"
+                  className="w-full max-h-[500px] object-contain"
                 />
               )}
             </div>

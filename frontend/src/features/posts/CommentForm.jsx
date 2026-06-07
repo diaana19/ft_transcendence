@@ -18,10 +18,10 @@ function CommentForm({ postId, onCommentAdded }) {
     try {
       // The endpoint accepts an optional file attachment, so it binds multipart
       // form data (not JSON) — send content (and the file, if any) as FormData.
-      const formData = new FormData()
-      formData.append('content', content)
-      if (file) formData.append('file', file)
-      const res = await axiosInstance.post(`/api/posts/${postId}/comments`, formData)
+	const formData = new FormData()
+	formData.append('content', content)
+	if (file) formData.append('file', file)
+	const res = await axiosInstance.post(`/api/posts/${postId}/comments`, formData)
       onCommentAdded(res.data)
       setContent('')
       setFile(null)
@@ -34,13 +34,13 @@ function CommentForm({ postId, onCommentAdded }) {
 	const handleFileChange = (e) => {
 	const selectedFile = e.target.files[0]
 	if (!selectedFile) return
-	if (!selectedFile.type.startsWith('image/')) {
-		setError('Only image files are allowed')
+	if (!selectedFile.type.startsWith('image/') && !selectedFile.type.startsWith('video/')) {
+		setError('Only image and video files are allowed')
 		setFile(null)
 		return
 		}
-	if (selectedFile.size > 20 * 1024 * 1024) {
-		setError('File too large. Maximum size is 20MB')
+	if (selectedFile.size > 25 * 1024 * 1024) {
+		setError('File too large. Maximum size is 25MB')
 		setFile(null)
 		return
 		}
@@ -101,7 +101,7 @@ function CommentForm({ postId, onCommentAdded }) {
 				<PhotoIcon className="w-5 h-5" />
 				<input
 					type="file"
-					accept="image/*"
+					accept="image/*,video/*"
 					onChange={handleFileChange}
 					className="hidden"
 				/>
