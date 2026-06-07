@@ -47,8 +47,8 @@ help:
 	@echo "  make test-frontend Frontend tests (inside the frontend container)"
 	@echo ""
 	@echo "Database:"
-	@echo "  make seed          Seed via the REST API with Python (500 users,"
-	@echo "                     2000 unique posts, comments, likes, follows;"
+	@echo "  make seed          Seed via the REST API with Python (50 users,"
+	@echo "                     500 unique posts, comments, likes, follows;"
 	@echo "                     real photos). Override: make seed USERS=200 POSTS_TARGET=800"
 	@echo ""
 	@echo "Shells:"
@@ -141,9 +141,13 @@ test-frontend:
 # so the seeder matches the running backend. Override the user count with USERS=N,
 # or the limit with RATE_LIMIT_MAX=N on the command line.
 RATE_LIMIT_MAX ?= $(shell sed -n 's/^RATE_LIMIT_MAX=//p' infra/.env 2>/dev/null | tail -1)
+USERS          ?= 50
+POSTS_TARGET   ?= 500
+PAR            ?= 12
+RATE_LIMIT_MAX ?= 20
 seed:
-	@$(if $(USERS),USERS="$(USERS)") $(if $(POSTS_TARGET),POSTS_TARGET="$(POSTS_TARGET)") $(if $(PAR),PAR="$(PAR)") \
-		$(if $(RATE_LIMIT_MAX),RATE_LIMIT_MAX="$(RATE_LIMIT_MAX)") \
+	@USERS="$(USERS)" POSTS_TARGET="$(POSTS_TARGET)" PAR="$(PAR)" \
+		RATE_LIMIT_MAX="$(RATE_LIMIT_MAX)" \
 		python3 scripts/seed.py
 
 # ==================== Shells & tools ====================
