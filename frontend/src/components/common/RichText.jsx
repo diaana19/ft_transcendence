@@ -4,7 +4,7 @@
 ** Splits the string on a token regex and renders matches specially; plain text
 ** stays as escaped React string children (no dangerouslySetInnerHTML), so user
 ** content cannot inject markup.
-**   #tag   -> highlighted span (display only)
+**   #tag   -> link to that tag's feed (/tag/:tag)
 **   @user  -> link to that user's profile (/profile/u/:username)
 */
 
@@ -27,7 +27,18 @@ export default function RichText({ text, className }) {
     <span className={className}>
       {text.split(SPLIT).map((part, i) => {
         if (IS_TAG.test(part)) {
-          return <span key={i} style={accent}>{part}</span>
+          return (
+            // stopPropagation so the click doesn't also trigger an enclosing
+            // card/post click handler.
+            <Link
+              key={i}
+              to={`/tag/${part.slice(1)}`}
+              onClick={(e) => e.stopPropagation()}
+              style={accent}
+            >
+              {part}
+            </Link>
+          )
         }
         if (IS_MENTION.test(part)) {
           return (

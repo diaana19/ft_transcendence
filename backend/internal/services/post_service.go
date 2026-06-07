@@ -29,6 +29,12 @@ func (s *PostService) GetPostsByAuthor(authorID string) ([]models.Post, error) {
 	return s.repo.GetByAuthorID(authorID)
 }
 
+// GetPostsByTag returns posts carrying tag (caller passes the canonical stored
+// form, see utils.NormalizeHashtag), newest first, with limit/offset paging.
+func (s *PostService) GetPostsByTag(tag string, limit, offset int) ([]models.Post, int64, error) {
+	return s.repo.GetByTag(tag, limit, offset)
+}
+
 func (s *PostService) CreatePost(content, authorID string, media *string) (*models.Post, error) {
 	if content == "" {
 		return nil, errors.New("content is required")

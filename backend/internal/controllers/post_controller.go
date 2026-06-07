@@ -14,6 +14,7 @@ import (
 
 	"ft_transcendence/backend/internal/models"
 	"ft_transcendence/backend/internal/services"
+	"ft_transcendence/backend/internal/utils"
 )
 
 type PostController struct {
@@ -97,18 +98,31 @@ func parseLimitOffset(c *gin.Context) (limit, offset int) {
 }
 
 // GetPosts godoc
-// @Summary   List posts (limit/offset pagination)
+// @Summary   List posts (limit/offset pagination), optionally filtered by hashtag
 // @Tags      posts
 // @Produce   json
-// @Param     limit  query int false "max items to return (default 10, max 50)"
-// @Param     offset query int false "items to skip (default 0)"
+// @Param     tag    query string false "filter to posts carrying this hashtag (with or without #)"
+// @Param     limit  query int    false "max items to return (default 10, max 50)"
+// @Param     offset query int    false "items to skip (default 0)"
 // @Success   200 {object} map[string]interface{}
 // @Failure   500 {object} map[string]string
 // @Router    /posts [get]
 func (pc *PostController) GetPosts(c *gin.Context) {
 	limit, offset := parseLimitOffset(c)
 
-	posts, total, err := pc.postService.GetPosts(limit, offset)
+	// An optional ?tag=xyz narrows the feed to posts carrying that hashtag,
+	// reusing the same paging and reaction-enrichment as the unfiltered list.
+	// An empty or malformed tag normalizes to "" and falls through to all posts.
+	var (
+		posts []models.Post
+		total int64
+		err   error
+	)
+	if tag := utils.NormalizeHashtag(c.Query("tag")); tag != "" {
+		posts, total, err = pc.postService.GetPostsByTag(tag, limit, offset)
+	} else {
+		posts, total, err = pc.postService.GetPosts(limit, offset)
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

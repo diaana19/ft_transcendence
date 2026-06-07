@@ -18,6 +18,7 @@ type PostRepository interface {
 	GetAll(limit, offset int) ([]models.Post, int64, error)
 	GetByID(id string) (*models.Post, error)
 	GetByAuthorID(authorID string) ([]models.Post, error)
+	GetByTag(tag string, limit, offset int) ([]models.Post, int64, error)
 	Create(post *models.Post) error
 	Update(id string, input models.UpdatePostInput) (*models.Post, error)
 	Delete(id string) error
@@ -65,6 +66,22 @@ func (r *postRepository) GetByAuthorID(authorID string) ([]models.Post, error) {
 	var posts []models.Post
 	result := r.db.Preload("Author").Where("author_id = ?", authorID).Order("created_at DESC").Find(&posts)
 	return posts, result.Error
+}
+
+// GetByTag returns non-deleted posts whose denormalized tags array contains the
+// given tag (already normalized to the stored lowercased, '#'-prefixed form),
+// newest first, with limit/offset paging. The @> containment check is served by
+// the GIN index on tags, so it stays fast as the table grows.
+func (r *postRepository) GetByTag(tag string, limit, offset int) ([]models.Post, int64, error) {
+	var posts []models.Post
+	var total int64
+
+	filter := pq.StringArray{tag}
+	r.db.Model(&models.Post{}).Where("tags @> ?", filter).Count(&total)
+	result := r.db.Preload("Author").Where("tags @> ?", filter).
+		Order("created_at DESC").Offset(offset).Limit(limit).Find(&posts)
+
+	return posts, total, result.Error
 }
 
 func (r *postRepository) Create(post *models.Post) error {

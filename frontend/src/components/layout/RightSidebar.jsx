@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import axiosInstance from '../../services/axiosInstance'
 
 // Trends reflect hashtags used in posts over the last week, counted live by the
@@ -36,7 +37,13 @@ function Trends() {
     <ul className="space-y-2">
       {trends.map((t) => (
         <li key={t.tag} className="flex items-center justify-between">
-          <span className="text-sm font-semibold truncate" style={{ color: '#534ab7' }}>{t.tag}</span>
+          <Link
+            to={`/tag/${t.tag.replace(/^#/, '')}`}
+            className="text-sm font-semibold truncate hover:underline"
+            style={{ color: '#534ab7' }}
+          >
+            {t.tag}
+          </Link>
           <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
             {t.count} {t.count === 1 ? 'post' : 'posts'}
           </span>

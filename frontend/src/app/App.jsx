@@ -8,6 +8,7 @@ import TwoFAVerify from '../features/auth/TwoFAVerify.jsx'
 import TwoFASetup from '../features/auth/TwoFASetup.jsx'
 import Profile from '../features/user/Profile.jsx'
 import Feed from '../features/posts/Feed'
+import TagFeed from '../features/posts/TagFeed.jsx'
 import NotificationsPage from '../components/notifications/Notification.jsx'
 import CookiesBanner from '../components/common/CookiesBanner'
 import HelpCenter from '../features/help/HelpCenter.jsx'
@@ -25,6 +26,7 @@ function App() {
                 {/* PUBLIC */}
                 <Route element={<Layout />}>
                     <Route path="/" element={<Feed />} />
+                    <Route path="/tag/:tag" element={<TagFeed />} />
                     <Route path="/help" element={<HelpCenter />} />
 					<Route path="/badge" element={<Gamification />} />
                 </Route>

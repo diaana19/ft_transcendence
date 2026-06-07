@@ -28,6 +28,14 @@ export async function getPostsByAuthor(id) {
     return response.data.data
 }
 
+// Fetch posts carrying a given hashtag, paginated like getPosts. The tag may be
+// passed with or without a leading '#'; the backend normalizes it.
+export async function getPostsByTag(tag, limit = 10, offset = 0) {
+    const name = encodeURIComponent(String(tag).replace(/^#/, ''))
+    const response = await axiosInstance.get(`/api/posts?tag=${name}&limit=${limit}&offset=${offset}`)
+    return response.data.data
+}
+
 export async function createPost(content, mediaUrl = null) {
     const response = await axiosInstance.post(
         '/api/posts',
