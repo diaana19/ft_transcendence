@@ -5,7 +5,7 @@ export async function register(username, email, password, dateOfBirth) {
         username,
         email,
         password,
-        dateOfBirth
+        dateOfBirth,
     })
     return response.data
 }
@@ -13,14 +13,14 @@ export async function login(identifier, password) {
     const response = await api.post('/api/auth/login', {
         email: identifier,
         username: identifier,
-        password
+        password,
     })
     return response.data
 }
 
 export async function forgotPassword(email) {
     const response = await api.post('/api/auth/forgot-password', {
-        email
+        email,
     })
     return response.data
 }
@@ -32,7 +32,7 @@ export async function setupTwoFA() {
 
 export async function enableTwoFA(code) {
     const response = await api.post('/api/2fa/enable', {
-        code
+        code,
     })
     return response.data
 }
@@ -45,7 +45,7 @@ export async function disableTwoFA(code) {
 export async function verifyTwoFA(pendingToken, code) {
     const response = await api.post('/api/auth/2fa/verify', {
         pending_token: pendingToken,
-        code
+        code,
     })
     return response.data
 }

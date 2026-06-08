@@ -29,14 +29,14 @@ function App() {
                     <Route path="/" element={<Feed />} />
                     <Route path="/tag/:tag" element={<TagFeed />} />
                     <Route path="/help" element={<HelpCenter />} />
-					<Route path="/badge" element={<Gamification />} />
+                    <Route path="/badge" element={<Gamification />} />
                 </Route>
                 <Route path="/register" element={<RegisterForm />} />
                 <Route path="/login" element={<LoginForm />} />
                 <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                 <Route path="/login/2fa" element={<TwoFAVerify />} />
-				<Route path="/terms" element={<TermsOfService />} />
-				<Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
 
                 {/* PRIVATE */}
                 <Route
