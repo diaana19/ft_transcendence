@@ -24,7 +24,6 @@ function App() {
         <>
             <CookiesBanner />
             <Routes>
-
                 <Route element={<Layout />}>
                     <Route path="/" element={<Feed />} />
                     <Route path="/tag/:tag" element={<TagFeed />} />
