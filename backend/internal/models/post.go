@@ -118,7 +118,13 @@ type CreateCommentInput struct {
 }
 
 type UpdateCommentInput struct {
-	Content string `json:"content" binding:"required,min=1,max=280"`
+	Content string `json:"content" form:"content" binding:"required,min=1,max=280"`
+	// NewFileID, when set, replaces the comment's attachment. It is populated by
+	// the controller after uploading the new file, never bound from the request.
+	NewFileID *string `json:"-"`
+	// RemoveFile detaches the current attachment when true. Ignored if a new
+	// file is provided (a replacement implies keeping an attachment).
+	RemoveFile bool `json:"remove_file" form:"remove_file"`
 }
 
 type CommentResponse struct {
