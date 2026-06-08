@@ -1,13 +1,3 @@
-/*
-** File: Profile.jsx
-** Description: User profile page that displays user information and allows editing or deletion
-** Responsibilities:
-** - Fetch user data by ID from API
-** - Display user profile information
-** - Provide edit functionality via modal
-** - Provide account deletion functionality via confirmation modal
-*/
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
@@ -25,12 +15,8 @@ export default function Profile() {
   const { id, username } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("posts");
-
-  // The profile is keyed by user id. The /profile/u/:username route (used by
-  // @mention links) carries a username instead, so resolve it to an id first.
   const [resolvedId, setResolvedId] = useState(null);
   const userId = resolvedId;
-
   const [user, setUser] = useState({ displayname: "", email: "", bio: "" });
   const [loading, setLoading] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -43,6 +29,7 @@ export default function Profile() {
   const [friendRequested, setFriendRequested] = useState(false)
   const [isFriend, setIsFriend] = useState(false)
   const [followModal, setFollowModal] = useState(null)
+  const [isOnline, setIsOnline] = useState(false)
 
   useEffect(() => {
     let active = true;
@@ -86,6 +73,12 @@ export default function Profile() {
     } finally {
       setLoading(false);
     }
+    try {
+      const onlineRes = await api.get(`/api/users/${userId}/online`)
+      setIsOnline(onlineRes.data?.online ?? false)
+    } catch (err) {
+      console.error(err)
+    }
   };
 
   const fetchUserPosts = async () => {
@@ -128,6 +121,7 @@ export default function Profile() {
     try {
       await removeFriend(userId)
       setIsFriend(false)
+      setFriendRequested(false)
     } catch (err) {
       console.error('Error removing friend:', err)
     }
@@ -154,6 +148,10 @@ export default function Profile() {
                   : <div className="w-full h-full bg-gray-300" />
                 }
               </div>
+              {isOnline && (
+                <div className="absolute bottom-2 right-2 w-5 h-5 rounded-full border-2 border-white"
+                  style={{ background: '#4ade80' }} />
+              )}
             </div>
           </div>
 
@@ -345,10 +343,10 @@ export default function Profile() {
               <input className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-400"
                 placeholder="Display name" type="text" value={form.displayname}
                 onChange={(e) => setForm({ ...form, displayname: e.target.value })} />
-              <input 
+              <input
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-400"
-                placeholder="Email" 
-                type="email" 
+                placeholder="Email"
+                type="email"
                 value={form.email}
                 disabled
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />

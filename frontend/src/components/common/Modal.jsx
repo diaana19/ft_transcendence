@@ -1,13 +1,3 @@
-/*
-** File: Modal.jsx
-** Description: Reusable modal component with overlay
-** Responsibilities:
-** - Render modal with overlay background
-** - Close on overlay click
-** - Support custom title and content
-** - Support confirm and cancel actions
-*/
-
 function Modal({
 	isOpen,
 	onClose,

@@ -1,14 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../hooks/useAuth'
 
-/*
-** SocketProvider owns the single WebSocket to /api/ws/chat for the whole app.
-** Both notifications and direct messages flow over this one connection, so it is
-** created once here rather than per-feature. Consumers register a handler with
-** subscribe() and push frames with send(); frames sent before the socket is open
-** are queued and flushed on connect.
-*/
-
 const SocketContext = createContext(null)
 
 export function SocketProvider({ children }) {
@@ -55,13 +47,11 @@ export function SocketProvider({ children }) {
     }
   }, [loading, user?.userId, token])
 
-  // subscribe registers a frame handler and returns an unsubscribe function.
   const subscribe = useCallback((handler) => {
     handlersRef.current.add(handler)
     return () => handlersRef.current.delete(handler)
   }, [])
 
-  // send delivers a frame now if the socket is open, otherwise queues it.
   const send = useCallback((obj) => {
     const frame = JSON.stringify(obj)
     const ws = wsRef.current

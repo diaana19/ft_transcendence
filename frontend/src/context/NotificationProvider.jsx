@@ -4,10 +4,6 @@ import { useSocket } from './SocketProvider'
 import { getUnreadNotifications, markAllNotificationsRead, markNotificationRead } from '../components/notifications/notificationService'
 
 export const NotificationContext = createContext()
-
-// On mount:
-// Load all notifications received while offline (REST), then listen on the
-// shared chat socket for real-time notification frames.
 export function NotificationProvider({ children }) {
   const { user, loading } = useAuth()
   const { subscribe } = useSocket()
@@ -42,7 +38,6 @@ export function NotificationProvider({ children }) {
   }
 
   const markRead = async (id) => {
-    // optimistic: flip locally, roll back if the request fails
     setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)))
     try {
       await markNotificationRead(id)

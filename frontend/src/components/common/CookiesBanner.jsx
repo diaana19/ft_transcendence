@@ -1,12 +1,3 @@
-/*
-** File: CookiesBanner.jsx
-** Description: Cookie consent banner for GDPR compliance
-** Responsibilities:
-** - Show cookie consent popup on first visit
-** - Save consent to localStorage
-** - Hide banner after user accepts or declines
-*/
-
 import { useState, useEffect } from 'react'
 
 export default function CookiesBanner() {

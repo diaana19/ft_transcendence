@@ -1,12 +1,3 @@
-/*
-** File: MessageInput.jsx
-** Description: Input component for sending chat messages
-** Responsibilities:
-** - Render text input and send button
-** - Handle message submission
-** - Notify parent when message is sent
-*/
-
 import { useState } from 'react'
 
 function MessageInput({ onSend, loading }) {

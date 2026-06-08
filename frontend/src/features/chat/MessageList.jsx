@@ -1,12 +1,3 @@
-/*
-** File: MessageList.jsx
-** Description: Displays the list of messages in a chat conversation
-** Responsibilities:
-** - Render messages from both users
-** - Differentiate sent vs received messages
-** - Show message timestamp
-*/
-
 import { useAuth } from '../../hooks/useAuth'
 
 function MessageList({ messages }) {

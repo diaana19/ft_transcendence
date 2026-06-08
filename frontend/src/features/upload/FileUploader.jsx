@@ -1,13 +1,3 @@
-/*
-** File: FileUploader.jsx
-** Description: Component for uploading files to the server
-** Responsibilities:
-** - Render file input and upload button
-** - Validate file size before sending (max 5MB)
-** - Send file to API using multipart/form-data
-** - Show upload progress and result
-*/
-
 import { useState } from 'react'
 import axios from 'axios'
 

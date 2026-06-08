@@ -3,10 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { verifyTwoFA } from './authService'
 import { useAuth } from '../../hooks/useAuth'
 
-// Login-time second factor. Reached via redirect from LoginForm with
-// { state: { pendingToken } }. Submits (pendingToken, 6-digit code) to
-// /api/auth/2fa/verify; on success the backend issues the final JWT and
-// the user is logged in.
 function TwoFAVerify() {
     const location = useLocation()
     const navigate = useNavigate()
@@ -17,8 +13,6 @@ function TwoFAVerify() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
 
-    // No pending token in router state means the user landed here directly
-    // (refresh, deep-link, bookmark). Send them back to the login screen.
     useEffect(() => {
         if (!pendingToken) {
             navigate('/login', { replace: true })
