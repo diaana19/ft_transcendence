@@ -1,12 +1,3 @@
-/*
- ** File: Button.jsx
- ** Description: Reusable button component with multiple variants
- ** Responsibilities:
- ** - Render button with consistent styling
- ** - Support primary, secondary, danger and ghost variants
- ** - Support loading and disabled states
- */
-
 import { colors } from '../../styles/tokens'
 
 function Button({

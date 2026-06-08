@@ -1,12 +1,3 @@
-/*
- ** File: SettingsPage.jsx
- ** Description: User configuration and settings page
- ** Responsibilities:
- ** - Allow user to delete their account
- ** - Show 2FA settings
- ** - Show account information
- */
-
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
