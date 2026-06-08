@@ -13,7 +13,6 @@ func TestWSManager_LeaveRoom(t *testing.T) {
 	m.RegisterClient(client)
 	m.JoinRoom(client, "room1")
 
-	// Verify client is in room
 	members := m.GetRoomMembers("room1")
 	if len(members) != 1 {
 		t.Fatalf("expected 1 member, got %d", len(members))
@@ -56,21 +55,18 @@ func TestWSManager_IsOnline(t *testing.T) {
 	m := socket.NewWSManager()
 	client := &socket.Client{ID: "user1", Username: "test", Send: make(chan []byte, 1)}
 
-	// Before registration
 	if m.IsOnline("user1") {
 		t.Fatal("expected offline before registration")
 	}
 
 	m.RegisterClient(client)
 
-	// After registration
 	if !m.IsOnline("user1") {
 		t.Fatal("expected online after registration")
 	}
 
 	m.UnregisterClient(client)
 
-	// After unregistration
 	if m.IsOnline("user1") {
 		t.Fatal("expected offline after unregistration")
 	}
@@ -107,7 +103,6 @@ func TestWSManager_BroadcastToRoom(t *testing.T) {
 	case <-client1.Send:
 		t.Fatal("sender should not receive broadcast")
 	default:
-		// expected
 	}
 }
 
@@ -128,7 +123,6 @@ func TestWSManager_UnregisterCleansUpRooms(t *testing.T) {
 
 	m.UnregisterClient(client)
 
-	// Client should be removed from all rooms
 	members1 := m.GetRoomMembers("room1")
 	members2 := m.GetRoomMembers("room2")
 

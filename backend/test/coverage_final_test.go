@@ -9,14 +9,11 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
-// --- Post Service: UpdatePost ---
-
 func TestPostService_UpdatePost(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user and post
 	userID := utils.NewID()
 	postID := utils.NewID()
 	user := models.User{ID: userID, Username: "updpostuser", Email: "updpost@test.com"}
@@ -24,7 +21,6 @@ func TestPostService_UpdatePost(t *testing.T) {
 	db.Create(&user)
 	repo.Create(&post)
 
-	// Update post
 	updated, err := service.UpdatePost(postID, models.UpdatePostInput{Content: "updated"}, userID)
 	if err != nil {
 		t.Fatalf("UpdatePost: %v", err)
@@ -33,8 +29,6 @@ func TestPostService_UpdatePost(t *testing.T) {
 		t.Fatalf("expected 'updated', got %q", updated.Content)
 	}
 }
-
-// --- Post Service: UpdatePost not found ---
 
 func TestPostService_UpdatePostNotFound(t *testing.T) {
 	_, db := SetupTestEnv()
@@ -47,14 +41,11 @@ func TestPostService_UpdatePostNotFound(t *testing.T) {
 	}
 }
 
-// --- Post Service: UpdatePost forbidden ---
-
 func TestPostService_UpdatePostForbidden(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user and post
 	userID := utils.NewID()
 	otherUserID := utils.NewID()
 	postID := utils.NewID()
@@ -65,21 +56,17 @@ func TestPostService_UpdatePostForbidden(t *testing.T) {
 	db.Create(&otherUser)
 	repo.Create(&post)
 
-	// Try to update other user's post
 	_, err := service.UpdatePost(postID, models.UpdatePostInput{Content: "hacked"}, otherUserID)
 	if err == nil {
 		t.Fatal("expected error for updating other user's post")
 	}
 }
 
-// --- Post Service: DeletePost ---
-
 func TestPostService_DeletePost(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user and post
 	userID := utils.NewID()
 	postID := utils.NewID()
 	user := models.User{ID: userID, Username: "delpostuser", Email: "delpost@test.com"}
@@ -87,20 +74,16 @@ func TestPostService_DeletePost(t *testing.T) {
 	db.Create(&user)
 	repo.Create(&post)
 
-	// Delete post
 	err := service.DeletePost(postID, userID)
 	if err != nil {
 		t.Fatalf("DeletePost: %v", err)
 	}
 
-	// Verify deleted
 	_, err = repo.GetByID(postID)
 	if err == nil {
 		t.Fatal("expected error for deleted post")
 	}
 }
-
-// --- Post Service: DeletePost not found ---
 
 func TestPostService_DeletePostNotFound(t *testing.T) {
 	_, db := SetupTestEnv()
@@ -113,14 +96,11 @@ func TestPostService_DeletePostNotFound(t *testing.T) {
 	}
 }
 
-// --- Post Service: DeletePost forbidden ---
-
 func TestPostService_DeletePostForbidden(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user and post
 	userID := utils.NewID()
 	otherUserID := utils.NewID()
 	postID := utils.NewID()
@@ -131,49 +111,39 @@ func TestPostService_DeletePostForbidden(t *testing.T) {
 	db.Create(&otherUser)
 	repo.Create(&post)
 
-	// Try to delete other user's post
 	err := service.DeletePost(postID, otherUserID)
 	if err == nil {
 		t.Fatal("expected error for deleting other user's post")
 	}
 }
 
-// --- Post Service: ReactToPost error path ---
-
 func TestPostService_ReactToPostErrorPath(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Try to react to non-existent post
 	_, _, err := service.ReactToPost(utils.NewID(), utils.NewID(), 1)
 	if err == nil {
 		t.Fatal("expected error for non-existent post")
 	}
 }
 
-// --- Post Service: ReactToComment error path ---
-
 func TestPostService_ReactToCommentErrorPath(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Try to react to non-existent comment
 	_, _, err := service.ReactToComment(utils.NewID(), utils.NewID(), 1)
 	if err == nil {
 		t.Fatal("expected error for non-existent comment")
 	}
 }
 
-// --- Post Service: GetPostReaction ---
-
 func TestPostService_GetPostReaction(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user and post
 	userID := utils.NewID()
 	postID := utils.NewID()
 	user := models.User{ID: userID, Username: "getreactuser", Email: "getreact@test.com"}
@@ -181,10 +151,8 @@ func TestPostService_GetPostReaction(t *testing.T) {
 	db.Create(&user)
 	repo.Create(&post)
 
-	// Set reaction
 	repo.SetPostReaction(userID, postID, 1)
 
-	// Get reaction
 	val, err := service.GetPostReaction(userID, postID)
 	if err != nil {
 		t.Fatalf("GetPostReaction: %v", err)
@@ -194,14 +162,11 @@ func TestPostService_GetPostReaction(t *testing.T) {
 	}
 }
 
-// --- Post Service: GetCommentReaction ---
-
 func TestPostService_GetCommentReaction(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user, post, and comment
 	userID := utils.NewID()
 	postID := utils.NewID()
 	commentID := utils.NewID()
@@ -212,10 +177,8 @@ func TestPostService_GetCommentReaction(t *testing.T) {
 	db.Create(&post)
 	repo.CreateComment(&comment)
 
-	// Set reaction
 	repo.SetReplyReaction(userID, commentID, 1)
 
-	// Get reaction
 	val, err := service.GetCommentReaction(userID, commentID)
 	if err != nil {
 		t.Fatalf("GetCommentReaction: %v", err)
@@ -225,14 +188,11 @@ func TestPostService_GetCommentReaction(t *testing.T) {
 	}
 }
 
-// --- User Service: GetUsers ---
-
 func TestUserService_GetUsers(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewUserRepository(db)
 	service := services.NewUserService(repo)
 
-	// Create test users
 	user1ID := utils.NewID()
 	user2ID := utils.NewID()
 	user1 := models.User{ID: user1ID, Username: "getusers1", Email: "gu1@test.com"}
@@ -240,7 +200,6 @@ func TestUserService_GetUsers(t *testing.T) {
 	db.Create(&user1)
 	db.Create(&user2)
 
-	// Get users
 	users, err := service.GetUsers()
 	if err != nil {
 		t.Fatalf("GetUsers: %v", err)
@@ -250,76 +209,61 @@ func TestUserService_GetUsers(t *testing.T) {
 	}
 }
 
-// --- Auth Service: LoginAuthUserService ---
-
 func TestAuthService_LoginAuthUserService(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewUserRepository(db)
 	service := services.NewAuthService(repo)
 
-	// Create test user with password
 	userID := utils.NewID()
 	password := "StrongPass123!"
 	hash, _ := utils.HashString(password)
 	user := models.User{ID: userID, Username: "loginuser", Email: "login@test.com", Password: &hash}
 	db.Create(&user)
 
-	// Login with email
 	_, err := service.LoginAuthUserService("login@test.com", password)
 	if err != nil {
 		t.Fatalf("LoginAuthUserService with email: %v", err)
 	}
 
-	// Login with username
 	_, err = service.LoginAuthUserService("loginuser", password)
 	if err != nil {
 		t.Fatalf("LoginAuthUserService with username: %v", err)
 	}
 }
 
-// --- Auth Service: LoginAuthUserService wrong password ---
-
 func TestAuthService_LoginAuthUserServiceWrongPassword(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewUserRepository(db)
 	service := services.NewAuthService(repo)
 
-	// Create test user with password
 	userID := utils.NewID()
 	password := "StrongPass123!"
 	hash, _ := utils.HashString(password)
 	user := models.User{ID: userID, Username: "loginwpuser", Email: "loginwp@test.com", Password: &hash}
 	db.Create(&user)
 
-	// Login with wrong password
 	_, err := service.LoginAuthUserService("loginwp@test.com", "wrongpassword")
 	if err == nil {
 		t.Fatal("expected error for wrong password")
 	}
 }
 
-// --- Auth Service: LoginAuthUserService not found ---
-
 func TestAuthService_LoginAuthUserServiceNotFound(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewUserRepository(db)
 	service := services.NewAuthService(repo)
 
-	// Login with non-existent user
 	_, err := service.LoginAuthUserService("nonexistent@test.com", "password")
 	if err == nil {
 		t.Fatal("expected error for non-existent user")
 	}
 }
 
-// --- Auth Service: CreateAuthUserService ---
-
 func TestAuthService_CreateAuthUserService(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewUserRepository(db)
 	service := services.NewAuthService(repo)
 
-	// Create new user
 	password := "StrongPass123!"
 	hash, _ := utils.HashString(password)
 	user := &models.User{
@@ -336,14 +280,11 @@ func TestAuthService_CreateAuthUserService(t *testing.T) {
 	}
 }
 
-// --- Auth Service: CreateAuthUserService duplicate ---
-
 func TestAuthService_CreateAuthUserServiceDuplicate(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewUserRepository(db)
 	service := services.NewAuthService(repo)
 
-	// Create first user
 	password := "StrongPass123!"
 	hash, _ := utils.HashString(password)
 	user1 := &models.User{
@@ -356,7 +297,6 @@ func TestAuthService_CreateAuthUserServiceDuplicate(t *testing.T) {
 		t.Fatalf("CreateAuthUserService first: %v", err)
 	}
 
-	// Create duplicate username
 	user2 := &models.User{
 		Username: "dupuser",
 		Email:    "dup2@test.com",

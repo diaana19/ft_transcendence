@@ -13,8 +13,6 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
-// ---------------- Repository DB-error branches ----------------
-
 func TestRepositories_DBErrorBranches(t *testing.T) {
 	SetupTestEnv()
 	bad := brokenDB(t)
@@ -40,8 +38,6 @@ func TestRepositories_DBErrorBranches(t *testing.T) {
 		t.Fatal("ListConversation with-cursor: expected error")
 	}
 }
-
-// ---------------- Service DB-error branches ----------------
 
 func TestServices_DBErrorBranches(t *testing.T) {
 	SetupTestEnv()
@@ -70,8 +66,6 @@ func TestServices_DBErrorBranches(t *testing.T) {
 	}
 }
 
-// ---------------- Auth controller: logout service error ----------------
-
 func TestAuthController_LogoutServiceError(t *testing.T) {
 	_, db := SetupTestEnv()
 	cfg, err := config.Load()
@@ -93,8 +87,6 @@ func TestAuthController_LogoutServiceError(t *testing.T) {
 		t.Fatalf("LogoutUser service error: expected 500, got %d", w.Code)
 	}
 }
-
-// ---------------- Chat handler: msgRepo failures ----------------
 
 func TestChatHandler_MsgRepoErrors(t *testing.T) {
 	_, db := SetupTestEnv()

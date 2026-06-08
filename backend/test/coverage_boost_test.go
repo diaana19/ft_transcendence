@@ -8,8 +8,6 @@ import (
 	"testing"
 )
 
-// --- Auth: Me endpoint ---
-
 func TestAuth_MeEndpoint(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "me-a", "me-a@test.com", "StrongPass123!")
@@ -53,8 +51,6 @@ func TestAuth_MeNoAuth(t *testing.T) {
 	}
 }
 
-// --- GDPR ---
-
 func TestGDPR_ExportData(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "gdpr-a", "gdpr-a@test.com", "StrongPass123!")
@@ -84,8 +80,6 @@ func TestGDPR_DeleteNoAuth(t *testing.T) {
 	}
 }
 
-// --- Gamification ---
-
 func TestGamification_GetStats(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "gam-a", "gam-a@test.com", "StrongPass123!")
@@ -105,8 +99,6 @@ func TestGamification_Leaderboard(t *testing.T) {
 		t.Fatalf("leaderboard: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 }
-
-// --- Notifications: more scenarios ---
 
 func TestNotification_FollowGeneratesNotification(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -140,8 +132,6 @@ func TestNotification_FollowGeneratesNotification(t *testing.T) {
 	}
 }
 
-// --- Posts: tag filtering ---
-
 func TestPost_FilterByTag(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "tag-a", "tag-a@test.com", "StrongPass123!")
@@ -162,8 +152,6 @@ func TestPost_FilterByTag(t *testing.T) {
 	}
 }
 
-// --- Posts: create with media ---
-
 func TestPost_CreateWithMedia(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "media-a", "media-a@test.com", "StrongPass123!")
@@ -182,8 +170,6 @@ func TestPost_CreateWithMedia(t *testing.T) {
 	}
 }
 
-// --- Posts: update with media ---
-
 func TestPost_UpdateWithMedia(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "media-b", "media-b@test.com", "StrongPass123!")
@@ -195,8 +181,6 @@ func TestPost_UpdateWithMedia(t *testing.T) {
 		t.Fatalf("update with media: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 }
-
-// --- Upload ---
 
 func TestUpload_ImageFile(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -222,8 +206,6 @@ func TestUpload_NoFile(t *testing.T) {
 	}
 }
 
-// --- User: delete ---
-
 func TestUser_DeleteAccount(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "del-acc", "del-acc@test.com", "StrongPass123!")
@@ -244,8 +226,6 @@ func TestUser_DeleteWrongPassword(t *testing.T) {
 	}
 }
 
-// --- 2FA ---
-
 func Test2FA_SetupRequiresAuth(t *testing.T) {
 	router, _ := SetupTestEnv()
 
@@ -263,8 +243,6 @@ func Test2FA_DisableRequiresAuth(t *testing.T) {
 		t.Fatalf("2fa disable no auth: expected 401, got %d", w.Code)
 	}
 }
-
-// --- Comments: update and delete ---
 
 func TestComment_Update(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -306,8 +284,6 @@ func TestComment_DeleteOtherUserFails(t *testing.T) {
 	}
 }
 
-// --- Comments: react ---
-
 func TestComment_Like(t *testing.T) {
 	router, _ := SetupTestEnv()
 	author := registerAndLogin(t, router, "cmt-like-a", "cmt-like-a@test.com", "StrongPass123!")
@@ -321,8 +297,6 @@ func TestComment_Like(t *testing.T) {
 		t.Fatalf("like comment: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 }
-
-// --- Posts: invalid inputs ---
 
 func TestPost_CreateEmptyContent(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -343,8 +317,6 @@ func TestPost_CreateNoAuth(t *testing.T) {
 	}
 }
 
-// --- Friends: unfollow non-existent ---
-
 func TestFriend_UnfollowNonExistent(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "unf-ne", "unf-ne@test.com", "StrongPass123!")
@@ -354,8 +326,6 @@ func TestFriend_UnfollowNonExistent(t *testing.T) {
 		t.Fatalf("unfollow non-existent: expected 400, got %d", w.Code)
 	}
 }
-
-// --- Friends: request to self ---
 
 func TestFriend_RequestSelfFails(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -367,8 +337,6 @@ func TestFriend_RequestSelfFails(t *testing.T) {
 	}
 }
 
-// --- Users: get non-existent ---
-
 func TestUser_GetNonExistent(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "get-ne", "get-ne@test.com", "StrongPass123!")
@@ -378,8 +346,6 @@ func TestUser_GetNonExistent(t *testing.T) {
 		t.Fatalf("get non-existent: expected 404, got %d", w.Code)
 	}
 }
-
-// --- Posts: get by non-existent user ---
 
 func TestPost_GetByNonExistentUser(t *testing.T) {
 	router, _ := SetupTestEnv()

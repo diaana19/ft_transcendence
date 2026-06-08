@@ -66,8 +66,6 @@ func setParam(c *gin.Context, key, value string) {
 	c.Params = append(c.Params, gin.Param{Key: key, Value: value})
 }
 
-// ---------------- Notification controller ----------------
-
 func TestNotificationController_Unauthorized(t *testing.T) {
 	ctrl := brokenControllers(t)
 
@@ -116,8 +114,6 @@ func TestNotificationController_DBErrors(t *testing.T) {
 	}
 }
 
-// ---------------- GDPR controller ----------------
-
 func TestGDPRController_Unauthorized(t *testing.T) {
 	ctrl := brokenControllers(t)
 
@@ -152,8 +148,6 @@ func TestGDPRController_DBErrors(t *testing.T) {
 	}
 }
 
-// ---------------- Gamification controller ----------------
-
 func TestGamificationController_Branches(t *testing.T) {
 	ctrl := brokenControllers(t)
 
@@ -177,8 +171,6 @@ func TestGamificationController_Branches(t *testing.T) {
 		t.Fatalf("GetLeaderboard db error: expected 500, got %d", w.Code)
 	}
 }
-
-// ---------------- Friend controller ----------------
 
 func TestFriendController_Unauthorized(t *testing.T) {
 	ctrl := brokenControllers(t)
@@ -232,8 +224,6 @@ func TestFriendController_DBErrors(t *testing.T) {
 		}
 	}
 }
-
-// ---------------- User controller ----------------
 
 func TestUserController_DBErrors(t *testing.T) {
 	ctrl := brokenControllers(t)
@@ -299,8 +289,6 @@ func TestUserController_Forbidden(t *testing.T) {
 		t.Fatalf("DeleteUser forbidden: expected 403, got %d", w.Code)
 	}
 }
-
-// ---------------- Post controller ----------------
 
 func TestPostController_TrendsClamp(t *testing.T) {
 	router, _ := SetupTestEnv()

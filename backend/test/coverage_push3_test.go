@@ -54,8 +54,6 @@ func makeFileHeader(t *testing.T, filename string, content []byte) *multipart.Fi
 	return form.File["file"][0]
 }
 
-// ---------------- Auth service: error branches ----------------
-
 func TestAuthService_ErrorBranches(t *testing.T) {
 	SetupTestEnv()
 
@@ -95,8 +93,6 @@ func TestAuthService_ErrorBranches(t *testing.T) {
 	}
 }
 
-// ---------------- Notification service: error branches ----------------
-
 func TestNotificationService_ErrorBranches(t *testing.T) {
 	_, db := SetupTestEnv()
 
@@ -123,8 +119,6 @@ func TestNotificationService_ErrorBranches(t *testing.T) {
 	}
 }
 
-// ---------------- Upload service: validation/error branches ----------------
-
 func TestUploadService_ErrorBranches(t *testing.T) {
 	_, db := SetupTestEnv()
 	svc := services.NewUploadService(repositories.NewFileRepository(db))
@@ -150,8 +144,6 @@ func TestUploadService_ErrorBranches(t *testing.T) {
 		t.Fatal("expected error tracking file in broken db")
 	}
 }
-
-// ---------------- Friend service: real-DB negative cases ----------------
 
 func TestFriendService_NegativeCases(t *testing.T) {
 	_, db := SetupTestEnv()
@@ -181,8 +173,6 @@ func TestFriendService_NegativeCases(t *testing.T) {
 	}
 }
 
-// ---------------- User controller: update DB error ----------------
-
 func TestUserController_UpdateDBError(t *testing.T) {
 	bcfg, _ := config.Load()
 	SetupTestEnv()
@@ -196,8 +186,6 @@ func TestUserController_UpdateDBError(t *testing.T) {
 		t.Fatalf("UpdateUser db error: expected 500, got %d", w.Code)
 	}
 }
-
-// ---------------- OAuth controller: redis-error branches ----------------
 
 func TestOAuthController_RedisErrors(t *testing.T) {
 	cfg, _ := config.Load()
@@ -218,8 +206,6 @@ func TestOAuthController_RedisErrors(t *testing.T) {
 		t.Fatalf("OAuthCallback redis error: expected 500, got %d", w.Code)
 	}
 }
-
-// ---------------- JWT: remaining branches ----------------
 
 func TestJWT_MoreBranches(t *testing.T) {
 	// A token signed with an unexpected (non-HMAC) method is rejected.
@@ -247,8 +233,6 @@ func TestJWT_MoreBranches(t *testing.T) {
 		t.Fatal("expected a long-lived token to be returned unchanged")
 	}
 }
-
-// ---------------- CreateComment with a file attachment (e2e) ----------------
 
 func TestCreateComment_WithFile(t *testing.T) {
 	router, _ := SetupTestEnv()

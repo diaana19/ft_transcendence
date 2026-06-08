@@ -80,7 +80,6 @@ func TestNotification_UnfriendNotifies(t *testing.T) {
 	authedRequest(t, router, "POST", "/api/friends/request/"+bob.ID, alice.Token, "")
 	authedRequest(t, router, "POST", "/api/friends/accept/"+alice.ID, bob.Token, "")
 
-	// Remove friend
 	w := authedRequest(t, router, "DELETE", "/api/friends/"+bob.ID, alice.Token, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("remove friend: expected 200, got %d - body: %s", w.Code, w.Body.String())

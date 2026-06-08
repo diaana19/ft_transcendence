@@ -6,8 +6,6 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
-// --- JWT: GenerateJWT with invalid secret ---
-
 func TestJWT_GenerateJWTWithShortSecret(t *testing.T) {
 	// This tests the error path when JWT_SECRET is too short
 	// The function should return an error
@@ -20,16 +18,12 @@ func TestJWT_GenerateJWTWithShortSecret(t *testing.T) {
 	}
 }
 
-// --- JWT: ValidateJWT with invalid token ---
-
 func TestJWT_ValidateJWTInvalidToken(t *testing.T) {
 	_, err := utils.ValidateJWT("invalid-token")
 	if err == nil {
 		t.Fatal("expected error for invalid token")
 	}
 }
-
-// --- JWT: ValidateJWT with empty token ---
 
 func TestJWT_ValidateJWTEmptyToken(t *testing.T) {
 	_, err := utils.ValidateJWT("")
@@ -38,16 +32,12 @@ func TestJWT_ValidateJWTEmptyToken(t *testing.T) {
 	}
 }
 
-// --- JWT: RefreshToken with invalid token ---
-
 func TestJWT_RefreshTokenInvalidToken(t *testing.T) {
 	_, err := utils.RefreshToken("invalid-token")
 	if err == nil {
 		t.Fatal("expected error for invalid token")
 	}
 }
-
-// --- Hash: HashString and CheckHashString ---
 
 func TestHash_HashAndCheck(t *testing.T) {
 	password := "testpassword123"
@@ -56,18 +46,14 @@ func TestHash_HashAndCheck(t *testing.T) {
 		t.Fatalf("HashString: %v", err)
 	}
 
-	// Check correct password
 	if !utils.CheckHashString(password, hash) {
 		t.Fatal("expected correct password to match")
 	}
 
-	// Check wrong password
 	if utils.CheckHashString("wrongpassword", hash) {
 		t.Fatal("expected wrong password to not match")
 	}
 }
-
-// --- Hashtag: ExtractHashtags ---
 
 func TestHashtag_ExtractHashtags(t *testing.T) {
 	tests := []struct {
@@ -86,8 +72,6 @@ func TestHashtag_ExtractHashtags(t *testing.T) {
 		}
 	}
 }
-
-// --- Hashtag: NormalizeHashtag ---
 
 func TestHashtag_NormalizeHashtag(t *testing.T) {
 	tests := []struct {
@@ -108,8 +92,6 @@ func TestHashtag_NormalizeHashtag(t *testing.T) {
 	}
 }
 
-// --- ID: NewID ---
-
 func TestID_NewID(t *testing.T) {
 	id1 := utils.NewID()
 	id2 := utils.NewID()
@@ -121,8 +103,6 @@ func TestID_NewID(t *testing.T) {
 		t.Fatal("expected unique IDs")
 	}
 }
-
-// --- Validator: CheckPasswordFormat edge cases ---
 
 func TestCheckPasswordFormat_ContainsUsername(t *testing.T) {
 	ok, code := utils.CheckPasswordFormat("myuser123!", "user")
@@ -174,8 +154,6 @@ func TestCheckPasswordFormat_NoSpecial(t *testing.T) {
 	}
 }
 
-// --- Validator: CheckUsernameFormat edge cases ---
-
 func TestCheckUsernameFormat_TooLong(t *testing.T) {
 	longUsername := ""
 	for i := 0; i < 50; i++ {
@@ -203,8 +181,6 @@ func TestCheckUsernameFormat_TrailingHyphen(t *testing.T) {
 		t.Fatal("expected trailing hyphen to be invalid")
 	}
 }
-
-// --- Validator: CheckEmailFormat edge cases ---
 
 func TestCheckEmailFormat_NoAt(t *testing.T) {
 	if utils.CheckEmailFormat("userdomain.com") {

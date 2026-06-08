@@ -13,12 +13,10 @@ func TestPostRepository_GetByTag(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 
-	// Create test user
 	userID := utils.NewID()
 	user := models.User{ID: userID, Username: "taguser", Email: "tag@test.com"}
 	db.Create(&user)
 
-	// Create posts with tags
 	post1 := models.Post{ID: utils.NewID(), AuthorID: userID, Content: "post with #golang", Tags: []string{"#golang"}}
 	post2 := models.Post{ID: utils.NewID(), AuthorID: userID, Content: "post with #rust", Tags: []string{"#rust"}}
 	post3 := models.Post{ID: utils.NewID(), AuthorID: userID, Content: "post with both", Tags: []string{"#golang", "#rust"}}
@@ -26,7 +24,6 @@ func TestPostRepository_GetByTag(t *testing.T) {
 	repo.Create(&post2)
 	repo.Create(&post3)
 
-	// Get by tag
 	posts, total, err := repo.GetByTag("#golang", 10, 0)
 	if err != nil {
 		t.Fatalf("GetByTag: %v", err)
@@ -59,12 +56,10 @@ func TestPostRepository_TopTags(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 
-	// Create test user
 	userID := utils.NewID()
 	user := models.User{ID: userID, Username: "trenduser", Email: "trend@test.com"}
 	db.Create(&user)
 
-	// Create posts with tags
 	post1 := models.Post{ID: utils.NewID(), AuthorID: userID, Content: "post1", Tags: []string{"#golang"}}
 	post2 := models.Post{ID: utils.NewID(), AuthorID: userID, Content: "post2", Tags: []string{"#golang"}}
 	post3 := models.Post{ID: utils.NewID(), AuthorID: userID, Content: "post3", Tags: []string{"#rust"}}
@@ -72,7 +67,6 @@ func TestPostRepository_TopTags(t *testing.T) {
 	repo.Create(&post2)
 	repo.Create(&post3)
 
-	// Get top tags
 	since := time.Now().Add(-24 * time.Hour)
 	tags, err := repo.TopTags(since, 10)
 	if err != nil {
@@ -82,7 +76,6 @@ func TestPostRepository_TopTags(t *testing.T) {
 		t.Fatalf("expected at least 2 tags, got %d", len(tags))
 	}
 
-	// First tag should be #golang (most used)
 	if tags[0].Tag != "#golang" {
 		t.Fatalf("expected #golang as top tag, got %s", tags[0].Tag)
 	}
@@ -92,18 +85,15 @@ func TestPostRepository_GetAll(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 
-	// Create test user
 	userID := utils.NewID()
 	user := models.User{ID: userID, Username: "alluser", Email: "all@test.com"}
 	db.Create(&user)
 
-	// Create posts
 	post1 := models.Post{ID: utils.NewID(), AuthorID: userID, Content: "post1"}
 	post2 := models.Post{ID: utils.NewID(), AuthorID: userID, Content: "post2"}
 	repo.Create(&post1)
 	repo.Create(&post2)
 
-	// Get all
 	posts, total, err := repo.GetAll(10, 0)
 	if err != nil {
 		t.Fatalf("GetAll: %v", err)
@@ -120,7 +110,6 @@ func TestPostRepository_GetByAuthorID(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 
-	// Create test users
 	user1ID := utils.NewID()
 	user2ID := utils.NewID()
 	user1 := models.User{ID: user1ID, Username: "author1", Email: "author1@test.com"}
@@ -128,7 +117,6 @@ func TestPostRepository_GetByAuthorID(t *testing.T) {
 	db.Create(&user1)
 	db.Create(&user2)
 
-	// Create posts
 	post1 := models.Post{ID: utils.NewID(), AuthorID: user1ID, Content: "post by author1"}
 	post2 := models.Post{ID: utils.NewID(), AuthorID: user1ID, Content: "another by author1"}
 	post3 := models.Post{ID: utils.NewID(), AuthorID: user2ID, Content: "post by author2"}
@@ -136,7 +124,6 @@ func TestPostRepository_GetByAuthorID(t *testing.T) {
 	repo.Create(&post2)
 	repo.Create(&post3)
 
-	// Get by author
 	posts, err := repo.GetByAuthorID(user1ID)
 	if err != nil {
 		t.Fatalf("GetByAuthorID: %v", err)
@@ -150,17 +137,14 @@ func TestPostRepository_Update(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 
-	// Create test user
 	userID := utils.NewID()
 	user := models.User{ID: userID, Username: "updateuser", Email: "update@test.com"}
 	db.Create(&user)
 
-	// Create post
 	postID := utils.NewID()
 	post := models.Post{ID: postID, AuthorID: userID, Content: "original"}
 	repo.Create(&post)
 
-	// Update
 	updated, err := repo.Update(postID, models.UpdatePostInput{Content: "updated"})
 	if err != nil {
 		t.Fatalf("Update: %v", err)
@@ -174,23 +158,19 @@ func TestPostRepository_Delete(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 
-	// Create test user
 	userID := utils.NewID()
 	user := models.User{ID: userID, Username: "deleteuser", Email: "delete@test.com"}
 	db.Create(&user)
 
-	// Create post
 	postID := utils.NewID()
 	post := models.Post{ID: postID, AuthorID: userID, Content: "to be deleted"}
 	repo.Create(&post)
 
-	// Delete
 	err := repo.Delete(postID)
 	if err != nil {
 		t.Fatalf("Delete: %v", err)
 	}
 
-	// Verify deleted
 	_, err = repo.GetByID(postID)
 	if err == nil {
 		t.Fatal("expected error for deleted post")
@@ -201,7 +181,6 @@ func TestPostRepository_SetAndGetReaction(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 
-	// Create test user and post
 	userID := utils.NewID()
 	postID := utils.NewID()
 	user := models.User{ID: userID, Username: "reactuser", Email: "react@test.com"}
@@ -209,13 +188,11 @@ func TestPostRepository_SetAndGetReaction(t *testing.T) {
 	db.Create(&user)
 	db.Create(&post)
 
-	// Set reaction
 	err := repo.SetPostReaction(userID, postID, 1)
 	if err != nil {
 		t.Fatalf("SetPostReaction: %v", err)
 	}
 
-	// Get reaction
 	val, err := repo.GetPostReaction(userID, postID)
 	if err != nil {
 		t.Fatalf("GetPostReaction: %v", err)
@@ -224,7 +201,6 @@ func TestPostRepository_SetAndGetReaction(t *testing.T) {
 		t.Fatalf("expected 1, got %d", val)
 	}
 
-	// Clear reaction
 	err = repo.SetPostReaction(userID, postID, 0)
 	if err != nil {
 		t.Fatalf("Clear reaction: %v", err)
@@ -243,7 +219,6 @@ func TestPostRepository_SetAndGetReplyReaction(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 
-	// Create test user, post, and reply
 	userID := utils.NewID()
 	postID := utils.NewID()
 	replyID := utils.NewID()
@@ -254,13 +229,11 @@ func TestPostRepository_SetAndGetReplyReaction(t *testing.T) {
 	db.Create(&post)
 	repo.CreateComment(&reply)
 
-	// Set reaction
 	err := repo.SetReplyReaction(userID, replyID, 1)
 	if err != nil {
 		t.Fatalf("SetReplyReaction: %v", err)
 	}
 
-	// Get reaction
 	val, err := repo.GetReplyReaction(userID, replyID)
 	if err != nil {
 		t.Fatalf("GetReplyReaction: %v", err)
@@ -274,7 +247,6 @@ func TestPostRepository_GetCommentsByPostID(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 
-	// Create test user and post
 	userID := utils.NewID()
 	postID := utils.NewID()
 	user := models.User{ID: userID, Username: "commentuser", Email: "comment@test.com"}
@@ -282,13 +254,11 @@ func TestPostRepository_GetCommentsByPostID(t *testing.T) {
 	db.Create(&user)
 	db.Create(&post)
 
-	// Create comments
 	comment1 := models.Reply{ID: utils.NewID(), PostID: postID, AuthorID: userID, Content: "comment1"}
 	comment2 := models.Reply{ID: utils.NewID(), PostID: postID, AuthorID: userID, Content: "comment2"}
 	repo.CreateComment(&comment1)
 	repo.CreateComment(&comment2)
 
-	// Get comments
 	comments, err := repo.GetCommentsByPostID(postID)
 	if err != nil {
 		t.Fatalf("GetCommentsByPostID: %v", err)
@@ -302,7 +272,6 @@ func TestPostRepository_GetCommentByID(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
 
-	// Create test user, post, and comment
 	userID := utils.NewID()
 	postID := utils.NewID()
 	commentID := utils.NewID()
@@ -313,7 +282,6 @@ func TestPostRepository_GetCommentByID(t *testing.T) {
 	db.Create(&post)
 	repo.CreateComment(&comment)
 
-	// Get comment
 	got, err := repo.GetCommentByID(commentID)
 	if err != nil {
 		t.Fatalf("GetCommentByID: %v", err)

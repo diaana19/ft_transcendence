@@ -29,8 +29,6 @@ func realControllers(t *testing.T) *routes.Controllers {
 	return routes.Wire(db, sharedRDB, cfg)
 }
 
-// ---------------- Post repository: reaction state machine ----------------
-
 func TestPostRepository_ReactionStateMachine(t *testing.T) {
 	_, db := SetupTestEnv()
 	repo := repositories.NewPostRepository(db)
@@ -83,8 +81,6 @@ func TestPostRepository_ReactionStateMachine(t *testing.T) {
 		t.Fatal("expected error deleting missing post")
 	}
 }
-
-// ---------------- Post repository: DB error branches ----------------
 
 func TestPostRepository_DBErrors(t *testing.T) {
 	SetupTestEnv()
@@ -145,8 +141,6 @@ func doJSON(router interface {
 	return w
 }
 
-// ---------------- Post service: empty content ----------------
-
 func TestPostService_EmptyContent(t *testing.T) {
 	_, db := SetupTestEnv()
 	svc := services.NewPostService(repositories.NewPostRepository(db))
@@ -155,19 +149,15 @@ func TestPostService_EmptyContent(t *testing.T) {
 	}
 }
 
-// ---------------- Auth controller: reachable error paths ----------------
-
 func TestAuthController_RegisterValidation(t *testing.T) {
 	router, _ := SetupTestEnv()
 
-	// invalid username format
 	body := `{"username":"-bad-","email":"x@test.com","password":"Abcdef1!","dateOfBirth":"2000-01-01"}`
 	w := doJSON(router, http.MethodPost, "/api/auth/register", body)
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("bad username: expected 400, got %d", w.Code)
 	}
 
-	// invalid date format
 	body = `{"username":"gooduser","email":"x@test.com","password":"Abcdef1!","dateOfBirth":"not-a-date"}`
 	w = doJSON(router, http.MethodPost, "/api/auth/register", body)
 	if w.Code != http.StatusBadRequest {
@@ -178,14 +168,12 @@ func TestAuthController_RegisterValidation(t *testing.T) {
 func TestAuthController_MeAndLogout(t *testing.T) {
 	ctrl := realControllers(t)
 
-	// Me without user_id -> 401
 	c, w := testCtx(http.MethodGet, "/", "")
 	ctrl.Auth.Me(c)
 	if w.Code != http.StatusUnauthorized {
 		t.Fatalf("Me unauth: expected 401, got %d", w.Code)
 	}
 
-	// Me with unknown user -> 404
 	c, w = testCtx(http.MethodGet, "/", "")
 	c.Set("user_id", utils.NewID())
 	ctrl.Auth.Me(c)
@@ -193,14 +181,12 @@ func TestAuthController_MeAndLogout(t *testing.T) {
 		t.Fatalf("Me not found: expected 404, got %d", w.Code)
 	}
 
-	// Logout with no token -> 401
 	c, w = testCtx(http.MethodPost, "/", "")
 	ctrl.Auth.LogoutUser(c)
 	if w.Code != http.StatusUnauthorized {
 		t.Fatalf("Logout missing token: expected 401, got %d", w.Code)
 	}
 
-	// Logout with invalid token -> 401
 	c, w = testCtx(http.MethodPost, "/", "")
 	c.Request.Header.Set("Authorization", "Bearer not-a-valid-jwt")
 	ctrl.Auth.LogoutUser(c)
@@ -208,8 +194,6 @@ func TestAuthController_MeAndLogout(t *testing.T) {
 		t.Fatalf("Logout invalid token: expected 401, got %d", w.Code)
 	}
 }
-
-// ---------------- TwoFA controller: unauthorized ----------------
 
 func TestTwoFAController_Unauthorized(t *testing.T) {
 	ctrl := realControllers(t)
@@ -233,20 +217,16 @@ func TestTwoFAController_Unauthorized(t *testing.T) {
 	}
 }
 
-// ---------------- Upload controller ----------------
-
 func TestUploadController_Branches(t *testing.T) {
 	ctrl := realControllers(t)
 	_, db := SetupTestEnv()
 
-	// UploadFile without user_id -> 401
 	c, w := testCtx(http.MethodPost, "/", "")
 	ctrl.Upload.UploadFile(c)
 	if w.Code != http.StatusUnauthorized {
 		t.Fatalf("UploadFile unauth: expected 401, got %d", w.Code)
 	}
 
-	// ServeFile with a DB error -> 500
 	bcfg, _ := config.Load()
 	broken := routes.Wire(brokenDB(t), sharedRDB, bcfg)
 	c, w = testCtx(http.MethodGet, "/", "")
@@ -256,7 +236,6 @@ func TestUploadController_Branches(t *testing.T) {
 		t.Fatalf("ServeFile db error: expected 500, got %d", w.Code)
 	}
 
-	// ServeFile for a public file whose path is missing on disk -> 404
 	fileRepo := repositories.NewFileRepository(db)
 	owner := utils.NewID()
 	db.Create(&models.User{ID: owner, Username: "upowner", Email: "upowner@test.com"})
@@ -274,7 +253,6 @@ func TestUploadController_Branches(t *testing.T) {
 		t.Fatalf("ServeFile missing disk: expected 404, got %d", w.Code)
 	}
 
-	// ServeFile for a friends-only file requested by a non-friend -> 403.
 	tmp, err := os.CreateTemp(t.TempDir(), "f-*.png")
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
@@ -296,7 +274,6 @@ func TestUploadController_Branches(t *testing.T) {
 		t.Fatalf("ServeFile friends forbidden: expected 403, got %d", w.Code)
 	}
 
-	// ServeFile private file without auth -> 401.
 	privFile := &models.File{
 		ID: utils.NewID(), OwnerID: owner, Path: tmp.Name(),
 		Filename: "p.png", MimeType: "image/png", Size: 4, Visibility: models.FileVisibilityPrivate,
@@ -312,27 +289,21 @@ func TestUploadController_Branches(t *testing.T) {
 	}
 }
 
-// ---------------- OAuth controller: deterministic redirects ----------------
-
 func TestOAuthController_CallbackRedirects(t *testing.T) {
 	ctrl := realControllers(t)
 
-	// missing code -> redirect oauth_denied
 	c, w := testCtx(http.MethodGet, "/", "")
 	ctrl.OAuth.OAuthCallback(c)
 	if w.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("callback no code: expected 307, got %d", w.Code)
 	}
 
-	// code present, unknown state -> redirect invalid_state
 	c, w = testCtx(http.MethodGet, "/?code=abc&state=never-stored", "")
 	ctrl.OAuth.OAuthCallback(c)
 	if w.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("callback bad state: expected 307, got %d", w.Code)
 	}
 }
-
-// ---------------- Models: ToResponse variants ----------------
 
 func TestModels_ToResponseVariants(t *testing.T) {
 	mime := "image/png"
@@ -352,8 +323,6 @@ func TestModels_ToResponseVariants(t *testing.T) {
 	}
 }
 
-// ---------------- JWT: short secret error paths ----------------
-
 func TestJWT_ShortSecret(t *testing.T) {
 	old := os.Getenv("JWT_SECRET")
 	defer os.Setenv("JWT_SECRET", old)
@@ -367,8 +336,6 @@ func TestJWT_ShortSecret(t *testing.T) {
 	}
 }
 
-// ---------------- Chat handler: message handling branches ----------------
-
 func TestChatHandler_HandleMessage(t *testing.T) {
 	ctrl := realControllers(t)
 	_, db := SetupTestEnv()
@@ -381,25 +348,17 @@ func TestChatHandler_HandleMessage(t *testing.T) {
 
 	client := &socket.Client{ID: sender, Username: "chatsender", Send: make(chan []byte, 256)}
 
-	// invalid JSON
 	h.HandleMessage(client, []byte("not json"))
-	// unknown action
 	h.HandleMessage(client, []byte(`{"action":"bogus"}`))
-	// open with empty peer
 	h.HandleMessage(client, []byte(`{"action":"open","peer_id":""}`))
-	// open with self
 	h.HandleMessage(client, []byte(`{"action":"open","peer_id":"`+sender+`"}`))
-	// message empty content + no file
 	h.HandleMessage(client, []byte(`{"action":"message","content":"   "}`))
-	// message to self
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hi","recipient_id":"`+sender+`"}`))
-	// message to unknown recipient
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hi","recipient_id":"`+utils.NewID()+`"}`))
-	// message with attachment that does not exist -> grantAttachment error
+	// attachment does not exist -> grantAttachment error
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hi","recipient_id":"`+recipient+`","file_id":"`+utils.NewID()+`"}`))
 	// open a real conversation (loads history, subscribes)
 	h.HandleMessage(client, []byte(`{"action":"open","peer_id":"`+recipient+`"}`))
-	// full happy-path message send
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hello there","recipient_id":"`+recipient+`"}`))
 
 	// Drain whatever was queued so the buffer never blocks.
@@ -411,8 +370,6 @@ func TestChatHandler_HandleMessage(t *testing.T) {
 		}
 	}
 }
-
-// ---------------- Chat handler: grantAttachment via private file ----------------
 
 func TestChatHandler_AttachmentValidation(t *testing.T) {
 	ctrl := realControllers(t)

@@ -11,8 +11,6 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
-// --- Auth: Login with username ---
-
 func TestAuth_LoginWithUsername(t *testing.T) {
 	router, _ := SetupTestEnv()
 	registerAndLogin(t, router, "loginuser", "loginuser@test.com", "StrongPass123!")
@@ -22,8 +20,6 @@ func TestAuth_LoginWithUsername(t *testing.T) {
 		t.Fatalf("login with username: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 }
-
-// --- Auth: Login with email ---
 
 func TestAuth_LoginWithEmail(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -35,8 +31,6 @@ func TestAuth_LoginWithEmail(t *testing.T) {
 	}
 }
 
-// --- Auth: Login wrong password ---
-
 func TestAuth_LoginWrongPassword(t *testing.T) {
 	router, _ := SetupTestEnv()
 	registerAndLogin(t, router, "loginwp", "loginwp@test.com", "StrongPass123!")
@@ -47,8 +41,6 @@ func TestAuth_LoginWrongPassword(t *testing.T) {
 	}
 }
 
-// --- Auth: Login non-existent user ---
-
 func TestAuth_LoginNonExistent(t *testing.T) {
 	router, _ := SetupTestEnv()
 
@@ -57,8 +49,6 @@ func TestAuth_LoginNonExistent(t *testing.T) {
 		t.Fatalf("login non-existent: expected 400 or 401, got %d", w.Code)
 	}
 }
-
-// --- Auth: Register duplicate username ---
 
 func TestAuth_RegisterDuplicateUsername(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -70,8 +60,6 @@ func TestAuth_RegisterDuplicateUsername(t *testing.T) {
 	}
 }
 
-// --- Auth: Register duplicate email ---
-
 func TestAuth_RegisterDuplicateEmail(t *testing.T) {
 	router, _ := SetupTestEnv()
 	registerAndLogin(t, router, "dupemail1", "dupemail@test.com", "StrongPass123!")
@@ -82,8 +70,6 @@ func TestAuth_RegisterDuplicateEmail(t *testing.T) {
 	}
 }
 
-// --- Auth: Register invalid email ---
-
 func TestAuth_RegisterInvalidEmail(t *testing.T) {
 	router, _ := SetupTestEnv()
 
@@ -92,8 +78,6 @@ func TestAuth_RegisterInvalidEmail(t *testing.T) {
 		t.Fatalf("invalid email: expected 400, got %d", w.Code)
 	}
 }
-
-// --- Posts: Get non-existent ---
 
 func TestPost_GetNonExistent(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -105,8 +89,6 @@ func TestPost_GetNonExistent(t *testing.T) {
 	}
 }
 
-// --- Posts: Update non-existent ---
-
 func TestPost_UpdateNonExistent(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "postune", "postune@test.com", "StrongPass123!")
@@ -116,8 +98,6 @@ func TestPost_UpdateNonExistent(t *testing.T) {
 		t.Fatalf("update non-existent post: expected 404, got %d", w.Code)
 	}
 }
-
-// --- Posts: Delete non-existent ---
 
 func TestPost_DeleteNonExistent(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -129,8 +109,6 @@ func TestPost_DeleteNonExistent(t *testing.T) {
 	}
 }
 
-// --- Posts: React to non-existent ---
-
 func TestPost_ReactNonExistent(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "reactne", "reactne@test.com", "StrongPass123!")
@@ -140,8 +118,6 @@ func TestPost_ReactNonExistent(t *testing.T) {
 		t.Fatalf("react non-existent post: expected 404, got %d", w.Code)
 	}
 }
-
-// --- Comments: Get for non-existent post ---
 
 func TestComment_GetForNonExistentPost(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -153,8 +129,6 @@ func TestComment_GetForNonExistentPost(t *testing.T) {
 	}
 }
 
-// --- Comments: Create on non-existent post ---
-
 func TestComment_CreateOnNonExistentPost(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "ccrtne", "ccrtne@test.com", "StrongPass123!")
@@ -164,8 +138,6 @@ func TestComment_CreateOnNonExistentPost(t *testing.T) {
 		t.Fatalf("create comment non-existent post: expected 404, got %d", w.Code)
 	}
 }
-
-// --- Upload: Invalid extension ---
 
 func TestUpload_InvalidExtensionExtra(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -177,8 +149,6 @@ func TestUpload_InvalidExtensionExtra(t *testing.T) {
 	}
 }
 
-// --- Upload: Invalid visibility ---
-
 func TestUpload_InvalidVisibilityExtra(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "uploadiv", "uploadiv@test.com", "StrongPass123!")
@@ -188,8 +158,6 @@ func TestUpload_InvalidVisibilityExtra(t *testing.T) {
 		t.Fatalf("upload invalid visibility: expected 400, got %d", w.Code)
 	}
 }
-
-// --- User: Get all users ---
 
 func TestUser_GetAllUsers(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -206,20 +174,15 @@ func TestUser_GetAllUsers(t *testing.T) {
 	}
 }
 
-// --- User: Update partial ---
-
 func TestUser_UpdatePartial(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "updp", "updp@test.com", "StrongPass123!")
 
-	// Update only bio
 	w := authedRequest(t, router, "PUT", "/api/users/"+user.ID, user.Token, `{"bio":"new bio"}`)
 	if w.Code != http.StatusOK {
 		t.Fatalf("update partial: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 }
-
-// --- Friends: Follow non-existent user ---
 
 func TestFriend_FollowNonExistent(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -231,8 +194,6 @@ func TestFriend_FollowNonExistent(t *testing.T) {
 	}
 }
 
-// --- Friends: Remove non-existent friend ---
-
 func TestFriend_RemoveNonExistent(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "rmne", "rmne@test.com", "StrongPass123!")
@@ -243,23 +204,18 @@ func TestFriend_RemoveNonExistent(t *testing.T) {
 	}
 }
 
-// --- Notifications: Mark all read ---
-
 func TestNotification_MarkAllRead(t *testing.T) {
 	router, _ := SetupTestEnv()
 	alice := registerAndLogin(t, router, "mar-a", "mar-a@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "mar-b", "mar-b@test.com", "StrongPass123!")
 
-	// Generate notification
 	authedRequest(t, router, "POST", "/api/friends/follow/"+bob.ID, alice.Token, "")
 
-	// Mark all read
 	w := authedRequest(t, router, "PATCH", "/api/notification/read", bob.Token, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("mark all read: expected 200, got %d", w.Code)
 	}
 
-	// Verify
 	w = authedRequest(t, router, "GET", "/api/notification", bob.Token, "")
 	var resp struct {
 		Total int `json:"total"`
@@ -269,8 +225,6 @@ func TestNotification_MarkAllRead(t *testing.T) {
 		t.Fatalf("expected 0 unread, got %d", resp.Total)
 	}
 }
-
-// --- Notifications: Get empty ---
 
 func TestNotification_GetEmpty(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -289,8 +243,6 @@ func TestNotification_GetEmpty(t *testing.T) {
 	}
 }
 
-// --- GDPR: Export requires auth ---
-
 func TestGDPR_ExportRequiresAuthExtra(t *testing.T) {
 	router, _ := SetupTestEnv()
 
@@ -300,13 +252,10 @@ func TestGDPR_ExportRequiresAuthExtra(t *testing.T) {
 	}
 }
 
-// --- Upload: File too large ---
-
 func TestUpload_FileTooLarge(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "uploadtl", "uploadtl@test.com", "StrongPass123!")
 
-	// Create a file larger than 25MB
 	largeData := make([]byte, 26*1024*1024)
 	w := uploadFile(t, router, user.Token, "large.png", "public", largeData)
 	if w.Code != http.StatusBadRequest {
@@ -314,13 +263,10 @@ func TestUpload_FileTooLarge(t *testing.T) {
 	}
 }
 
-// --- Upload: With friends visibility ---
-
 func TestUpload_FriendsVisibility(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "uploadfv", "uploadfv@test.com", "StrongPass123!")
 
-	// Use a minimal valid PNG file
 	pngData := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52}
 	w := uploadFile(t, router, user.Token, "friends.png", "friends", pngData)
 	if w.Code != http.StatusOK {
@@ -328,13 +274,10 @@ func TestUpload_FriendsVisibility(t *testing.T) {
 	}
 }
 
-// --- Upload: With private visibility ---
-
 func TestUpload_PrivateVisibility(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "uploadpv", "uploadpv@test.com", "StrongPass123!")
 
-	// Use a minimal valid PNG file
 	pngData := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52}
 	w := uploadFile(t, router, user.Token, "private.png", "private", pngData)
 	if w.Code != http.StatusOK {
@@ -342,41 +285,33 @@ func TestUpload_PrivateVisibility(t *testing.T) {
 	}
 }
 
-// --- Post with multipart form (file upload in post) ---
-
 func TestPost_CreateWithFileUpload(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "postfile", "postfile@test.com", "StrongPass123!")
 
-	// First upload a file
 	uploadResp := uploadFile(t, router, user.Token, "post.png", "public", []byte{0x89, 0x50, 0x4E, 0x47})
 	var uploadData struct {
 		URL string `json:"url"`
 	}
 	json.Unmarshal(uploadResp.Body.Bytes(), &uploadData)
 
-	// Create post with file
 	w := authedRequest(t, router, "POST", "/api/posts", user.Token, `{"content":"post with file","media_url":"`+uploadData.URL+`","media_mime":"image/png"}`)
 	if w.Code != http.StatusCreated {
 		t.Fatalf("create post with file: expected 201, got %d - body: %s", w.Code, w.Body.String())
 	}
 }
 
-// --- Comment with file upload ---
-
 func TestComment_CreateWithFileUpload(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "cmtfile", "cmtfile@test.com", "StrongPass123!")
 	postID := createPost(t, router, user.Token, "post for comment file")
 
-	// Upload a file
 	uploadResp := uploadFile(t, router, user.Token, "comment.png", "public", []byte{0x89, 0x50, 0x4E, 0x47})
 	var uploadData struct {
 		ID string `json:"id"`
 	}
 	json.Unmarshal(uploadResp.Body.Bytes(), &uploadData)
 
-	// Create comment with file using multipart
 	var body bytes.Buffer
 	mw := multipart.NewWriter(&body)
 	mw.WriteField("content", "comment with file")
@@ -392,8 +327,6 @@ func TestComment_CreateWithFileUpload(t *testing.T) {
 		t.Fatalf("create comment with file: expected 201, got %d - body: %s", w.Code, w.Body.String())
 	}
 }
-
-// --- Get single post ---
 
 func TestPost_GetSingle(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -413,8 +346,6 @@ func TestPost_GetSingle(t *testing.T) {
 		t.Fatalf("expected 'single post', got %q", resp.Content)
 	}
 }
-
-// --- Get posts by user ---
 
 func TestPost_GetByUserEndpoint(t *testing.T) {
 	router, _ := SetupTestEnv()

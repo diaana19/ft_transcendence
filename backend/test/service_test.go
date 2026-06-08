@@ -14,18 +14,15 @@ func TestPostService_GetPostsByTag(t *testing.T) {
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user
 	userID := utils.NewID()
 	user := models.User{ID: userID, Username: "svctaguser", Email: "svctag@test.com"}
 	db.Create(&user)
 
-	// Create posts
 	post1 := models.Post{ID: utils.NewID(), AuthorID: userID, Content: "post with #go", Tags: []string{"#go"}}
 	post2 := models.Post{ID: utils.NewID(), AuthorID: userID, Content: "post with #rust", Tags: []string{"#rust"}}
 	repo.Create(&post1)
 	repo.Create(&post2)
 
-	// Get by tag
 	posts, total, err := service.GetPostsByTag("#go", 10, 0)
 	if err != nil {
 		t.Fatalf("GetPostsByTag: %v", err)
@@ -43,7 +40,6 @@ func TestPostService_CreateComment(t *testing.T) {
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user and post
 	userID := utils.NewID()
 	postID := utils.NewID()
 	user := models.User{ID: userID, Username: "svccommentuser", Email: "svccomment@test.com"}
@@ -51,7 +47,6 @@ func TestPostService_CreateComment(t *testing.T) {
 	db.Create(&user)
 	repo.Create(&post)
 
-	// Create comment
 	comment, err := service.CreateComment("nice post", userID, postID, nil)
 	if err != nil {
 		t.Fatalf("CreateComment: %v", err)
@@ -93,7 +88,6 @@ func TestPostService_GetComments(t *testing.T) {
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user and post
 	userID := utils.NewID()
 	postID := utils.NewID()
 	user := models.User{ID: userID, Username: "svcgetcommentuser", Email: "svcgetcomment@test.com"}
@@ -101,11 +95,9 @@ func TestPostService_GetComments(t *testing.T) {
 	db.Create(&user)
 	repo.Create(&post)
 
-	// Create comments
 	service.CreateComment("comment1", userID, postID, nil)
 	service.CreateComment("comment2", userID, postID, nil)
 
-	// Get comments
 	comments, err := service.GetComments(postID)
 	if err != nil {
 		t.Fatalf("GetComments: %v", err)
@@ -120,7 +112,6 @@ func TestPostService_UpdateComment(t *testing.T) {
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user, post, and comment
 	userID := utils.NewID()
 	postID := utils.NewID()
 	user := models.User{ID: userID, Username: "svcupdcommentuser", Email: "svcupdcomment@test.com"}
@@ -130,7 +121,6 @@ func TestPostService_UpdateComment(t *testing.T) {
 
 	comment, _ := service.CreateComment("original", userID, postID, nil)
 
-	// Update comment
 	updated, err := service.UpdateComment(comment.ID, models.UpdateCommentInput{Content: "updated"}, userID)
 	if err != nil {
 		t.Fatalf("UpdateComment: %v", err)
@@ -145,7 +135,6 @@ func TestPostService_DeleteComment(t *testing.T) {
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user, post, and comment
 	userID := utils.NewID()
 	postID := utils.NewID()
 	user := models.User{ID: userID, Username: "svcdelcommentuser", Email: "svcdelcomment@test.com"}
@@ -155,7 +144,6 @@ func TestPostService_DeleteComment(t *testing.T) {
 
 	comment, _ := service.CreateComment("to delete", userID, postID, nil)
 
-	// Delete comment
 	err := service.DeleteComment(comment.ID, userID)
 	if err != nil {
 		t.Fatalf("DeleteComment: %v", err)
@@ -178,7 +166,6 @@ func TestPostService_ReactToPost(t *testing.T) {
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user and post
 	userID := utils.NewID()
 	postID := utils.NewID()
 	user := models.User{ID: userID, Username: "svcreactuser", Email: "svcreact@test.com"}
@@ -186,7 +173,6 @@ func TestPostService_ReactToPost(t *testing.T) {
 	db.Create(&user)
 	repo.Create(&post)
 
-	// Like
 	value, _, err := service.ReactToPost(userID, postID, 1)
 	if err != nil {
 		t.Fatalf("ReactToPost like: %v", err)
@@ -210,7 +196,6 @@ func TestPostService_ReactToComment(t *testing.T) {
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	// Create test user, post, and comment
 	userID := utils.NewID()
 	postID := utils.NewID()
 	commentID := utils.NewID()
@@ -221,7 +206,6 @@ func TestPostService_ReactToComment(t *testing.T) {
 	repo.Create(&post)
 	repo.CreateComment(&comment)
 
-	// Like comment
 	value, _, err := service.ReactToComment(userID, commentID, 1)
 	if err != nil {
 		t.Fatalf("ReactToComment: %v", err)
@@ -236,12 +220,10 @@ func TestUserService_GetUserByUsername(t *testing.T) {
 	repo := repositories.NewUserRepository(db)
 	service := services.NewUserService(repo)
 
-	// Create test user
 	userID := utils.NewID()
 	user := models.User{ID: userID, Username: "svcusernameuser", Email: "svcusername@test.com"}
 	db.Create(&user)
 
-	// Get by username
 	got, err := service.GetUserByUsername("svcusernameuser")
 	if err != nil {
 		t.Fatalf("GetUserByUsername: %v", err)
@@ -266,7 +248,6 @@ func TestFriendService_CountFollowers(t *testing.T) {
 	_, db := SetupTestEnv()
 	service := &services.FriendService{DB: db}
 
-	// Create test users
 	user1ID := utils.NewID()
 	user2ID := utils.NewID()
 	targetID := utils.NewID()
@@ -277,11 +258,9 @@ func TestFriendService_CountFollowers(t *testing.T) {
 	db.Create(&user2)
 	db.Create(&user3)
 
-	// Create follows
 	service.Follow(user1ID, targetID)
 	service.Follow(user2ID, targetID)
 
-	// Count followers
 	count, err := service.CountFollowers(targetID)
 	if err != nil {
 		t.Fatalf("CountFollowers: %v", err)
@@ -295,7 +274,6 @@ func TestFriendService_CountFollowing(t *testing.T) {
 	_, db := SetupTestEnv()
 	service := &services.FriendService{DB: db}
 
-	// Create test users
 	user1ID := utils.NewID()
 	user2ID := utils.NewID()
 	user3ID := utils.NewID()
@@ -306,11 +284,9 @@ func TestFriendService_CountFollowing(t *testing.T) {
 	db.Create(&user2)
 	db.Create(&user3)
 
-	// Create follows
 	service.Follow(user1ID, user2ID)
 	service.Follow(user1ID, user3ID)
 
-	// Count following
 	count, err := service.CountFollowing(user1ID)
 	if err != nil {
 		t.Fatalf("CountFollowing: %v", err)
@@ -324,7 +300,6 @@ func TestFriendService_AreFriends(t *testing.T) {
 	_, db := SetupTestEnv()
 	service := &services.FriendService{DB: db}
 
-	// Create test users
 	user1ID := utils.NewID()
 	user2ID := utils.NewID()
 	user1 := models.User{ID: user1ID, Username: "friendcheck1", Email: "fc1@test.com"}
@@ -332,7 +307,6 @@ func TestFriendService_AreFriends(t *testing.T) {
 	db.Create(&user1)
 	db.Create(&user2)
 
-	// Not friends initially
 	areFriends, err := service.AreFriends(user1ID, user2ID)
 	if err != nil {
 		t.Fatalf("AreFriends: %v", err)
@@ -341,11 +315,9 @@ func TestFriendService_AreFriends(t *testing.T) {
 		t.Fatal("expected not friends initially")
 	}
 
-	// Make friends
 	service.SendRequest(user1ID, user2ID)
 	service.AcceptRequest(user2ID, user1ID)
 
-	// Now friends
 	areFriends, err = service.AreFriends(user1ID, user2ID)
 	if err != nil {
 		t.Fatalf("AreFriends after accept: %v", err)

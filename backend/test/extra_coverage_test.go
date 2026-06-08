@@ -6,8 +6,6 @@ import (
 	"testing"
 )
 
-// --- Post update and delete ---
-
 func TestPost_UpdatePost(t *testing.T) {
 	router, _ := SetupTestEnv()
 	author := registerAndLogin(t, router, "upd-a", "upd-a@test.com", "StrongPass123!")
@@ -80,8 +78,6 @@ func TestPost_NotFound(t *testing.T) {
 	}
 }
 
-// --- Comments ---
-
 func TestComment_CreateAndGet(t *testing.T) {
 	router, _ := SetupTestEnv()
 	author := registerAndLogin(t, router, "cmt-a", "cmt-a@test.com", "StrongPass123!")
@@ -118,8 +114,6 @@ func TestComment_EmptyContentFails(t *testing.T) {
 		t.Fatalf("empty comment: expected 400, got %d", w.Code)
 	}
 }
-
-// --- User operations ---
 
 func TestUser_GetUser(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -162,8 +156,6 @@ func TestUser_UpdateOtherUserFails(t *testing.T) {
 	}
 }
 
-// --- Trends ---
-
 func TestTrends_ReturnsData(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "trend-a", "trend-a@test.com", "StrongPass123!")
@@ -175,8 +167,6 @@ func TestTrends_ReturnsData(t *testing.T) {
 		t.Fatalf("trends: expected 200, got %d", w.Code)
 	}
 }
-
-// --- Posts by user ---
 
 func TestPost_GetByUserExtra(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -197,8 +187,6 @@ func TestPost_GetByUserExtra(t *testing.T) {
 	}
 }
 
-// --- Reactions ---
-
 func TestPost_LikeAndUnlike(t *testing.T) {
 	router, _ := SetupTestEnv()
 	author := registerAndLogin(t, router, "react-a", "react-a@test.com", "StrongPass123!")
@@ -206,7 +194,6 @@ func TestPost_LikeAndUnlike(t *testing.T) {
 
 	postID := createPost(t, router, author.Token, "likeable post")
 
-	// Like
 	w := authedRequest(t, router, "POST", "/api/posts/"+postID+"/react", liker.Token, `{"value":1}`)
 	if w.Code != http.StatusOK {
 		t.Fatalf("like: expected 200, got %d - body: %s", w.Code, w.Body.String())
@@ -242,8 +229,6 @@ func TestPost_InvalidReactionValue(t *testing.T) {
 		t.Fatalf("invalid reaction: expected 400, got %d", w.Code)
 	}
 }
-
-// --- Pagination ---
 
 func TestPost_Pagination(t *testing.T) {
 	router, _ := SetupTestEnv()
