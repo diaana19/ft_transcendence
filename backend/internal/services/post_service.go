@@ -33,6 +33,10 @@ func (s *PostService) GetPostsByTag(tag string, limit, offset int) ([]models.Pos
 	return s.repo.GetByTag(tag, limit, offset)
 }
 
+func (s *PostService) GetRepliedPosts(userID string, limit, offset int) ([]models.Post, int64, error) {
+	return s.repo.GetRepliedByUser(userID, limit, offset)
+}
+
 func (s *PostService) CreatePost(content, authorID string, media *string, mediaMIME *string) (*models.Post, error) {
 	if content == "" {
 		return nil, errors.New("content is required")

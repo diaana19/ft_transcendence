@@ -89,26 +89,31 @@ func parseLimitOffset(c *gin.Context) (limit, offset int) {
 }
 
 // GetPosts godoc
-// @Summary   List posts (limit/offset pagination), optionally filtered by hashtag
+// @Summary   List posts (limit/offset pagination), optionally filtered by hashtag or replied-to
 // @Tags      posts
 // @Produce   json
-// @Param     tag    query string false "filter to posts carrying this hashtag (with or without #)"
-// @Param     limit  query int    false "max items to return (default 10, max 50)"
-// @Param     offset query int    false "items to skip (default 0)"
+// @Param     tag       query string false "filter to posts carrying this hashtag (with or without #)"
+// @Param     repliedBy query string false "list only posts this user id has replied to"
+// @Param     limit     query int    false "max items to return (default 10, max 50)"
+// @Param     offset    query int    false "items to skip (default 0)"
 // @Success   200 {object} map[string]interface{}
 // @Failure   500 {object} map[string]string
 // @Router    /posts [get]
 func (pc *PostController) GetPosts(c *gin.Context) {
 	limit, offset := parseLimitOffset(c)
+	userID, _ := c.Get("user_id")
 
 	var (
 		posts []models.Post
 		total int64
 		err   error
 	)
-	if tag := utils.NormalizeHashtag(c.Query("tag")); tag != "" {
-		posts, total, err = pc.postService.GetPostsByTag(tag, limit, offset)
-	} else {
+	switch {
+	case c.Query("repliedBy") != "":
+		posts, total, err = pc.postService.GetRepliedPosts(c.Query("repliedBy"), limit, offset)
+	case utils.NormalizeHashtag(c.Query("tag")) != "":
+		posts, total, err = pc.postService.GetPostsByTag(utils.NormalizeHashtag(c.Query("tag")), limit, offset)
+	default:
 		posts, total, err = pc.postService.GetPosts(limit, offset)
 	}
 	if err != nil {
@@ -116,7 +121,6 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 		return
 	}
 
-	userID, _ := c.Get("user_id")
 	responses := make([]models.PostResponse, len(posts))
 	for i, p := range posts {
 		resp := p.ToResponse()
