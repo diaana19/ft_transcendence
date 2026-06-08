@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	sqlFriendBidirectional = "((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)) AND status = ?"
-	sqlFriendsMutualJoin   = "JOIN friends ON (friends.user_id = users.id AND friends.friend_id = ?) " +
+	sqlFriendBidirectional         = "((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)) AND status = ?"
+	sqlFriendBidirectionalStatuses = "((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)) AND status IN (?)"
+	sqlFriendsMutualJoin           = "JOIN friends ON (friends.user_id = users.id AND friends.friend_id = ?) " +
 		"OR (friends.friend_id = users.id AND friends.user_id = ?)"
 )
 
@@ -108,12 +109,14 @@ func (s *FriendService) Unfollow(userID, targetID string) error {
 	if result.RowsAffected == 0 {
 		return errors.New("not following this user")
 	}
-	return nil
+	return s.DB.
+		Where(sqlFriendBidirectionalStatuses, userID, targetID, targetID, userID, []string{"pending", "accepted"}).
+		Delete(&models.Friend{}).Error
 }
 
 func (s *FriendService) RemoveFriend(userID, targetID string) error {
 	result := s.DB.
-		Where(sqlFriendBidirectional, userID, targetID, targetID, userID, "accepted").
+		Where(sqlFriendBidirectionalStatuses, userID, targetID, targetID, userID, []string{"pending", "accepted"}).
 		Delete(&models.Friend{})
 	if result.Error != nil {
 		return result.Error
