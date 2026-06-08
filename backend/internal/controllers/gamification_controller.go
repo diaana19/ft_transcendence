@@ -44,6 +44,14 @@ func (gc *GamificationController) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, stats)
 }
 
+// GetLeaderboard godoc
+// @Summary   Global gamification leaderboard
+// @Tags      gamification
+// @Security  BearerAuth
+// @Produce   json
+// @Success   200 {array} services.LeaderboardEntry
+// @Failure   500 {object} map[string]string
+// @Router    /leaderboard [get]
 func (gc *GamificationController) GetLeaderboard(c *gin.Context) {
 	entries, err := gc.service.Leaderboard()
 	if err != nil {
