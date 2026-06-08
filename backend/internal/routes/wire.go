@@ -36,6 +36,7 @@ func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 
 	authService := services.NewAuthService(userRepo)
 	twoFAService := services.NewTwoFAService(userRepo)
+	mailService := services.NewMailService()
 	userService := services.NewUserService(userRepo)
 	friendService := &services.FriendService{DB: pdb}
 	postService := services.NewPostService(postRepo)
@@ -49,14 +50,14 @@ func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 	chatWS := socket.NewChatHandler(wsManager, rdb, notifService, msgRepo, userRepo, fileRepo, cfg.FrontendURL)
 
 	return &Controllers{
-		Auth:         controllers.NewAuthController(authService, twoFAService, rdb),
+		Auth:         controllers.NewAuthController(authService, twoFAService, mailService, rdb),
 		TwoFA:        controllers.NewTwoFAController(twoFAService),
-		User:         controllers.NewUserController(userService, friendService),
+		User:         controllers.NewUserController(userService, friendService, mailService),
 		Friend:       &controllers.FriendController{Service: friendService, NotificationService: notifService},
 		Post:         controllers.NewPostController(postService, notifService, uploadService),
 		Notification: controllers.NewNotificationController(notifService),
 		Upload:       &controllers.UploadController{Service: uploadService, FriendService: friendService},
-		GDPR:         controllers.NewGDPRController(gdprService),
+		GDPR:         controllers.NewGDPRController(gdprService, mailService),
 		OAuth:        controllers.NewOAuthController(oauthService, cfg),
 		Gamification: controllers.NewGamificationController(gamificationService),
 		ChatWS:       chatWS,

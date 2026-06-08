@@ -177,3 +177,15 @@ func (m *mockUserRepository) ClearTwoFA(userID string) error {
 	user.TwoFAEnabled = false
 	return nil
 }
+
+func (m *mockUserRepository) UpdatePassword(userID, hashedPassword string) error {
+	if m.err != nil {
+		return m.err
+	}
+	user, ok := m.users[userID]
+	if !ok {
+		return errors.New("record not found")
+	}
+	user.Password = &hashedPassword
+	return nil
+}

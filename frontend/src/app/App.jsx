@@ -4,6 +4,7 @@ import RequireAuth from '../components/common/RequireAuth'
 import PostPage from '../features/posts/PostPage.jsx'
 import RegisterForm from '../features/auth/RegisterForm.jsx'
 import LoginForm from '../features/auth/LoginForm.jsx'
+import ForgotPasswordForm from '../features/auth/ForgotPasswordForm.jsx'
 import TwoFAVerify from '../features/auth/TwoFAVerify.jsx'
 import TwoFASetup from '../features/auth/TwoFASetup.jsx'
 import Profile from '../features/user/Profile.jsx'
@@ -32,6 +33,7 @@ function App() {
                 </Route>
                 <Route path="/register" element={<RegisterForm />} />
                 <Route path="/login" element={<LoginForm />} />
+                <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                 <Route path="/login/2fa" element={<TwoFAVerify />} />
 				<Route path="/terms" element={<TermsOfService />} />
 				<Route path="/privacy" element={<PrivacyPolicy />} />

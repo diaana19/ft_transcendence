@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -23,17 +24,20 @@ type LoginInput struct {
 type AuthController struct {
 	authService  *services.AuthService
 	twoFAService *services.TwoFAService
+	mailService  *services.MailService
 	rdb          *redis.Client
 }
 
 func NewAuthController(
 	authService *services.AuthService,
 	twoFAService *services.TwoFAService,
+	mailService *services.MailService,
 	rdb *redis.Client,
 ) *AuthController {
 	return &AuthController{
 		authService:  authService,
 		twoFAService: twoFAService,
+		mailService:  mailService,
 		rdb:          rdb,
 	}
 }
@@ -108,6 +112,20 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
+	}
+
+	if response.Email != "" {
+		go func(email, username string) {
+			subject := "Welcome to Synk"
+			body := fmt.Sprintf(
+				"Hi %s,\n\nYour Synk account has been created successfully. Welcome aboard!\n\n"+
+					"If you didn't create this account, please contact us immediately.\n",
+				username,
+			)
+			if err := ac.mailService.SendMail([]string{email}, subject, body); err != nil {
+				log.Printf("welcome email failed for %s: %v", email, err)
+			}
+		}(response.Email, response.Username)
 	}
 
 	c.JSON(200, response)
@@ -208,6 +226,58 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": newToken})
+}
+
+type ForgotPasswordInput struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+// ForgotPassword godoc
+// @Summary   Request a password reset
+// @Description Generate a new password for the account with the given email and send it to that address. Always returns 200 so it can't be used to discover which emails are registered.
+// @Tags      auth
+// @Accept    json
+// @Produce   json
+// @Param     body body ForgotPasswordInput true "Account email"
+// @Success   200 {object} map[string]string
+// @Failure   400 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /auth/forgot-password [post]
+func (ac *AuthController) ForgotPassword(c *gin.Context) {
+	var input ForgotPasswordInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "a valid email is required"})
+		return
+	}
+
+	const genericMsg = "if an account exists for that email, a new password has been sent"
+
+	user, err := ac.authService.GetUserByEmail(input.Email)
+	if err != nil {
+		log.Printf("forgot-password: no account for email=%s ip=%s", input.Email, c.ClientIP())
+		c.JSON(http.StatusOK, gin.H{"message": genericMsg})
+		return
+	}
+
+	deliver := func(newPassword string) error {
+		subject := "Your new ft_transcendence password"
+		body := fmt.Sprintf(
+			"Hi %s,\n\nYou requested a password reset. Your new password is:\n\n    %s\n\n"+
+				"Please log in and change it from your profile as soon as possible.\n\n"+
+				"If you didn't request this, change your password immediately.\n",
+			user.Username, newPassword,
+		)
+		return ac.mailService.SendMail([]string{user.Email}, subject, body)
+	}
+
+	if err := ac.authService.ResetPassword(user.ID, deliver); err != nil {
+		log.Printf("forgot-password: reset failed for userID=%s: %v", user.ID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not process password reset, please try again later"})
+		return
+	}
+
+	log.Printf("forgot-password: new password sent to userID=%s email=%s", user.ID, user.Email)
+	c.JSON(http.StatusOK, gin.H{"message": genericMsg})
 }
 
 // Me returns the authenticated user's profile. Used by the SPA on mount to

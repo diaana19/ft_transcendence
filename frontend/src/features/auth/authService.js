@@ -18,6 +18,13 @@ export async function login(identifier, password) {
     return response.data
 }
 
+export async function forgotPassword(email) {
+    const response = await api.post('/api/auth/forgot-password', {
+        email
+    })
+    return response.data
+}
+
 export async function setupTwoFA() {
     const response = await api.post('/api/2fa/setup')
     return response.data

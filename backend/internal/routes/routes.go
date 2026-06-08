@@ -53,6 +53,7 @@ func registerPublicAuthRoutes(api *gin.RouterGroup, c *controllers.AuthControlle
 	auth.POST("/login", c.LoginUser)
 	auth.POST("/refresh", c.RefreshToken)
 	auth.POST("/2fa/verify", c.Verify2FA)
+	auth.POST("/forgot-password", c.ForgotPassword)
 }
 
 func registerOAuthRoutes(api *gin.RouterGroup, c *controllers.OAuthController) {
