@@ -84,7 +84,7 @@ export default function MessagesPage() {
 	return (
 		<div className="flex h-screen overflow-hidden">
 
-			{/* Left — user list: oculto en móvil si hay chat abierto */}
+		
 			<div className={`${peerId ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col`}
 				style={{ borderRight: '1px solid #ede8fd', background: 'linear-gradient(135deg, #faf5ff 0%, #eef2ff 100%)' }}>
 				<div className="px-4 py-4" style={{ borderBottom: '1px solid #ede8fd' }}>
@@ -130,11 +130,9 @@ export default function MessagesPage() {
 				</div>
 			</div>
 
-			{/* Right — chat: oculto en móvil si no hay chat abierto */}
 			<div className={`${peerId ? 'flex' : 'hidden md:flex'} flex-1 flex-col`} style={{ background: '#faf5ff' }}>
 				{peerId && selectedUser ? (
 					<>
-						{/* Chat header con botón back en móvil */}
 						<div className="px-4 py-3 flex items-center gap-3 bg-white" style={{ borderBottom: '1px solid #ede8fd' }}>
 							<button
 								onClick={() => navigate('/messages')}
@@ -160,7 +158,6 @@ export default function MessagesPage() {
 							</div>
 						</div>
 
-						{/* Messages */}
 						<div className="flex-1 overflow-y-auto">
 							{fetching ? (
 								<p className="text-center py-8 text-sm" style={{ color: '#afa9ec' }}>Loading...</p>
@@ -170,7 +167,6 @@ export default function MessagesPage() {
 							<div ref={lastMessageRef} />
 						</div>
 
-						{/* Input */}
 						<div style={{ borderTop: '1px solid #ede8fd', background: 'white' }}>
 							<MessageInput onSend={handleSend} loading={false} />
 						</div>

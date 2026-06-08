@@ -34,17 +34,17 @@ function Modal({
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center">
-			{/* Overlay */}
+			
 			<div
 				className="absolute inset-0 backdrop-blur-sm"
 				style={{ background: 'linear-gradient(135deg, #faf5ff80 10%, #eef2ff80 60%, #f5f7fb80 100%)' }}
 				onClick={onClose}
 			/>
 
-			{/* Modal box */}
+			
 			<div className={`relative z-10 bg-white rounded-2xl w-full ${sizes[size]} shadow-xl overflow-hidden mx-4`}>
 
-				{/* Header */}
+			
 				<div className="flex items-center gap-4 px-4 py-3 border-b border-gray-200">
 					<button
 						onClick={onClose}
@@ -55,12 +55,12 @@ function Modal({
 					<h3 className="text-lg font-bold flex-1 text-gray-900">{title}</h3>
 				</div>
 
-				{/* Content */}
+				
 				<div className="px-4 py-4">
 					{children}
 				</div>
 
-				{/* Footer */}
+				
 				{onConfirm && (
 					<div className="flex justify-end gap-2 px-4 pb-4">
 						<button

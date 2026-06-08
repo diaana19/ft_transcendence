@@ -74,7 +74,7 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
 	}
   return (
     <div className="flex gap-3 mb-3">
-      {/* Avatar */}
+
       <div className="flex flex-col items-center">
         <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold flex-shrink-0">
           {comment.author?.avatar ? (

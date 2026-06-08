@@ -60,7 +60,6 @@ export default function RightSidebar() {
                       border-r border-transparent
                       px-4 py-6 hidden lg:block">
 
-      {/* Trends */}
       <div className="bg-white/60 border border-gray-200 rounded-xl p-4 mb-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-2">
           Trends
@@ -68,7 +67,6 @@ export default function RightSidebar() {
         <Trends />
       </div>
 
-      {/* Placeholder card 2 */}
       <div className="bg-white/60 border border-gray-200 rounded-xl p-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-2">
           Suggestions

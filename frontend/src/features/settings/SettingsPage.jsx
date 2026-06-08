@@ -43,12 +43,10 @@ export default function SettingsPage() {
 
 	return (
 		<div className="max-w-2xl mx-auto">
-			{/* Header */}
 			<div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
 				<h1 className="text-xl font-bold">Settings</h1>
 			</div>
 
-			{/* Account section */}
 			<div className="px-4 py-6 border-b border-gray-200">
 				<h2 className="text-base font-bold text-gray-900 mb-1">Account</h2>
 				<p className="text-sm text-gray-500 mb-4">Manage your account information</p>
@@ -75,7 +73,6 @@ export default function SettingsPage() {
 				</div>
 			</div>
 
-			{/* Security section */}
 			<div className="px-4 py-6 border-b border-gray-200">
 				<h2 className="text-base font-bold text-gray-900 mb-1">Security</h2>
 				<p className="text-sm text-gray-500 mb-4">Manage your security settings</p>
@@ -94,7 +91,6 @@ export default function SettingsPage() {
 				</div>
 			</div>
 
-			{/* GDPR section */}
 			<div className="px-4 py-6 border-b border-gray-200">
 				<h2 className="text-base font-bold text-gray-900 mb-1">Your data</h2>
 				<p className="text-sm text-gray-500 mb-4">Manage your personal data</p>
@@ -121,7 +117,6 @@ export default function SettingsPage() {
 				</div>
 			</div>
 
-			{/* Danger zone */}
 			<div className="px-4 py-6">
 				<h2 className="text-base font-bold text-red-500 mb-1">Danger zone</h2>
 				<p className="text-sm text-gray-500 mb-4">These actions are permanent and cannot be undone</p>
@@ -140,7 +135,6 @@ export default function SettingsPage() {
 				</div>
 			</div>
 
-			{/* Delete Modal */}
 			<Modal
 				isOpen={showDeleteModal}
 				onClose={() => { setShowDeleteModal(false); setPassword(''); setError(null) }}

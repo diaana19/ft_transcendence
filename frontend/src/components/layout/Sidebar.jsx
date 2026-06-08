@@ -28,9 +28,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Sidebar desktop — oculta en móvil */}
       <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-transparent px-4 py-6">
-        {/* Logo */}
         <div className="mb-8 px-2 flex items-center gap-3">
           <img src="/logo.png" alt="Synk logo" className="w-10 h-10 object-contain" />
           <div className="flex flex-col leading-tight">
@@ -39,7 +37,6 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="space-y-2">
           <NavLink to="/" className={linkClass}>
             <HomeIcon className="w-5 h-5" />
@@ -66,7 +63,6 @@ export default function Sidebar() {
           </NavLink>
         </nav>
 
-        {/* Bottom user card */}
         {user?.userId && (
           <div className="absolute bottom-6 left-0 w-full px-4">
             <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
@@ -85,7 +81,6 @@ export default function Sidebar() {
         )}
       </aside>
 
-      {/* Bottom bar móvil — solo en móvil */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center py-2 z-50">
         <NavLink to="/" className={({ isActive }) => `flex flex-col items-center p-2 ${isActive ? 'text-blue-400' : 'text-gray-500'}`}>
           <HomeIcon className="w-6 h-6" />
@@ -93,27 +88,7 @@ export default function Sidebar() {
         <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center p-2 ${isActive ? 'text-blue-400' : 'text-gray-500'}`}>
           <UserIcon className="w-6 h-6" />
         </NavLink>
-
-         {/* <NavLink to="/comunities" className={linkClass}>
-           <SparklesIcon className="w-5 h-5" />
-           <span>Comunities</span>
-         </NavLink>
-
-         <NavLink to="/notifications" className={linkClass}>
-           <BellIcon className="w-5 h-5" />
-           <span>Notifications</span>
-           <NotificationBell />
-         </NavLink>
-
-         <NavLink to="/messages" className={linkClass}>
-           <EnvelopeIcon className="w-5 h-5" />
-           <span>Messages</span>
-         </NavLink>
-
-         <NavLink to="/help" className={linkClass}>
-           <QuestionMarkCircleIcon className="w-5 h-5" />
-           <span>Help</span>
-         </NavLink> */}
+        
         {user?.userId && (
           <NavLink to="/notifications" className={({ isActive }) => `flex flex-col items-center p-2 ${isActive ? 'text-blue-400' : 'text-gray-500'}`}>
             <BellIcon className="w-6 h-6" />

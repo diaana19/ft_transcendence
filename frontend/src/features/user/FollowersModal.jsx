@@ -22,13 +22,11 @@ export default function FollowersModal({ userId, type, onClose }) {
       <div className="relative z-10 bg-white rounded-2xl w-full max-w-sm overflow-hidden"
         style={{ border: '2px solid #ede8fd', boxShadow: '0 8px 32px rgba(167,139,250,0.15)', maxHeight: '70vh' }}>
 
-        {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: '#ede8fd' }}>
           <button onClick={onClose} className="rounded-full p-1 hover:bg-[#faf8f5]" style={{ color: '#534ab7' }}>✕</button>
           <h3 className="font-bold text-base capitalize" style={{ color: '#2c2c2a' }}>{type}</h3>
         </div>
 
-        {/* List */}
         <div className="overflow-y-auto" style={{ maxHeight: 'calc(70vh - 56px)' }}>
           {loading ? (
             <p className="text-center py-8 text-sm" style={{ color: '#b4b2a9' }}>Loading...</p>

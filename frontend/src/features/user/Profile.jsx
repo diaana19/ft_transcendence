@@ -135,7 +135,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-transparent">
-      {/* Banner */}
+      
       <div className="h-56 w-full overflow-hidden" style={{ background: 'linear-gradient(120deg, #fde8f0 0%, #ede8fd 50%, #e8f0fd 100%)' }}>
         {user.wallpaper && (
           <img src={user.wallpaper} alt="banner" className="w-full h-full object-cover" />

@@ -51,7 +51,6 @@ function CommentForm({ postId, onCommentAdded }) {
 
   return (
     <div className="flex gap-3 px-4 py-3" style={{ borderBottom: '0.5px solid #ede8fd' }}>
-      {/* Avatar */}
 
       <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-semibold flex-shrink-0" style={{ background: '#ede8fd', color: '#534ab7', fontSize: '11px' }}>
         {user?.avatar ? (

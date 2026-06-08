@@ -120,7 +120,6 @@ function TagFeed() {
         ))
       )}
 
-      {/* Infinite-scroll trigger + status */}
       {!fetching && hasMore && <div ref={sentinelRef} className="h-1" />}
       {loadingMore && <p className="text-center text-gray-400 py-4">Loading more...</p>}
       {!fetching && !hasMore && posts.length > 0 && (
