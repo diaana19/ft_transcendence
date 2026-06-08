@@ -9,9 +9,15 @@ import (
 )
 
 const (
-	sqlFriendBidirectional         = "((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)) AND status = ?"
-	sqlFriendBidirectionalStatuses = "((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)) AND status IN (?)"
-	sqlFriendsMutualJoin           = "JOIN friends ON (friends.user_id = users.id AND friends.friend_id = ?) " +
+	statusPending  = "pending"
+	statusAccepted = "accepted"
+	statusFollow   = "follow"
+
+	sqlFriendBidirectional = "((user_id = ? AND friend_id = ?) OR " +
+		"(user_id = ? AND friend_id = ?)) AND status = ?"
+	sqlFriendBidirectionalStatuses = "((user_id = ? AND friend_id = ?) OR " +
+		"(user_id = ? AND friend_id = ?)) AND status IN (?)"
+	sqlFriendsMutualJoin = "JOIN friends ON (friends.user_id = users.id AND friends.friend_id = ?) " +
 		"OR (friends.friend_id = users.id AND friends.user_id = ?)"
 )
 
@@ -29,7 +35,7 @@ func (s *FriendService) SendRequest(userID, targetID string) error {
 	}
 	var existing models.Friend
 	err := s.DB.
-		Where("user_id = ? AND friend_id = ? AND status IN (?)", userID, targetID, []string{"pending", "accepted"}).
+		Where("user_id = ? AND friend_id = ? AND status IN (?)", userID, targetID, []string{statusPending, statusAccepted}).
 		First(&existing).Error
 	if err == nil {
 		return errors.New("relationship already exists")
@@ -37,7 +43,7 @@ func (s *FriendService) SendRequest(userID, targetID string) error {
 	friend := models.Friend{
 		UserID:   userID,
 		FriendID: targetID,
-		Status:   "pending",
+		Status:   statusPending,
 	}
 	return s.DB.Create(&friend).Error
 }
@@ -50,7 +56,7 @@ func (s *FriendService) AcceptRequest(userID, requesterID string) error {
 	var friend models.Friend
 	err := s.DB.Where(
 		"user_id = ? AND friend_id = ? AND status = ?",
-		requesterID, userID, "pending",
+		requesterID, userID, statusPending,
 	).First(&friend).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -59,7 +65,7 @@ func (s *FriendService) AcceptRequest(userID, requesterID string) error {
 		return err
 	}
 
-	friend.Status = "accepted"
+	friend.Status = statusAccepted
 	return s.DB.Save(&friend).Error
 }
 
@@ -73,7 +79,7 @@ func (s *FriendService) Follow(userID, targetID string) error {
 	}
 	var existing models.Friend
 	err := s.DB.
-		Where("user_id = ? AND friend_id = ? AND status = ?", userID, targetID, "follow").
+		Where("user_id = ? AND friend_id = ? AND status = ?", userID, targetID, statusFollow).
 		First(&existing).Error
 	if err == nil {
 		return errors.New("relationship already exists")
@@ -81,7 +87,7 @@ func (s *FriendService) Follow(userID, targetID string) error {
 	follow := models.Friend{
 		UserID:   userID,
 		FriendID: targetID,
-		Status:   "follow",
+		Status:   statusFollow,
 	}
 
 	return s.DB.Create(&follow).Error
@@ -89,19 +95,19 @@ func (s *FriendService) Follow(userID, targetID string) error {
 
 func (s *FriendService) CountFollowers(userID string) (int64, error) {
 	var count int64
-	err := s.DB.Model(&models.Friend{}).Where("friend_id = ? AND status = ?", userID, "follow").Count(&count).Error
+	err := s.DB.Model(&models.Friend{}).Where("friend_id = ? AND status = ?", userID, statusFollow).Count(&count).Error
 	return count, err
 }
 
 func (s *FriendService) CountFollowing(userID string) (int64, error) {
 	var count int64
-	err := s.DB.Model(&models.Friend{}).Where("user_id = ? AND status = ?", userID, "follow").Count(&count).Error
+	err := s.DB.Model(&models.Friend{}).Where("user_id = ? AND status = ?", userID, statusFollow).Count(&count).Error
 	return count, err
 }
 
 func (s *FriendService) Unfollow(userID, targetID string) error {
 	result := s.DB.
-		Where("user_id = ? AND friend_id = ? AND status = ?", userID, targetID, "follow").
+		Where("user_id = ? AND friend_id = ? AND status = ?", userID, targetID, statusFollow).
 		Delete(&models.Friend{})
 	if result.Error != nil {
 		return result.Error
@@ -110,13 +116,13 @@ func (s *FriendService) Unfollow(userID, targetID string) error {
 		return errors.New("not following this user")
 	}
 	return s.DB.
-		Where(sqlFriendBidirectionalStatuses, userID, targetID, targetID, userID, []string{"pending", "accepted"}).
+		Where(sqlFriendBidirectionalStatuses, userID, targetID, targetID, userID, []string{statusPending, statusAccepted}).
 		Delete(&models.Friend{}).Error
 }
 
 func (s *FriendService) RemoveFriend(userID, targetID string) error {
 	result := s.DB.
-		Where(sqlFriendBidirectionalStatuses, userID, targetID, targetID, userID, []string{"pending", "accepted"}).
+		Where(sqlFriendBidirectionalStatuses, userID, targetID, targetID, userID, []string{statusPending, statusAccepted}).
 		Delete(&models.Friend{})
 	if result.Error != nil {
 		return result.Error
@@ -130,7 +136,7 @@ func (s *FriendService) RemoveFriend(userID, targetID string) error {
 func (s *FriendService) RejectRequest(userID, requesterID string) error {
 	result := s.DB.Where(
 		"user_id = ? AND friend_id = ? AND status = ?",
-		requesterID, userID, "pending",
+		requesterID, userID, statusPending,
 	).Delete(&models.Friend{})
 	if result.Error != nil {
 		return result.Error
@@ -145,7 +151,7 @@ func (s *FriendService) GetFollowers(userID string) ([]models.User, error) {
 	var followers []models.User
 	err := s.DB.
 		Joins("JOIN friends ON friends.user_id = users.id").
-		Where("friends.friend_id = ? AND friends.status = ?", userID, "follow").
+		Where("friends.friend_id = ? AND friends.status = ?", userID, statusFollow).
 		Find(&followers).Error
 	return followers, err
 }
@@ -154,7 +160,7 @@ func (s *FriendService) GetFollowing(userID string) ([]models.User, error) {
 	var following []models.User
 	err := s.DB.
 		Joins("JOIN friends ON friends.friend_id = users.id").
-		Where("friends.user_id = ? AND friends.status = ?", userID, "follow").
+		Where("friends.user_id = ? AND friends.status = ?", userID, statusFollow).
 		Find(&following).Error
 	return following, err
 }
@@ -163,7 +169,7 @@ func (s *FriendService) GetFriends(userID string) ([]models.User, error) {
 	var friends []models.User
 	err := s.DB.
 		Joins(sqlFriendsMutualJoin, userID, userID).
-		Where("friends.status = ?", "accepted").
+		Where("friends.status = ?", statusAccepted).
 		Find(&friends).Error
 	return friends, err
 }
@@ -171,7 +177,7 @@ func (s *FriendService) GetFriends(userID string) ([]models.User, error) {
 func (s *FriendService) AreFriends(userID1, userID2 string) (bool, error) {
 	var count int64
 	err := s.DB.Model(&models.Friend{}).
-		Where(sqlFriendBidirectional, userID1, userID2, userID2, userID1, "accepted").
+		Where(sqlFriendBidirectional, userID1, userID2, userID2, userID1, statusAccepted).
 		Count(&count).Error
 	return count > 0, err
 }

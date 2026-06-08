@@ -22,7 +22,11 @@ type DeleteAccountInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func NewUserController(userService *services.UserService, friendService *services.FriendService, mailService *services.MailService) *UserController {
+func NewUserController(
+	userService *services.UserService,
+	friendService *services.FriendService,
+	mailService *services.MailService,
+) *UserController {
 	return &UserController{userService: userService, friendService: friendService, mailService: mailService}
 }
 

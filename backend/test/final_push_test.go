@@ -177,7 +177,7 @@ func TestGamificationService_LeaderboardErrorPath(t *testing.T) {
 	}
 }
 
-func TestSocket_PublishToRoomErrorPath(t *testing.T) {
+func TestSocket_PublishToRoomErrorPath(_ *testing.T) {
 }
 
 func TestUtils_GenerateJWTErrorPath(t *testing.T) {

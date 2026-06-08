@@ -1,6 +1,7 @@
 package test
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -128,7 +129,7 @@ func TestHashtag_NormalizeHashtagEdgeCases(t *testing.T) {
 
 func TestID_NewIDUniqueness(t *testing.T) {
 	ids := make(map[string]bool)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		id := utils.NewID()
 		if id == "" {
 			t.Fatal("expected non-empty ID")
@@ -210,11 +211,11 @@ func TestCheckUsernameFormat_Comprehensive(t *testing.T) {
 		}
 	}
 
-	longUsername := ""
-	for i := 0; i < 50; i++ {
-		longUsername += "a"
+	var longUsername strings.Builder
+	for range 50 {
+		longUsername.WriteString("a")
 	}
-	if utils.CheckUsernameFormat(longUsername) {
+	if utils.CheckUsernameFormat(longUsername.String()) {
 		t.Fatal("expected long username to be invalid")
 	}
 }

@@ -110,14 +110,14 @@ func (s *AuthService) ResetPassword(userID string, deliver func(newPassword stri
 	if err != nil {
 		return fmt.Errorf("generate password: %w", err)
 	}
-	if err := deliver(newPassword); err != nil {
+	if err = deliver(newPassword); err != nil {
 		return fmt.Errorf("deliver password: %w", err)
 	}
 	hashed, err := utils.HashString(newPassword)
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
 	}
-	if err := s.repo.UpdatePassword(userID, hashed); err != nil {
+	if err = s.repo.UpdatePassword(userID, hashed); err != nil {
 		return fmt.Errorf("persist password: %w", err)
 	}
 	return nil

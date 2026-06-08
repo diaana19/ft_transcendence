@@ -104,7 +104,7 @@ func TestWSManager_BroadcastToRoom(t *testing.T) {
 	}
 }
 
-func TestWSManager_BroadcastToEmptyRoom(t *testing.T) {
+func TestWSManager_BroadcastToEmptyRoom(_ *testing.T) {
 	m := socket.NewWSManager()
 
 	m.BroadcastToRoom("nonexistent", []byte("hello"), "user1")

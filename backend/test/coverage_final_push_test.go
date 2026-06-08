@@ -1,6 +1,7 @@
 package test
 
 import (
+	"strings"
 	"testing"
 
 	"ft_transcendence/backend/internal/models"
@@ -46,12 +47,12 @@ func TestPostService_CreateCommentTooLongFinal(t *testing.T) {
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	longContent := ""
-	for i := 0; i < 300; i++ {
-		longContent += "a"
+	var longContent strings.Builder
+	for range 300 {
+		longContent.WriteString("a")
 	}
 
-	_, err := service.CreateComment(longContent, utils.NewID(), utils.NewID(), nil)
+	_, err := service.CreateComment(longContent.String(), utils.NewID(), utils.NewID(), nil)
 	if err == nil {
 		t.Fatal("expected error for comment over 280 chars")
 	}

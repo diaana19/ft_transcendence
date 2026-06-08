@@ -1,6 +1,7 @@
 package test
 
 import (
+	"strings"
 	"testing"
 
 	"ft_transcendence/backend/internal/models"
@@ -72,12 +73,12 @@ func TestPostService_CreateCommentOverLimit(t *testing.T) {
 	repo := repositories.NewPostRepository(db)
 	service := services.NewPostService(repo)
 
-	longContent := ""
-	for i := 0; i < 300; i++ {
-		longContent += "a"
+	var longContent strings.Builder
+	for range 300 {
+		longContent.WriteString("a")
 	}
 
-	_, err := service.CreateComment(longContent, "user", "post", nil)
+	_, err := service.CreateComment(longContent.String(), "user", "post", nil)
 	if err == nil {
 		t.Fatal("expected error for content over 280 chars")
 	}
