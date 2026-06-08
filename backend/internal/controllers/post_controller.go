@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -229,7 +230,15 @@ func (pc *PostController) CreatePost(c *gin.Context) {
 
 	post, err := pc.postService.CreatePost(req.Content, authorID.(string), req.MediaURL, req.MediaMIME)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		switch {
+		case errors.Is(err, services.ErrAuthorNotFound):
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "your session is no longer valid, please log in again"})
+		case strings.Contains(err.Error(), "content"):
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		default:
+			log.Printf("CreatePost failed for author %s: %v", authorID, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create post"})
+		}
 		return
 	}
 
