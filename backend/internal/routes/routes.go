@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 
@@ -19,9 +21,7 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 
 	api.GET("/trends", c.Post.GetTrends)
 
-	api.GET("/users/:id/online", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{"online": c.WSManager.IsOnline(ctx.Param("id"))})
-	})
+	api.GET("/users/:id/online", onlineStatusHandler(c.WSManager))
 
 	protected := api.Group("", middleware.AuthMiddleware(rdb))
 	registerProtectedAuthRoutes(protected, c.Auth)
@@ -32,6 +32,19 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	registerGDPRRoutes(protected, c.GDPR)
 	registerTwoFARoutes(protected, c.TwoFA)
 	registerGamificationRoutes(protected, c.Gamification)
+}
+
+// onlineStatusHandler godoc
+// @Summary   Check whether a user is currently online (has an active WebSocket connection)
+// @Tags      users
+// @Produce   json
+// @Param     id path string true "user id"
+// @Success   200 {object} map[string]bool
+// @Router    /users/{id}/online [get]
+func onlineStatusHandler(wsManager *socket.WSManager) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"online": wsManager.IsOnline(ctx.Param("id"))})
+	}
 }
 
 func registerPublicAuthRoutes(api *gin.RouterGroup, c *controllers.AuthController, rdb *redis.Client) {

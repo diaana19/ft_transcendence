@@ -101,6 +101,14 @@ func (h *ChatHandler) sendPendingNotifications(client *Client) {
 	}
 }
 
+// HandleWS godoc
+// @Summary      Real-time chat WebSocket
+// @Description  Upgrades the connection to a WebSocket for real-time chat and presence. This is not a regular REST call: the client must perform a WebSocket handshake. Authentication is via the "auth_token" cookie or a "token" query parameter carrying the JWT access token.
+// @Tags         chat
+// @Param        token query string false "JWT access token (alternative to the auth_token cookie)"
+// @Success      101 {string} string "Switching Protocols — WebSocket established"
+// @Failure      401 {object} map[string]string "missing or invalid token"
+// @Router       /ws/chat [get]
 func (h *ChatHandler) HandleWS(c *gin.Context) {
 	userID := c.GetString("user_id")
 	username := c.GetString("username")
