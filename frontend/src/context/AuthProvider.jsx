@@ -44,6 +44,12 @@ export function AuthProvider({ children }) {
     const isExpired = (exp) => exp * 1000 < Date.now()
 
     useEffect(() => {
+        const onExpired = () => clearLocalSession()
+        window.addEventListener('auth:expired', onExpired)
+        return () => window.removeEventListener('auth:expired', onExpired)
+    }, [])
+
+    useEffect(() => {
         const storedToken = localStorage.getItem('token')
 
         if (storedToken) {
@@ -57,18 +63,13 @@ export function AuthProvider({ children }) {
                     setUser({ userId: payload.userId,
                         username: payload.username
                      })
+                    setLoading(false)
                 }
-                setLoading(false)
-                return
             } catch {
                 clearLocalSession()
             }
         }
 
-        // No (valid) localStorage token. The OAuth callback only sets an
-        // HttpOnly auth_token cookie, so we probe /api/auth/me to recover
-        // the session — axiosInstance has withCredentials: true so the
-        // cookie travels with this request.
         let cancelled = false
         api.get('/api/auth/me')
             .then((res) => {
@@ -84,7 +85,10 @@ export function AuthProvider({ children }) {
                     })
                 }
             })
-            .catch(() => { /* not logged in — fall through */ })
+            .catch((err) => {
+                if (cancelled) return
+                if (err.response?.status === 401) clearLocalSession()
+            })
             .finally(() => { if (!cancelled) setLoading(false) })
 
         return () => { cancelled = true }

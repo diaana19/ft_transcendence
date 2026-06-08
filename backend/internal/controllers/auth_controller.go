@@ -234,7 +234,8 @@ type ForgotPasswordInput struct {
 
 // ForgotPassword godoc
 // @Summary   Request a password reset
-// @Description Generate a new password for the account with the given email and send it to that address. Always returns 200 so it can't be used to discover which emails are registered.
+// @Description Generate a new password for the account with the given email and send it to that address.
+// @Description Always returns 200 so it can't be used to discover which emails are registered.
 // @Tags      auth
 // @Accept    json
 // @Produce   json

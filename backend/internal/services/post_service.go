@@ -4,10 +4,14 @@ import (
 	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
+
 	"ft_transcendence/backend/internal/models"
 	"ft_transcendence/backend/internal/repositories"
 	"ft_transcendence/backend/internal/utils"
 )
+
+var ErrAuthorNotFound = errors.New("author does not exist")
 
 type PostService struct {
 	repo repositories.PostRepository
@@ -54,8 +58,14 @@ func (s *PostService) CreatePost(content, authorID string, media *string, mediaM
 		Tags:      utils.ExtractHashtags(content),
 	}
 
-	err := s.repo.Create(post)
-	return post, err
+	if err := s.repo.Create(post); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return nil, ErrAuthorNotFound
+		}
+		return nil, err
+	}
+	return post, nil
 }
 
 const trendWindow = 7 * 24 * time.Hour

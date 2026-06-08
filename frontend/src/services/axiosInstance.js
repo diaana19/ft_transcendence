@@ -16,4 +16,18 @@ api.interceptors.request.use((config) => {
     return config
 })
 
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const status = error.response?.status
+        const url = error.config?.url || ''
+        const isAuthEndpoint = url.includes('/api/auth/')
+        if (status === 401 && !isAuthEndpoint) {
+            localStorage.removeItem('token')
+            window.dispatchEvent(new CustomEvent('auth:expired'))
+        }
+        return Promise.reject(error)
+    }
+)
+
 export default api
