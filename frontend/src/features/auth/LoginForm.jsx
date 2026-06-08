@@ -1,13 +1,3 @@
-/*
- ** File: LoginForm.jsx
- ** Description: Login form component
- ** Responsibilities:
- ** - Render login form with email and password fields
- ** - Handle form submission and authentication
- ** - Redirect to 2FA if required
- ** - Navigate to feed on success
- */
-
 import { useState } from 'react'
 import { login } from './authService.js'
 import { useNavigate } from 'react-router-dom'

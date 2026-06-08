@@ -57,13 +57,11 @@ export default function PostPage() {
             className="w-full mx-auto min-h-screen bg-transparent"
             style={{ borderLeft: '0.5px solid #ede8fd', borderRight: '0.5px solid #ede8fd' }}
         >
-            {/* POST */}
             <div className="p-4">
                 <div
                     className="rounded-2xl p-4"
                     style={{ background: 'white', border: '0.5px solid #ede8fd' }}
                 >
-                    {/* Avatar */}
                     <div
                         className="w-11 h-11 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center font-bold flex-shrink-0"
                         style={{ background: '#ede8fd', color: '#534ab7' }}
@@ -121,7 +119,6 @@ export default function PostPage() {
 
             <div className="px-4 pb-2 pt-4" style={{ borderBottom: '0.5px solid #ede8fd' }} />
 
-            {/* COMMENTS */}
             <div className="px-4 pt-4">
                 {comments.map((comment, index) => (
                     <CommentItem
@@ -135,7 +132,6 @@ export default function PostPage() {
                 ))}
             </div>
 
-            {/* COMMENT FORM */}
             <CommentForm postId={id} onCommentAdded={handleCommentAdded} />
         </div>
     )

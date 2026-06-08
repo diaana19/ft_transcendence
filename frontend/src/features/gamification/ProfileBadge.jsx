@@ -83,47 +83,64 @@ export default function ProfileBadges({ userId }) {
         posts: stats?.posts?.count ?? 0,
         likes: stats?.likes?.count ?? 0,
         followers: stats?.followers?.count ?? 0,
-        messages: 0,
     }
 
     const earned = BADGES.filter((b) => b.check(userStats))
 
     if (earned.length === 0)
         return (
-            <p className="text-center py-8 text-sm" style={{ color: '#b4b2a9' }}>
-                No badges yet
-            </p>
+            <div className="flex flex-col items-center py-12">
+                <div
+                    className="w-16 h-16 rounded-full flex items-center justify-center mb-3"
+                    style={{ background: '#ede8fd' }}
+                >
+                    <i className="ti ti-award" style={{ color: '#afa9ec', fontSize: '28px' }} />
+                </div>
+                <p className="text-sm font-medium" style={{ color: '#afa9ec' }}>
+                    No badges yet
+                </p>
+                <p className="text-xs mt-1" style={{ color: '#c4c2bb' }}>
+                    Start posting and connecting!
+                </p>
+            </div>
         )
 
     return (
-        <div className="px-4 py-4">
-            <div className="flex flex-wrap gap-3">
+        <div className="px-4 py-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {earned.map((badge) => (
                     <div
                         key={badge.key}
-                        className="flex flex-col items-center gap-1 p-3 rounded-2xl transition-all cursor-pointer hover:scale-105"
+                        className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all cursor-pointer hover:scale-105"
                         style={{
                             background: 'white',
-                            border: '0.5px solid #ede8fd',
-                            minWidth: '80px',
+                            border: '1px solid #ede8fd',
+                            boxShadow: '0 2px 12px rgba(167, 139, 250, 0.08)',
                         }}
-                        title={badge.condition}
                     >
                         <div
-                            className="w-10 h-10 rounded-full flex items-center justify-center"
-                            style={{ background: '#ede8fd' }}
+                            className="w-14 h-14 rounded-full flex items-center justify-center"
+                            style={{
+                                background: 'linear-gradient(135deg, #ede8fd 0%, #fde8f0 100%)',
+                            }}
                         >
                             <i
                                 className={`ti ${badge.icon}`}
                                 aria-hidden="true"
-                                style={{ color: '#534ab7', fontSize: '18px' }}
+                                style={{ color: '#534ab7', fontSize: '24px' }}
                             />
                         </div>
                         <span
-                            className="text-xs font-semibold text-center"
+                            className="text-sm font-bold text-center"
                             style={{ color: '#534ab7' }}
                         >
                             {badge.name}
+                        </span>
+                        <span
+                            className="text-xs px-2 py-0.5 rounded-full"
+                            style={{ background: '#ede8fd', color: '#afa9ec' }}
+                        >
+                            {badge.condition}
                         </span>
                     </div>
                 ))}

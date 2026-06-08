@@ -74,7 +74,6 @@ function CreatePost({ onPostCreated }) {
             }}
         >
             <div className="flex gap-3">
-                {/* Avatar */}
                 <div
                     className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center font-bold text-sm"
                     style={{ background: '#ede8fd', color: '#534ab7' }}

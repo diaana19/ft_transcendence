@@ -96,10 +96,8 @@ function Feed() {
 
     return (
         <div className="w-full mx-auto space-y-4 mt-6 ">
-            {/* Composer */}
             {user?.userId && <CreatePost onPostCreated={handleCreated} user={user} />}
 
-            {/* Posts */}
             {fetching ? (
                 <p className="text-center text-gray-400 py-8">Loading...</p>
             ) : posts.length === 0 ? (
@@ -116,7 +114,6 @@ function Feed() {
                 ))
             )}
 
-            {/* Infinite-scroll trigger + status */}
             {!fetching && hasMore && <div ref={sentinelRef} className="h-1" />}
             {loadingMore && <p className="text-center text-gray-400 py-4">Loading more...</p>}
             {!fetching && !hasMore && posts.length > 0 && (

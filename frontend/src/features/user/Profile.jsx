@@ -1,13 +1,3 @@
-/*
- ** File: Profile.jsx
- ** Description: User profile page that displays user information and allows editing or deletion
- ** Responsibilities:
- ** - Fetch user data by ID from API
- ** - Display user profile information
- ** - Provide edit functionality via modal
- ** - Provide account deletion functionality via confirmation modal
- */
-
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
@@ -16,7 +6,7 @@ import FriendsList from './FriendsList'
 import FollowButton from '../../components/common/FollowButton'
 import PostCard from '../posts/PostCard'
 import { getPostsByAuthor } from '../posts/postService'
-import { sendFriendRequest } from '../../features/user/userService'
+import { sendFriendRequest, removeFriend } from '../../features/user/userService'
 import FollowersModal from './FollowersModal'
 import ProfileBadges from '../gamification/ProfileBadge'
 
@@ -25,12 +15,8 @@ export default function Profile() {
     const { id, username } = useParams()
     const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState('posts')
-
-    // The profile is keyed by user id. The /profile/u/:username route (used by
-    // @mention links) carries a username instead, so resolve it to an id first.
     const [resolvedId, setResolvedId] = useState(null)
     const userId = resolvedId
-
     const [user, setUser] = useState({ displayname: '', email: '', bio: '' })
     const [loading, setLoading] = useState(false)
     const [showEdit, setShowEdit] = useState(false)
@@ -43,6 +29,7 @@ export default function Profile() {
     const [friendRequested, setFriendRequested] = useState(false)
     const [isFriend, setIsFriend] = useState(false)
     const [followModal, setFollowModal] = useState(null)
+    const [isOnline, setIsOnline] = useState(false)
 
     useEffect(() => {
         let active = true
@@ -92,6 +79,12 @@ export default function Profile() {
         } finally {
             setLoading(false)
         }
+        try {
+            const onlineRes = await api.get(`/api/users/${userId}/online`)
+            setIsOnline(onlineRes.data?.online ?? false)
+        } catch (err) {
+            console.error(err)
+        }
     }
 
     const fetchUserPosts = async () => {
@@ -130,9 +123,18 @@ export default function Profile() {
 
     if (loading) return <p>Loading profile...</p>
 
+    const handleRemoveFriend = async () => {
+        try {
+            await removeFriend(userId)
+            setIsFriend(false)
+            setFriendRequested(false)
+        } catch (err) {
+            console.error('Error removing friend:', err)
+        }
+    }
+
     return (
         <div className="min-h-screen bg-transparent">
-            {/* Banner */}
             <div
                 className="h-56 w-full overflow-hidden"
                 style={{
@@ -144,10 +146,8 @@ export default function Profile() {
                 )}
             </div>
 
-            {/* Card */}
             <div className="border-b border-gray-200">
                 <div className="relative px-4">
-                    {/* Avatar */}
                     <div className="absolute -top-16">
                         <div className="relative w-32 h-32">
                             <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-300 overflow-hidden">
@@ -164,10 +164,15 @@ export default function Profile() {
                                     <div className="w-full h-full bg-gray-300" />
                                 )}
                             </div>
+                            {isOnline && (
+                                <div
+                                    className="absolute bottom-2 right-2 w-5 h-5 rounded-full border-2 border-white"
+                                    style={{ background: '#4ade80' }}
+                                />
+                            )}
                         </div>
                     </div>
 
-                    {/* Botones top-right */}
                     <div className="flex justify-end pt-3 pb-2 gap-2 flex-wrap">
                         {authUser?.userId === userId ? (
                             <>
@@ -202,17 +207,19 @@ export default function Profile() {
                                     isFollowing={isFollowing}
                                 />
                                 <button
-                                    onClick={handleFriendRequest}
-                                    disabled={friendRequested || isFriend}
-                                    className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors hover:bg-[#faf8f5]"
+                                    onClick={isFriend ? handleRemoveFriend : handleFriendRequest}
+                                    disabled={!isFriend && friendRequested}
+                                    className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors"
                                     style={{
-                                        border: '1px solid #ede8fd',
-                                        color: '#534ab7',
+                                        border: isFriend
+                                            ? '1px solid #fde8f0'
+                                            : '1px solid #ede8fd',
+                                        color: isFriend ? '#d4537e' : '#534ab7',
                                         background: 'white',
                                     }}
                                 >
                                     {isFriend
-                                        ? 'Friends ✓'
+                                        ? 'Remove friend'
                                         : friendRequested
                                           ? 'Requested'
                                           : 'Add friend'}
@@ -232,7 +239,6 @@ export default function Profile() {
                         )}
                     </div>
 
-                    {/* Info */}
                     <div className="mt-12 pb-3">
                         <h2 className="text-xl font-bold" style={{ color: '#2c2c2a' }}>
                             {user.displayname}
@@ -278,7 +284,6 @@ export default function Profile() {
                     </div>
                 </div>
 
-                {/* Posts tab */}
                 <div className="flex border-b" style={{ borderColor: '#ede8fd' }}>
                     {['posts', 'replies', 'badges'].map((tab) => (
                         <button
@@ -300,7 +305,6 @@ export default function Profile() {
                 </div>
             </div>
 
-            {/* Posts list */}
             <div className="mt-6">
                 {activeTab === 'posts' &&
                     (loadingPosts ? (
@@ -332,7 +336,6 @@ export default function Profile() {
                 {activeTab === 'badges' && <ProfileBadges userId={userId} />}
             </div>
 
-            {/* Modal Edit */}
             {showEdit && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center"
@@ -474,6 +477,7 @@ export default function Profile() {
                                 placeholder="Email"
                                 type="email"
                                 value={form.email}
+                                disabled
                                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                             />
                             <textarea

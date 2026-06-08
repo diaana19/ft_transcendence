@@ -24,7 +24,6 @@ function App() {
         <>
             <CookiesBanner />
             <Routes>
-                {/* PUBLIC */}
                 <Route element={<Layout />}>
                     <Route path="/" element={<Feed />} />
                     <Route path="/tag/:tag" element={<TagFeed />} />
@@ -38,7 +37,6 @@ function App() {
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
 
-                {/* PRIVATE */}
                 <Route
                     element={
                         <RequireAuth>

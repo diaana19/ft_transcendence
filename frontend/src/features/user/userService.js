@@ -29,3 +29,8 @@ export const acceptFriendRequest = async (requesterId) => {
     const res = await axiosInstance.post(`/api/friends/accept/${requesterId}`)
     return res.data
 }
+
+export const removeFriend = async (friendId) => {
+    const res = await axiosInstance.delete(`/api/friends/${friendId}`)
+    return res.data
+}

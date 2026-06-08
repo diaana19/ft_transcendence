@@ -1,13 +1,3 @@
-/*
- ** File: Input.jsx
- ** Description: Reusable input component with label and error support
- ** Responsibilities:
- ** - Render input with consistent styling
- ** - Show label above input
- ** - Show error message below input
- ** - Support different input types
- */
-
 import { colors } from '../../styles/tokens'
 
 function Input({

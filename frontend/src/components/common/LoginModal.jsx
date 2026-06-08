@@ -1,12 +1,3 @@
-/*
- ** File: LoginModal.jsx
- ** Description: Login popup modal for unauthenticated users
- ** Responsibilities:
- ** - Show login form in a modal popup
- ** - Allow users to login without leaving the current page
- ** - Navigate to register if user doesn't have an account
- */
-
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'

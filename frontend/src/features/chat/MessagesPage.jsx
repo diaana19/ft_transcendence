@@ -1,13 +1,3 @@
-/*
- ** File: MessagesPage.jsx
- ** Description: Full chat page with conversation list and active chat
- ** Responsibilities:
- ** - Display list of users to chat with on the left
- ** - Display active conversation on the right
- ** - Handle sending and receiving messages
- ** - Search users by display name or username
- */
-
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axiosInstance from '../../services/axiosInstance'
@@ -27,7 +17,23 @@ export default function MessagesPage() {
     const [messages, setMessages] = useState([])
     const [fetching, setFetching] = useState(false)
     const [selectedUser, setSelectedUser] = useState(null)
+    const [onlineUsers, setOnlineUsers] = useState({})
     const lastMessageRef = useRef(null)
+
+    const fetchOnlineStatus = async (usersList) => {
+        const statuses = {}
+        await Promise.all(
+            usersList.map(async (u) => {
+                try {
+                    const res = await axiosInstance.get(`/api/users/${u.id}/online`)
+                    statuses[u.id] = res.data?.online ?? false
+                } catch {
+                    statuses[u.id] = false
+                }
+            })
+        )
+        setOnlineUsers(statuses)
+    }
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -35,6 +41,7 @@ export default function MessagesPage() {
                 const res = await axiosInstance.get('/api/users')
                 const filtered = res.data.filter((u) => u.id !== currentUser?.userId)
                 setUsers(filtered)
+                fetchOnlineStatus(filtered)
             } catch (err) {
                 console.error(err)
             }
@@ -49,8 +56,6 @@ export default function MessagesPage() {
         }
     }, [peerId, users])
 
-    // Open the conversation over the socket: the server replies with a "history"
-    // frame and pushes each new "message" in real time. No polling.
     useEffect(() => {
         if (!peerId) return
         setMessages([])
@@ -80,8 +85,6 @@ export default function MessagesPage() {
         lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
 
-    // The sent message is echoed back over the socket (we joined the channel on
-    // open), so we render it on arrival rather than appending optimistically.
     const handleSend = (content) => {
         send({ action: 'message', recipient_id: peerId, content })
     }
@@ -94,7 +97,7 @@ export default function MessagesPage() {
 
     return (
         <div className="flex h-screen overflow-hidden">
-            {/* Left — user list: oculto en móvil si hay chat abierto */}
+            {/* Left — user list */}
             <div
                 className={`${peerId ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col`}
                 style={{
@@ -141,18 +144,26 @@ export default function MessagesPage() {
                                             : '3px solid transparent',
                                 }}
                             >
-                                <div
-                                    className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center font-bold text-sm"
-                                    style={{ background: '#ede8fd', color: '#534ab7' }}
-                                >
-                                    {u.avatar ? (
-                                        <img
-                                            src={u.avatar}
-                                            alt={u.username}
-                                            className="w-full h-full object-cover"
+                                <div className="relative w-10 h-10 flex-shrink-0">
+                                    <div
+                                        className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center font-bold text-sm"
+                                        style={{ background: '#ede8fd', color: '#534ab7' }}
+                                    >
+                                        {u.avatar ? (
+                                            <img
+                                                src={u.avatar}
+                                                alt={u.username}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            u.username?.[0]?.toUpperCase()
+                                        )}
+                                    </div>
+                                    {onlineUsers[u.id] && (
+                                        <div
+                                            className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white"
+                                            style={{ background: '#4ade80' }}
                                         />
-                                    ) : (
-                                        u.username?.[0]?.toUpperCase()
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -172,14 +183,13 @@ export default function MessagesPage() {
                 </div>
             </div>
 
-            {/* Right — chat: oculto en móvil si no hay chat abierto */}
+            {/* Right — chat */}
             <div
                 className={`${peerId ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}
                 style={{ background: '#faf5ff' }}
             >
                 {peerId && selectedUser ? (
                     <>
-                        {/* Chat header con botón back en móvil */}
                         <div
                             className="px-4 py-3 flex items-center gap-3 bg-white"
                             style={{ borderBottom: '1px solid #ede8fd' }}
@@ -191,31 +201,48 @@ export default function MessagesPage() {
                             >
                                 ←
                             </button>
-                            <div
-                                className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center font-bold text-sm"
-                                style={{ background: '#ede8fd', color: '#534ab7' }}
-                            >
-                                {selectedUser.avatar ? (
-                                    <img
-                                        src={selectedUser.avatar}
-                                        alt={selectedUser.username}
-                                        className="w-full h-full object-cover"
+                            <div className="relative w-9 h-9 flex-shrink-0">
+                                <div
+                                    className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center font-bold text-sm"
+                                    style={{ background: '#ede8fd', color: '#534ab7' }}
+                                >
+                                    {selectedUser.avatar ? (
+                                        <img
+                                            src={selectedUser.avatar}
+                                            alt={selectedUser.username}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        selectedUser.username?.[0]?.toUpperCase()
+                                    )}
+                                </div>
+                                {onlineUsers[selectedUser.id] && (
+                                    <div
+                                        className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white"
+                                        style={{ background: '#4ade80' }}
                                     />
-                                ) : (
-                                    selectedUser.username?.[0]?.toUpperCase()
                                 )}
                             </div>
-                            <div>
+                            <div
+                                onClick={() => navigate(`/profile/${selectedUser.id}`)}
+                                className="cursor-pointer hover:underline"
+                            >
                                 <p className="text-sm font-bold" style={{ color: '#2c2c2a' }}>
                                     {selectedUser.username}
                                 </p>
-                                <p className="text-xs" style={{ color: '#afa9ec' }}>
-                                    {selectedUser.displayname || ''}
+                                <p
+                                    className="text-xs"
+                                    style={{
+                                        color: onlineUsers[selectedUser.id] ? '#4ade80' : '#afa9ec',
+                                    }}
+                                >
+                                    {onlineUsers[selectedUser.id]
+                                        ? 'Online'
+                                        : selectedUser.displayname || ''}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Messages */}
                         <div className="flex-1 overflow-y-auto">
                             {fetching ? (
                                 <p
@@ -230,7 +257,6 @@ export default function MessagesPage() {
                             <div ref={lastMessageRef} />
                         </div>
 
-                        {/* Input */}
                         <div style={{ borderTop: '1px solid #ede8fd', background: 'white' }}>
                             <MessageInput onSend={handleSend} loading={false} />
                         </div>

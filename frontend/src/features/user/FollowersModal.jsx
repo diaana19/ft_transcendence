@@ -29,7 +29,6 @@ export default function FollowersModal({ userId, type, onClose }) {
                     maxHeight: '70vh',
                 }}
             >
-                {/* Header */}
                 <div
                     className="flex items-center gap-3 px-4 py-3 border-b"
                     style={{ borderColor: '#ede8fd' }}
@@ -46,7 +45,6 @@ export default function FollowersModal({ userId, type, onClose }) {
                     </h3>
                 </div>
 
-                {/* List */}
                 <div className="overflow-y-auto" style={{ maxHeight: 'calc(70vh - 56px)' }}>
                     {loading ? (
                         <p className="text-center py-8 text-sm" style={{ color: '#b4b2a9' }}>

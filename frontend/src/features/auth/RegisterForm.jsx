@@ -1,13 +1,3 @@
-/*
- ** File: RegisterForm.jsx
- ** Description: Registration form component
- ** Responsibilities:
- ** - Render registration form with all required fields
- ** - Handle form submission and account creation
- ** - Navigate to login on success
- ** - Show specific error messages from backend
- */
-
 import { useState } from 'react'
 import { register } from './authService.js'
 import { useNavigate, Link } from 'react-router-dom'

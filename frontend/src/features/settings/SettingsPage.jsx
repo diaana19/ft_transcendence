@@ -1,12 +1,3 @@
-/*
- ** File: SettingsPage.jsx
- ** Description: User configuration and settings page
- ** Responsibilities:
- ** - Allow user to delete their account
- ** - Show 2FA settings
- ** - Show account information
- */
-
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
@@ -43,12 +34,10 @@ export default function SettingsPage() {
 
     return (
         <div className="max-w-2xl mx-auto">
-            {/* Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
                 <h1 className="text-xl font-bold">Settings</h1>
             </div>
 
-            {/* Account section */}
             <div className="px-4 py-6 border-b border-gray-200">
                 <h2 className="text-base font-bold text-gray-900 mb-1">Account</h2>
                 <p className="text-sm text-gray-500 mb-4">Manage your account information</p>
@@ -75,7 +64,6 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            {/* Security section */}
             <div className="px-4 py-6 border-b border-gray-200">
                 <h2 className="text-base font-bold text-gray-900 mb-1">Security</h2>
                 <p className="text-sm text-gray-500 mb-4">Manage your security settings</p>
@@ -98,7 +86,6 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            {/* GDPR section */}
             <div className="px-4 py-6 border-b border-gray-200">
                 <h2 className="text-base font-bold text-gray-900 mb-1">Your data</h2>
                 <p className="text-sm text-gray-500 mb-4">Manage your personal data</p>
@@ -129,7 +116,6 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            {/* Danger zone */}
             <div className="px-4 py-6">
                 <h2 className="text-base font-bold text-red-500 mb-1">Danger zone</h2>
                 <p className="text-sm text-gray-500 mb-4">
@@ -152,7 +138,6 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            {/* Delete Modal */}
             <Modal
                 isOpen={showDeleteModal}
                 onClose={() => {
@@ -180,6 +165,18 @@ export default function SettingsPage() {
                 />
                 {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
             </Modal>
+            <div className="px-4 py-6 md:hidden">
+                <button
+                    onClick={async () => {
+                        await logout()
+                        navigate('/login')
+                    }}
+                    className="w-full py-2 rounded-full text-sm font-bold transition-colors"
+                    style={{ background: '#fde8f0', color: '#d4537e', border: '1px solid #fde8f0' }}
+                >
+                    Log out
+                </button>
+            </div>
         </div>
     )
 }
