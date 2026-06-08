@@ -135,7 +135,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-transparent">
-      
+
       <div className="h-56 w-full overflow-hidden" style={{ background: 'linear-gradient(120deg, #fde8f0 0%, #ede8fd 50%, #e8f0fd 100%)' }}>
         {user.wallpaper && (
           <img src={user.wallpaper} alt="banner" className="w-full h-full object-cover" />
@@ -345,8 +345,12 @@ export default function Profile() {
               <input className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-400"
                 placeholder="Display name" type="text" value={form.displayname}
                 onChange={(e) => setForm({ ...form, displayname: e.target.value })} />
-              <input className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-400"
-                placeholder="Email" type="email" value={form.email}
+              <input 
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-400"
+                placeholder="Email" 
+                type="email" 
+                value={form.email}
+                disabled
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
               <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 text-sm focus:outline-none focus:border-blue-400 resize-none"
                 placeholder="Bio" rows={3} value={form.bio}

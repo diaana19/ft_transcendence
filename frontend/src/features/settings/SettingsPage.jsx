@@ -13,6 +13,7 @@ import { useAuth } from '../../hooks/useAuth'
 import api from '../../services/axiosInstance'
 import Modal from '../../components/common/Modal'
 
+
 export default function SettingsPage() {
 	const { user, logout } = useAuth()
 	const navigate = useNavigate()
@@ -157,6 +158,15 @@ export default function SettingsPage() {
 				/>
 				{error && <p className="text-red-500 text-xs mt-2">{error}</p>}
 			</Modal>
+			<div className="px-4 py-6 md:hidden">
+				<button
+					onClick={async () => { await logout(); navigate('/login') }}
+					className="w-full py-2 rounded-full text-sm font-bold transition-colors"
+					style={{ background: '#fde8f0', color: '#d4537e', border: '1px solid #fde8f0' }}
+				>
+					Log out
+				</button>
+			</div>
 		</div>
 	)
 }
