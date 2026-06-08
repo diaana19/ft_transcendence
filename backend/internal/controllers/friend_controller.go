@@ -145,6 +145,13 @@ func (fc *FriendController) UnfollowUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	username, _ := c.Get("username")
+	_ = fc.NotificationService.SendNotification(
+		targetID, "",
+		userID.(string), username.(string),
+		"unfollow", username.(string)+" stopped following you",
+		"",
+	)
 	c.JSON(http.StatusOK, gin.H{"message": "user unfollowed"})
 }
 
