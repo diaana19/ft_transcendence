@@ -91,3 +91,8 @@ export async function deleteComment(postId, commentId) {
     const res = await axiosInstance.delete(`/api/posts/${postId}/comments/${commentId}`)
     return res.data
 }
+
+export const getRepliesByUser = async (userId) => {
+  const { data } = await api.get(`/api/posts?repliedBy=${userId}`)
+  return data.data
+}
