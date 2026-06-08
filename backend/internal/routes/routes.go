@@ -9,11 +9,6 @@ import (
 	"ft_transcendence/backend/internal/socket"
 )
 
-// SetupRoutes registers every HTTP and WebSocket endpoint under /api. The
-// route tree is broken up by feature so this function reads as a manifest;
-// the per-feature register* helpers below own the path details. rdb is passed
-// for the middlewares that need direct Redis access (rate limit, auth session
-// lookups).
 func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	api := router.Group("/api")
 
@@ -22,10 +17,8 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	registerWebSocketRoutes(api, c.ChatWS)
 	registerPostRoutes(api, rdb, c.Post)
 
-	// Trending hashtags — public, read-only, computed live from posts.
 	api.GET("/trends", c.Post.GetTrends)
 
-	// Online status — check if a user has an active WebSocket connection.
 	api.GET("/users/:id/online", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{"online": c.WSManager.IsOnline(ctx.Param("id"))})
 	})
@@ -41,7 +34,6 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	registerGamificationRoutes(protected, c.Gamification)
 }
 
-// /auth/{register,login,refresh,2fa/verify} — public, rate-limited per IP.
 func registerPublicAuthRoutes(api *gin.RouterGroup, c *controllers.AuthController, rdb *redis.Client) {
 	auth := api.Group("/auth", middleware.RateLimitMiddleware(rdb))
 	auth.POST("/register", c.RegisterUser)
@@ -50,15 +42,12 @@ func registerPublicAuthRoutes(api *gin.RouterGroup, c *controllers.AuthControlle
 	auth.POST("/2fa/verify", c.Verify2FA)
 }
 
-// GitHub OAuth — public login surface, currently not rate-limited.
 func registerOAuthRoutes(api *gin.RouterGroup, c *controllers.OAuthController) {
 	oauth := api.Group("/auth/oauth/github")
 	oauth.GET("/login", c.OAuthLogin)
 	oauth.GET("/callback", c.OAuthCallback)
 }
 
-// WebSocket chat — auth happens inside WSAuthMiddleware (reads token from a
-// query param because browsers can't set Authorization on a WS handshake).
 func registerWebSocketRoutes(api *gin.RouterGroup, c *socket.ChatHandler) {
 	api.GET("/ws/chat", middleware.WSAuthMiddleware(), c.HandleWS)
 }
@@ -93,11 +82,6 @@ func registerNotificationRoutes(protected *gin.RouterGroup, c *controllers.Notif
 	protected.PATCH("/notification/:id/read", c.MarkRead)
 }
 
-// Uploads have mixed visibility. POST /upload requires auth (only logged-in
-// users can write). GET /files/:id is mounted on the public api group with
-// OptionalAuthMiddleware so the controller's visibility check runs first:
-// public files stream without a token, friends/private files still require
-// an authenticated caller.
 func registerUploadRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controllers.UploadController) {
 	api.GET("/files/:id", middleware.OptionalAuthMiddleware(rdb), c.ServeFile)
 
@@ -121,8 +105,6 @@ func registerGamificationRoutes(protected *gin.RouterGroup, c *controllers.Gamif
 	protected.GET("/leaderboard", c.GetLeaderboard)
 }
 
-// Posts have mixed visibility: list / single / comments are public with optional
-// auth, mutations require it. Kept self-contained because of that quirk.
 func registerPostRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controllers.PostController) {
 	posts := api.Group("/posts")
 	posts.GET("", middleware.OptionalAuthMiddleware(rdb), c.GetPosts)

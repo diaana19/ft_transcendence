@@ -2,9 +2,6 @@ package models
 
 import "testing"
 
-// Repost has no HTTP route yet, so Repost.ToResponse is unreachable through the
-// e2e suite. It is a pure mapping, so unit-test it directly: the embedded author
-// must be projected through User.ToResponse and the scalar fields copied across.
 func TestRepostToResponse(t *testing.T) {
 	avatar := "https://example.com/a.png"
 	r := Repost{

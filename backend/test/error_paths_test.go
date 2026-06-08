@@ -7,13 +7,8 @@ import (
 )
 
 func TestJWT_GenerateJWTWithShortSecret(t *testing.T) {
-	// This tests the error path when JWT_SECRET is too short
-	// The function should return an error
 	_, err := utils.GenerateJWT("user1", "testuser")
-	// This will fail if JWT_SECRET is not set or too short
-	// In test environment, it might succeed if secret is set
 	if err != nil {
-		// Expected behavior when secret is invalid
 		t.Logf("GenerateJWT returned error (expected if secret is invalid): %v", err)
 	}
 }

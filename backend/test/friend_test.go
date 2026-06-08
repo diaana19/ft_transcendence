@@ -28,7 +28,6 @@ func TestFriend_FollowAndListFollowers(t *testing.T) {
 		t.Fatalf("expected 1 follower, got %d", len(resp.Data))
 	}
 
-	// alice's following list should contain one entry
 	w = authedRequest(t, router, "GET", "/api/users/"+alice.ID+"/following", alice.Token, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("following: expected 200, got %d", w.Code)
@@ -63,19 +62,16 @@ func TestFriend_RequestAcceptFlow(t *testing.T) {
 	alice := registerAndLogin(t, router, "freq-a", "freq-a@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "freq-b", "freq-b@test.com", "StrongPass123!")
 
-	// alice sends a friend request to bob
 	w := authedRequest(t, router, "POST", "/api/friends/request/"+bob.ID, alice.Token, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("send request: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 
-	// bob accepts alice's request
 	w = authedRequest(t, router, "POST", "/api/friends/accept/"+alice.ID, bob.Token, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("accept request: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 
-	// they should now appear in each other's friends list
 	w = authedRequest(t, router, "GET", "/api/users/"+alice.ID+"/friends", alice.Token, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("friends list: expected 200, got %d", w.Code)

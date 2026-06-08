@@ -112,7 +112,6 @@ func TestCheckUserAge_Invalid(t *testing.T) {
 }
 
 func TestCheckUserAge_EdgeCase(t *testing.T) {
-	// Exactly 13 years old
 	now := time.Now()
 	birthDate := time.Date(now.Year()-13, now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	if !utils.CheckUserAge(birthDate) {

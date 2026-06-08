@@ -19,18 +19,10 @@ func Publish(rdb *redis.Client, channel, message string) error {
 	return nil
 }
 
-// RoundTrip publishes message on channel and waits for it to come back on a
-// fresh subscription. Used by the /health/redis endpoint to verify that the
-// broker is not just reachable (Ping covers that) but actually delivering
-// pub/sub traffic. ctx must carry a deadline; the caller is responsible for
-// bounding latency.
 func RoundTrip(ctx context.Context, rdb *redis.Client, channel, message string) error {
 	sub := rdb.Subscribe(ctx, channel)
 	defer func() { _ = sub.Close() }()
 
-	// The first Receive call returns a *Subscription confirming the broker has
-	// registered the SUBSCRIBE. Publishing before this point can race ahead of
-	// the subscription and silently drop the message.
 	if _, err := sub.Receive(ctx); err != nil {
 		return fmt.Errorf("subscribe handshake: %w", err)
 	}

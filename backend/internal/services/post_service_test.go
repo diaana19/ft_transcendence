@@ -11,10 +11,6 @@ import (
 	"ft_transcendence/backend/internal/models"
 )
 
-// mockPostRepo is a stateful in-memory PostRepository used only for the
-// validation branches below that cannot be reached through the HTTP layer
-// (request binding rejects empty/over-long content before the service runs).
-// All other post/comment behaviour is covered end-to-end via the /posts API.
 type mockPostRepo struct {
 	posts         map[string]*models.Post
 	comments      map[string]*models.Reply

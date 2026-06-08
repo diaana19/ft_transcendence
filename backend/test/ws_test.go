@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// wsConnect dials the chat WebSocket endpoint on srv authenticating with token.
 func wsConnect(t *testing.T, srvURL, token string) *websocket.Conn {
 	t.Helper()
 	wsURL := "ws" + strings.TrimPrefix(srvURL, "http") + "/api/ws/chat?token=" + token
@@ -27,8 +26,6 @@ func wsConnect(t *testing.T, srvURL, token string) *websocket.Conn {
 	return conn
 }
 
-// readUntilType reads frames until one with the given "type" arrives or a 4s
-// deadline elapses.
 func readUntilType(t *testing.T, conn *websocket.Conn, wantType string) map[string]any {
 	t.Helper()
 	conn.SetReadDeadline(time.Now().Add(4 * time.Second))
@@ -47,8 +44,6 @@ func readUntilType(t *testing.T, conn *websocket.Conn, wantType string) map[stri
 	}
 }
 
-// wsOpen subscribes the connection to its conversation with peerID. The server
-// replies with a "history" frame (asserted/drained by the caller).
 func wsOpen(t *testing.T, conn *websocket.Conn, peerID string) {
 	t.Helper()
 	if err := conn.WriteJSON(map[string]any{"action": "open", "peer_id": peerID}); err != nil {
@@ -107,8 +102,6 @@ func TestWS_SendAndReceiveDM(t *testing.T) {
 	bobConn := wsConnect(t, srv.URL, bob.Token)
 	defer bobConn.Close()
 
-	// Both participants open the conversation so the dm channel subscription
-	// becomes live for realtime delivery.
 	wsOpen(t, aliceConn, bob.ID)
 	wsOpen(t, bobConn, alice.ID)
 	time.Sleep(600 * time.Millisecond)
@@ -169,7 +162,6 @@ func TestWS_UnknownActionAndEmptyOpen(t *testing.T) {
 	conn := wsConnect(t, srv.URL, u.Token)
 	defer conn.Close()
 
-	// Unknown actions and an empty/self peer open must be no-ops, not crashes.
 	if err := conn.WriteJSON(map[string]any{"action": "bogus"}); err != nil {
 		t.Fatalf("write bogus: %v", err)
 	}
@@ -190,13 +182,11 @@ func TestWS_DeliversPendingNotificationsOnConnect(t *testing.T) {
 	sender := registerAndLogin(t, router, "wsnotif-s", "wsnotif-s@test.com", "StrongPass123!")
 	target := registerAndLogin(t, router, "wsnotif-t", "wsnotif-t@test.com", "StrongPass123!")
 
-	// a friend request creates an unread notification for the target
 	w := authedRequest(t, router, "POST", "/api/friends/request/"+target.ID, sender.Token, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("friend request: expected 200, got %d", w.Code)
 	}
 
-	// when the target connects, the pending notification is pushed down the socket
 	conn := wsConnect(t, srv.URL, target.Token)
 	defer conn.Close()
 
@@ -215,7 +205,6 @@ func TestWS_AttachmentRejectedWhenNotPrivate(t *testing.T) {
 	alice := registerAndLogin(t, router, "wsrej-a", "wsrej-a@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "wsrej-b", "wsrej-b@test.com", "StrongPass123!")
 
-	// public file cannot be used as a DM attachment (must be private)
 	publicFile := uploadAndGetID(t, router, alice.Token, "public")
 
 	aliceConn := wsConnect(t, srv.URL, alice.Token)
@@ -227,7 +216,6 @@ func TestWS_AttachmentRejectedWhenNotPrivate(t *testing.T) {
 	wsOpen(t, bobConn, alice.ID)
 	time.Sleep(500 * time.Millisecond)
 
-	// attachment is rejected (not private) so no chat message is broadcast
 	aliceConn.WriteJSON(map[string]any{"action": "message", "recipient_id": bob.ID, "file_id": publicFile})
 
 	bobConn.SetReadDeadline(time.Now().Add(1 * time.Second))
@@ -255,7 +243,6 @@ func TestWS_AttachmentGrantsAccessToRecipient(t *testing.T) {
 
 	fileID := uploadAndGetID(t, router, alice.Token, "private")
 
-	// before sharing, bob cannot access alice's private file
 	w := authedRequest(t, router, "GET", "/api/files/"+fileID, bob.Token, "")
 	if w.Code != http.StatusForbidden {
 		t.Fatalf("pre-share access: expected 403, got %d", w.Code)
@@ -280,7 +267,6 @@ func TestWS_AttachmentGrantsAccessToRecipient(t *testing.T) {
 
 	readUntilType(t, bobConn, "message")
 
-	// after the DM attachment, bob is granted access (canAccess true → 404 from disk, not 403)
 	w = authedRequest(t, router, "GET", "/api/files/"+fileID, bob.Token, "")
 	if w.Code == http.StatusForbidden {
 		t.Fatalf("post-share access: expected access granted, still got 403")

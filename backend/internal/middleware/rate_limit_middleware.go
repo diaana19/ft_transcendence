@@ -13,9 +13,6 @@ import (
 
 const defaultRateLimitMax = 20
 
-// rateLimitMax returns the per-IP request ceiling enforced each minute. It is
-// read from the RATE_LIMIT_MAX env var, falling back to defaultRateLimitMax
-// when the var is unset or not a valid integer.
 func rateLimitMax() int64 {
 	if v := os.Getenv("RATE_LIMIT_MAX"); v != "" {
 		if n, err := strconv.ParseInt(v, 10, 64); err == nil {

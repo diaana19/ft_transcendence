@@ -21,12 +21,6 @@ func newTestMessageDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-// MessageRepository read/write happy paths (PollSince, ListConversation,
-// Create, GetByRoomID, GetReplies) are covered end-to-end through the /chat,
-// /ws and /rooms endpoints against a real Postgres. Only the query/connection
-// error branches — unreachable over HTTP — are unit-tested here by closing the
-// underlying connection.
-
 func TestMessageRepo_BootstrapQueryError(t *testing.T) {
 	db := newTestMessageDB(t)
 	r := NewMessageRepository(db)

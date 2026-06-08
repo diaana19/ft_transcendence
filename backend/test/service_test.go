@@ -181,7 +181,6 @@ func TestPostService_ReactToPost(t *testing.T) {
 		t.Fatalf("expected 1, got %d", value)
 	}
 
-	// Unlike (toggle)
 	value, _, err = service.ReactToPost(userID, postID, 1)
 	if err != nil {
 		t.Fatalf("ReactToPost unlike: %v", err)

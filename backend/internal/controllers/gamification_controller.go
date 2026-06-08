@@ -1,4 +1,3 @@
-// Gamification controller — exposes GET /users/:id/gamification.
 package controllers
 
 import (

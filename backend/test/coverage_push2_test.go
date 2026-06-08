@@ -17,8 +17,6 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
-// realControllers wires the full controller graph against the shared (working)
-// DB and Redis, for exercising deterministic non-DB-error branches directly.
 func realControllers(t *testing.T) *routes.Controllers {
 	t.Helper()
 	_, db := SetupTestEnv()
@@ -40,24 +38,19 @@ func TestPostRepository_ReactionStateMachine(t *testing.T) {
 		t.Fatalf("create post: %v", err)
 	}
 
-	// create (default branch) + likes_count delta
 	if err := repo.SetPostReaction(uid, pid, 1); err != nil {
 		t.Fatalf("set like: %v", err)
 	}
-	// same value -> no-op early return
 	if err := repo.SetPostReaction(uid, pid, 1); err != nil {
 		t.Fatalf("set like again: %v", err)
 	}
-	// found -> update branch, plus both like and dislike count deltas
 	if err := repo.SetPostReaction(uid, pid, -1); err != nil {
 		t.Fatalf("switch to dislike: %v", err)
 	}
-	// value == 0 -> delete branch
 	if err := repo.SetPostReaction(uid, pid, 0); err != nil {
 		t.Fatalf("clear reaction: %v", err)
 	}
 
-	// Reply reaction state machine.
 	reply := &models.Reply{ID: utils.NewID(), PostID: pid, AuthorID: uid, Content: "c"}
 	if err := repo.CreateComment(reply); err != nil {
 		t.Fatalf("create comment: %v", err)
@@ -76,7 +69,6 @@ func TestPostRepository_ReactionStateMachine(t *testing.T) {
 		t.Fatalf("reply clear: %v", err)
 	}
 
-	// Delete with no matching row -> ErrRecordNotFound branch.
 	if err := repo.Delete(utils.NewID()); err == nil {
 		t.Fatal("expected error deleting missing post")
 	}
@@ -130,7 +122,6 @@ func TestPostRepository_DBErrors(t *testing.T) {
 	}
 }
 
-// doJSON performs an in-process JSON request against the router.
 func doJSON(router interface {
 	ServeHTTP(http.ResponseWriter, *http.Request)
 }, method, path, body string) *httptest.ResponseRecorder {
@@ -267,7 +258,7 @@ func TestUploadController_Branches(t *testing.T) {
 		t.Fatalf("create friends file: %v", err)
 	}
 	c, w = testCtx(http.MethodGet, "/", "")
-	c.Set("user_id", utils.NewID()) // a stranger
+	c.Set("user_id", utils.NewID())
 	setParam(c, "id", friendsFile.ID)
 	ctrl.Upload.ServeFile(c)
 	if w.Code != http.StatusForbidden {
@@ -355,13 +346,10 @@ func TestChatHandler_HandleMessage(t *testing.T) {
 	h.HandleMessage(client, []byte(`{"action":"message","content":"   "}`))
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hi","recipient_id":"`+sender+`"}`))
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hi","recipient_id":"`+utils.NewID()+`"}`))
-	// attachment does not exist -> grantAttachment error
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hi","recipient_id":"`+recipient+`","file_id":"`+utils.NewID()+`"}`))
-	// open a real conversation (loads history, subscribes)
 	h.HandleMessage(client, []byte(`{"action":"open","peer_id":"`+recipient+`"}`))
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hello there","recipient_id":"`+recipient+`"}`))
 
-	// Drain whatever was queued so the buffer never blocks.
 	for {
 		select {
 		case <-client.Send:
@@ -386,17 +374,14 @@ func TestChatHandler_AttachmentValidation(t *testing.T) {
 	fileRepo := repositories.NewFileRepository(db)
 	client := &socket.Client{ID: sender, Username: "atsender", Send: make(chan []byte, 256)}
 
-	// file owned by someone else -> rejected (not owned by sender)
 	notOwned := &models.File{ID: utils.NewID(), OwnerID: other, Path: "/tmp/x", Filename: "x", MimeType: "image/png", Size: 1, Visibility: models.FileVisibilityPrivate}
 	fileRepo.Create(notOwned)
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hi","recipient_id":"`+recipient+`","file_id":"`+notOwned.ID+`"}`))
 
-	// file owned by sender but public -> rejected (must be private)
 	pub := &models.File{ID: utils.NewID(), OwnerID: sender, Path: "/tmp/y", Filename: "y", MimeType: "image/png", Size: 1, Visibility: models.FileVisibilityPublic}
 	fileRepo.Create(pub)
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hi","recipient_id":"`+recipient+`","file_id":"`+pub.ID+`"}`))
 
-	// file owned by sender and private -> accepted, message goes through
 	priv := &models.File{ID: utils.NewID(), OwnerID: sender, Path: "/tmp/z", Filename: "z", MimeType: "image/png", Size: 1, Visibility: models.FileVisibilityPrivate}
 	fileRepo.Create(priv)
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hi","recipient_id":"`+recipient+`","file_id":"`+priv.ID+`"}`))

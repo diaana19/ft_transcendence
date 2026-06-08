@@ -90,7 +90,6 @@ func TestWSManager_BroadcastToRoom(t *testing.T) {
 	m.JoinRoom(client1, "room1")
 	m.JoinRoom(client2, "room1")
 
-	// Broadcast from user1 - should reach user2 only
 	m.BroadcastToRoom("room1", []byte("hello"), "user1")
 
 	msg := <-client2.Send
@@ -98,7 +97,6 @@ func TestWSManager_BroadcastToRoom(t *testing.T) {
 		t.Fatalf("expected 'hello', got %q", string(msg))
 	}
 
-	// client1 should not receive the message (it's the sender)
 	select {
 	case <-client1.Send:
 		t.Fatal("sender should not receive broadcast")
@@ -109,7 +107,6 @@ func TestWSManager_BroadcastToRoom(t *testing.T) {
 func TestWSManager_BroadcastToEmptyRoom(t *testing.T) {
 	m := socket.NewWSManager()
 
-	// Should not panic
 	m.BroadcastToRoom("nonexistent", []byte("hello"), "user1")
 }
 

@@ -87,7 +87,6 @@ func TestGDPR_DeleteRequiresAuth(t *testing.T) {
 	}
 }
 
-// contains reports whether substr occurs within s.
 func contains(s, substr string) bool {
 	for i := 0; i+len(substr) <= len(s); i++ {
 		if s[i:i+len(substr)] == substr {

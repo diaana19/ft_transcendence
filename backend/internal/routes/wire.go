@@ -11,9 +11,6 @@ import (
 	"ft_transcendence/backend/internal/socket"
 )
 
-// Controllers aggregates every HTTP handler the API exposes plus the
-// WebSocket chat handler. Built once at startup by Wire and passed to
-// SetupRoutes for registration.
 type Controllers struct {
 	Auth         *controllers.AuthController
 	TwoFA        *controllers.TwoFAController
@@ -29,10 +26,6 @@ type Controllers struct {
 	WSManager    *socket.WSManager
 }
 
-// Wire builds the full dependency graph (repositories -> services -> controllers)
-// from the shared infrastructure clients. Construction order respects the
-// dependency direction: every value used by a later constructor is declared
-// before it.
 func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 	userRepo := repositories.NewUserRepository(pdb)
 	msgRepo := repositories.NewMessageRepository(pdb)

@@ -34,7 +34,6 @@ func TestUserController_UpdateUserErrorPath(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "upderr", "upderr@test.com", "StrongPass123!")
 
-	// Try to update non-existent user (returns 403 because user is not the owner)
 	w := authedRequest(t, router, "PUT", "/api/users/"+utils.NewID(), user.Token, `{"bio":"new bio"}`)
 	if w.Code != http.StatusNotFound && w.Code != http.StatusForbidden {
 		t.Fatalf("update non-existent user: expected 404 or 403, got %d", w.Code)
@@ -162,7 +161,6 @@ func TestAuthService_LogoutAuthUserServiceErrorPath(t *testing.T) {
 	service := services.NewAuthService(repo)
 
 	err := service.LogoutAuthUserService("invalid-token", 3600, sharedRDB)
-	// This might not return an error depending on implementation
 	if err != nil {
 		t.Logf("LogoutAuthUserService returned error (expected): %v", err)
 	}
@@ -180,10 +178,6 @@ func TestGamificationService_LeaderboardErrorPath(t *testing.T) {
 }
 
 func TestSocket_PublishToRoomErrorPath(t *testing.T) {
-	// This tests the publishToRoom function path
-	// In a real test, we'd need to set up a WebSocket connection
-	// For now, we'll test that the function doesn't panic
-	// when called with invalid parameters
 }
 
 func TestUtils_GenerateJWTErrorPath(t *testing.T) {

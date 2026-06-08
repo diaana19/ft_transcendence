@@ -11,8 +11,6 @@ import (
 )
 
 type NotificationService struct {
-	// db  *gorm.DB
-	// rdb *redis.Client
 	repo   *repositories.NotificationRepositories
 	pubsub *repositories.NotificationPubSub
 }
@@ -27,7 +25,6 @@ func NewNotificationService(
 func (s *NotificationService) SendNotification(
 	userID, userUsername, actorID, actorUsername, notifType, content, postID string,
 ) error {
-	// Use the provided username if available, otherwise fetch from DB.
 	if userUsername == "" {
 		u, err := s.repo.GetUsernameByID(userID)
 		if err != nil {
@@ -73,15 +70,6 @@ func (s *NotificationService) MarkAllRead(userID string) error {
 func (s *NotificationService) MarkRead(userID, notifID string) error {
 	return s.repo.MarkReadByID(userID, notifID)
 }
-
-// func (s *NotificationService) SendLikeNotification(receiverID string, actorID string, actorUsername string) error {
-// 	receiverUsername, err := s.repo.GetUsernameByID(receiverID)
-// 	if err != nil {
-// 		log.Printf("Warning could not get the username of receiverID: %v", err)
-// 	}
-// 	content := actorUsername + " liked your post"
-// 	return s.SendNotification(receiverID, receiverUsername, actorID, actorUsername, "like", content)
-// }
 
 func (s *NotificationService) SendCommentNotification(
 	receiverID, actorID, actorUsername, postID, commentPreview string,

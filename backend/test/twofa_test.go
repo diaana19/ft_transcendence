@@ -61,7 +61,6 @@ func TestTwoFA_SetupRequiresAuth(t *testing.T) {
 
 func TestTwoFA_SetupUnknownUser(t *testing.T) {
 	router, _ := SetupTestEnv()
-	// a validly-signed token whose user id has no row → service GetByID fails
 	w := authedRequest(t, router, "POST", "/api/2fa/setup", tokenFor("550e8400-e29b-41d4-a716-446655440000"), "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("setup unknown user: expected 400, got %d - body: %s", w.Code, w.Body.String())
@@ -80,7 +79,6 @@ func TestTwoFA_SetupAlreadyEnabled(t *testing.T) {
 	code, _ := totp.GenerateCode(setup.Secret, time.Now())
 	authedRequest(t, router, "POST", "/api/2fa/enable", u.Token, `{"code":"`+code+`"}`)
 
-	// a second setup while already enabled must be rejected
 	w = authedRequest(t, router, "POST", "/api/2fa/setup", u.Token, "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("setup when already enabled: expected 400, got %d", w.Code)

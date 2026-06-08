@@ -17,7 +17,6 @@ const (
 	MaxFileSize = 25 * 1024 * 1024
 )
 
-// Allowed MIME types for upload — images and videos.
 var allowedMimeTypes = map[string]bool{
 	"image/jpeg": true,
 	"image/png":  true,

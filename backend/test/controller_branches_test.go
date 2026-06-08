@@ -13,10 +13,6 @@ import (
 	"ft_transcendence/backend/internal/routes"
 )
 
-// brokenDB returns a *gorm.DB whose underlying connection pool is already
-// closed, so every query against it fails. This lets tests exercise the
-// "internal server error" (500) branches of handlers without having to corrupt
-// the shared schema.
 func brokenDB(t *testing.T) *gorm.DB {
 	t.Helper()
 	cfg, err := config.Load()
@@ -35,11 +31,9 @@ func brokenDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-// brokenControllers wires the full controller graph against a closed DB so the
-// service calls inside each handler return errors.
 func brokenControllers(t *testing.T) *routes.Controllers {
 	t.Helper()
-	SetupTestEnv() // ensure sharedRDB is initialised
+	SetupTestEnv()
 	cfg, err := config.Load()
 	if err != nil {
 		t.Fatalf("config.Load: %v", err)
@@ -47,7 +41,6 @@ func brokenControllers(t *testing.T) *routes.Controllers {
 	return routes.Wire(brokenDB(t), sharedRDB, cfg)
 }
 
-// testCtx builds a gin.Context backed by a recorder for direct handler calls.
 func testCtx(method, target, body string) (*gin.Context, *httptest.ResponseRecorder) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -175,7 +168,6 @@ func TestGamificationController_Branches(t *testing.T) {
 func TestFriendController_Unauthorized(t *testing.T) {
 	ctrl := brokenControllers(t)
 
-	// no user_id at all
 	for _, h := range []func(*gin.Context){
 		ctrl.Friend.SendFriendRequest,
 		ctrl.Friend.AcceptFriend,
@@ -192,8 +184,6 @@ func TestFriendController_Unauthorized(t *testing.T) {
 		}
 	}
 
-	// user_id present but username missing (only SendFriendRequest/AcceptFriend
-	// guard against this).
 	for _, h := range []func(*gin.Context){
 		ctrl.Friend.SendFriendRequest,
 		ctrl.Friend.AcceptFriend,
@@ -228,21 +218,18 @@ func TestFriendController_DBErrors(t *testing.T) {
 func TestUserController_DBErrors(t *testing.T) {
 	ctrl := brokenControllers(t)
 
-	// GetUsers ?username= -> internal error (non NotFound)
 	c, w := testCtx(http.MethodGet, "/?username=someone", "")
 	ctrl.User.GetUsers(c)
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("GetUsers by username: expected 500, got %d", w.Code)
 	}
 
-	// GetUsers list -> internal error
 	c, w = testCtx(http.MethodGet, "/", "")
 	ctrl.User.GetUsers(c)
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("GetUsers list: expected 500, got %d", w.Code)
 	}
 
-	// GetUser -> internal error
 	c, w = testCtx(http.MethodGet, "/", "")
 	setParam(c, "id", "u1")
 	ctrl.User.GetUser(c)
@@ -272,7 +259,6 @@ func TestUserController_Unauthorized(t *testing.T) {
 func TestUserController_Forbidden(t *testing.T) {
 	ctrl := brokenControllers(t)
 
-	// user_id differs from target -> 403
 	c, w := testCtx(http.MethodPut, "/", `{"display_name":"x"}`)
 	c.Set("user_id", "other")
 	setParam(c, "id", "u1")
@@ -293,7 +279,6 @@ func TestUserController_Forbidden(t *testing.T) {
 func TestPostController_TrendsClamp(t *testing.T) {
 	router, _ := SetupTestEnv()
 
-	// limit <= 0 path
 	req := httptest.NewRequest(http.MethodGet, "/api/trends?limit=-5", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -301,7 +286,6 @@ func TestPostController_TrendsClamp(t *testing.T) {
 		t.Fatalf("trends limit<=0: expected 200, got %d", w.Code)
 	}
 
-	// limit > 50 path
 	req = httptest.NewRequest(http.MethodGet, "/api/trends?limit=999", nil)
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -309,7 +293,6 @@ func TestPostController_TrendsClamp(t *testing.T) {
 		t.Fatalf("trends limit>50: expected 200, got %d", w.Code)
 	}
 
-	// posts with limit=0 exercises parseLimitOffset default clamp
 	req = httptest.NewRequest(http.MethodGet, "/api/posts?limit=0&offset=-3", nil)
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -373,7 +356,6 @@ func TestPostController_Unauthorized(t *testing.T) {
 func TestPostController_CreateCommentValidation(t *testing.T) {
 	ctrl := brokenControllers(t)
 
-	// empty content -> 400
 	c, w := testCtx(http.MethodPost, "/", "")
 	setParam(c, "id", "p1")
 	ctrl.Post.CreateComment(c)
@@ -381,7 +363,6 @@ func TestPostController_CreateCommentValidation(t *testing.T) {
 		t.Fatalf("CreateComment empty: expected 400, got %d", w.Code)
 	}
 
-	// content too long -> 400. content is read from form, so post it as a form.
 	form := url_Values("content", strings.Repeat("a", 300))
 	c, w = testCtx(http.MethodPost, "/", "")
 	c.Request = httptest.NewRequest(http.MethodPost, "/", strings.NewReader(form))
@@ -392,7 +373,6 @@ func TestPostController_CreateCommentValidation(t *testing.T) {
 		t.Fatalf("CreateComment too long: expected 400, got %d", w.Code)
 	}
 
-	// valid content but no user_id -> 401
 	form = url_Values("content", "nice")
 	c, w = testCtx(http.MethodPost, "/", "")
 	c.Request = httptest.NewRequest(http.MethodPost, "/", strings.NewReader(form))
@@ -438,7 +418,6 @@ func TestPostController_DBErrors(t *testing.T) {
 	}
 }
 
-// url_Values builds a single-field urlencoded form body.
 func url_Values(key, value string) string {
 	return key + "=" + strings.ReplaceAll(value, " ", "+")
 }

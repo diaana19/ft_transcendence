@@ -84,7 +84,6 @@ func TestComment_CreateAndGet(t *testing.T) {
 
 	postID := createPost(t, router, author.Token, "post with comments")
 
-	// Comments use multipart form data
 	w := postCommentForm(t, router, author.Token, postID, "nice post")
 	if w.Code != http.StatusCreated {
 		t.Fatalf("create comment: expected 201, got %d - body: %s", w.Code, w.Body.String())
@@ -199,7 +198,6 @@ func TestPost_LikeAndUnlike(t *testing.T) {
 		t.Fatalf("like: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 
-	// Unlike (toggle by sending same value again)
 	w = authedRequest(t, router, "POST", "/api/posts/"+postID+"/react", liker.Token, `{"value":1}`)
 	if w.Code != http.StatusOK {
 		t.Fatalf("unlike: expected 200, got %d", w.Code)

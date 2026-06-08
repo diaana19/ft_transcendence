@@ -11,17 +11,14 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	_ "ft_transcendence/backend/docs" // generated OpenAPI spec (run `make swagger`)
+	_ "ft_transcendence/backend/docs"
 	"ft_transcendence/backend/internal/config"
 	"ft_transcendence/backend/internal/redis"
 	"ft_transcendence/backend/internal/routes"
 )
 
-// maxBodySize is the maximum request body size (30MB).
-// This covers both JSON endpoints and file uploads (upload service has a 25MB file limit).
-const maxBodySize = 30 << 20 // 30MB
+const maxBodySize = 30 << 20
 
-// BodySizeLimit middleware rejects requests with a body larger than maxBodySize.
 func BodySizeLimit() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodySize)
@@ -29,37 +26,19 @@ func BodySizeLimit() gin.HandlerFunc {
 	}
 }
 
-// SecurityHeaders middleware adds common security headers including CSP.
 func SecurityHeaders() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Content-Security-Policy restricts where resources can be loaded from.
-		// - default-src 'self': only allow resources from our domain
-		// - script-src 'self': only run scripts from our domain (blocks inline JS)
-		// - style-src 'self' 'unsafe-inline': styles from our domain + inline styles (React needs this)
-		// - img-src 'self' data: blob: images from our domain, data URIs, and blob URLs (for previews)
-		// - media-src 'self' blob: videos/audio from our domain and blob URLs
-		// - connect-src 'self' wss: ws: API calls to our domain + WebSocket connections
-		// - frame-ancestors 'none': prevents page from being embedded in iframes (clickjacking)
 		csp := "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
 			"img-src 'self' data: blob:; media-src 'self' blob:; " +
 			"connect-src 'self' wss: ws:; frame-ancestors 'none'"
 		c.Header("Content-Security-Policy", csp)
 
-		// Prevents browsers from MIME-sniffing a response away from declared content-type.
-		// Stops a file labeled as image.jpg from being executed as JavaScript.
 		c.Header("X-Content-Type-Options", "nosniff")
 
-		// Blocks the page from being loaded in <iframe> or <frame>, preventing clickjacking attacks.
 		c.Header("X-Frame-Options", "DENY")
 
-		// Enables the browser's built-in XSS filter and blocks the page if an attack is detected.
 		c.Header("X-XSS-Protection", "1; mode=block")
 
-		// Controls how much referrer info is sent with requests:
-		// - Same origin: full URL
-		// - Cross origin: only the origin (not the full path)
-		// - Downgrade (HTTPS→HTTP): nothing
-		// Prevents leaking sensitive URL paths to external sites.
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
 
 		c.Next()
@@ -135,9 +114,6 @@ func main() {
 	ctrl := routes.Wire(pdb, rdb, conf)
 	routes.SetupRoutes(router, ctrl, rdb)
 
-	// Swagger UI, reachable through the nginx `/swagger/` proxy entry (the backend
-	// has no public port of its own). Reachable at <proxy>/swagger/index.html.
-	// Spec built by `make swagger`.
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(
 		swaggerFiles.Handler,
 		ginSwagger.URL("/swagger/doc.json"),

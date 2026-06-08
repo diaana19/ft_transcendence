@@ -146,12 +146,10 @@ func TestUtils_RefreshToken(t *testing.T) {
 func TestUtils_RefreshTokenNotExpired(t *testing.T) {
 	token, _ := utils.GenerateJWT("user1", "testuser")
 
-	// Token should not be refreshed if not near expiration
 	refreshed, err := utils.RefreshToken(token)
 	if err != nil {
 		t.Fatalf("RefreshToken: %v", err)
 	}
-	// Should return same token if not near expiration
 	if refreshed != token {
 		t.Fatal("expected same token when not near expiration")
 	}

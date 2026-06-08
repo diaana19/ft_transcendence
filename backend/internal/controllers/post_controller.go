@@ -33,10 +33,6 @@ func NewPostController(
 	}
 }
 
-// respondOwnedResourceError maps a service error for an owner-guarded resource
-// (post or comment update/delete) to an HTTP response: not-found uses
-// notFoundMsg, ownership violations ("you can only ...") become 403, and any
-// other error becomes 500.
 func respondOwnedResourceError(c *gin.Context, err error, notFoundMsg string) {
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
@@ -77,9 +73,6 @@ func (pc *PostController) GetTrends(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": trends})
 }
 
-// parseLimitOffset reads the limit/offset pagination params, applying defaults
-// and clamping limit to [1,50] and offset to >= 0, so a caller can't request an
-// unbounded page or a negative offset (the latter errors in Postgres).
 func parseLimitOffset(c *gin.Context) (limit, offset int) {
 	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	if err != nil || limit < 1 {
@@ -108,9 +101,6 @@ func parseLimitOffset(c *gin.Context) (limit, offset int) {
 func (pc *PostController) GetPosts(c *gin.Context) {
 	limit, offset := parseLimitOffset(c)
 
-	// An optional ?tag=xyz narrows the feed to posts carrying that hashtag,
-	// reusing the same paging and reaction-enrichment as the unfiltered list.
-	// An empty or malformed tag normalizes to "" and falls through to all posts.
 	var (
 		posts []models.Post
 		total int64
@@ -314,13 +304,10 @@ func (pc *PostController) DeletePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Post deleted"})
 }
 
-// reactionInput is the body of the react endpoints: +1 likes, -1 dislikes.
 type reactionInput struct {
 	Value int `json:"value" binding:"required"`
 }
 
-// bindReactionValue decodes and validates a react request body, writing a 400
-// and returning ok=false when the value is missing or not exactly +1 / -1.
 func bindReactionValue(c *gin.Context) (int, bool) {
 	var input reactionInput
 	if err := c.ShouldBindJSON(&input); err != nil || (input.Value != 1 && input.Value != -1) {

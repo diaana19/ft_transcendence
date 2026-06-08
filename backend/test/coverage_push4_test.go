@@ -53,7 +53,6 @@ func TestServices_DBErrorBranches(t *testing.T) {
 		t.Fatal("GenerateSecret: expected error storing secret")
 	}
 
-	// Friend service: the result.Error (non-RowsAffected) branches.
 	fsvc := &services.FriendService{DB: bad}
 	if err := fsvc.Unfollow("a", "b"); err == nil {
 		t.Fatal("Unfollow on broken db: expected error")
@@ -72,7 +71,6 @@ func TestAuthController_LogoutServiceError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("config.Load: %v", err)
 	}
-	// Real DB so JWT validation works, but a closed Redis so blacklisting fails.
 	ctrl := routes.Wire(db, brokenRDB(t), cfg)
 
 	token, err := utils.GenerateJWT(utils.NewID(), "logouterr")
@@ -109,9 +107,7 @@ func TestChatHandler_MsgRepoErrors(t *testing.T) {
 
 	client := &socket.Client{ID: sender, Username: "msgerrsender", Send: make(chan []byte, 256)}
 
-	// handleOpen -> ListConversation fails -> history load error branch.
 	h.HandleMessage(client, []byte(`{"action":"open","peer_id":"`+recipient+`"}`))
-	// handleDM -> recipient lookup ok, msgRepo.Create fails -> save error branch.
 	h.HandleMessage(client, []byte(`{"action":"message","content":"hi","recipient_id":"`+recipient+`"}`))
 
 	for {

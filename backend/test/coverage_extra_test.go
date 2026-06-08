@@ -1,9 +1,5 @@
 package test
 
-// End-to-end tests filling coverage gaps on routes that previously had none:
-// single-notification mark-read, the ?username= user lookup, token refresh and
-// the cookie-based logout path. Every test drives the real HTTP stack.
-
 import (
 	"bytes"
 	"encoding/json"
@@ -12,14 +8,11 @@ import (
 	"testing"
 )
 
-// --- notifications: mark a single notification as read ---------------------
-
 func TestNotification_MarkSingleRead(t *testing.T) {
 	router, _ := SetupTestEnv()
 	alice := registerAndLogin(t, router, "msralice", "msralice@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "msrbob", "msrbob@test.com", "StrongPass123!")
 
-	// A friend request generates a notification for bob.
 	if w := authedRequest(t, router, "POST", "/api/friends/request/"+bob.ID, alice.Token, ""); w.Code != http.StatusOK {
 		t.Fatalf("friend request: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
@@ -71,8 +64,6 @@ func TestNotification_MarkSingleReadRequiresAuth(t *testing.T) {
 	}
 }
 
-// --- users: lookup by exact username via ?username= ------------------------
-
 func TestGetUsers_ByUsername_Success(t *testing.T) {
 	router, _ := SetupTestEnv()
 	target := registerAndLogin(t, router, "lookupme", "lookupme@test.com", "StrongPass123!")
@@ -104,8 +95,6 @@ func TestGetUsers_ByUsername_NotFound(t *testing.T) {
 		t.Fatalf("unknown username lookup: expected 404, got %d - body: %s", w.Code, w.Body.String())
 	}
 }
-
-// --- auth: token refresh ---------------------------------------------------
 
 func TestRefreshToken_Success(t *testing.T) {
 	router, _ := SetupTestEnv()
@@ -144,13 +133,10 @@ func TestRefreshToken_InvalidToken(t *testing.T) {
 	}
 }
 
-// --- auth: logout via the auth_token cookie (OAuth sessions) ----------------
-
 func TestLogout_ViaCookie(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "cookielogout", "cookielogout@test.com", "StrongPass123!")
 
-	// No Authorization header: the controller must fall back to the cookie.
 	req, _ := http.NewRequest("POST", "/api/auth/logout", &bytes.Buffer{})
 	req.AddCookie(&http.Cookie{Name: "auth_token", Value: user.Token})
 	w := httptest.NewRecorder()

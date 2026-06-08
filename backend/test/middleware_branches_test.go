@@ -14,8 +14,6 @@ import (
 func TestRateLimitMiddleware_Branches(t *testing.T) {
 	SetupTestEnv()
 
-	// Default ceiling when RATE_LIMIT_MAX is unset/invalid (exercises the
-	// fallback return in rateLimitMax).
 	old, had := os.LookupEnv("RATE_LIMIT_MAX")
 	os.Unsetenv("RATE_LIMIT_MAX")
 	_ = middleware.RateLimitMiddleware(sharedRDB)
@@ -23,7 +21,6 @@ func TestRateLimitMiddleware_Branches(t *testing.T) {
 		os.Setenv("RATE_LIMIT_MAX", old)
 	}
 
-	// Redis error -> 500.
 	errHF := middleware.RateLimitMiddleware(brokenRDB(t))
 	c, w := testCtx(http.MethodGet, "/", "")
 	errHF(c)
@@ -31,7 +28,6 @@ func TestRateLimitMiddleware_Branches(t *testing.T) {
 		t.Fatalf("rate limit redis error: expected 500, got %d", w.Code)
 	}
 
-	// Exceeding the ceiling -> 429.
 	os.Setenv("RATE_LIMIT_MAX", "1")
 	limitHF := middleware.RateLimitMiddleware(sharedRDB)
 	if had {
@@ -52,7 +48,6 @@ func TestOptionalAuthMiddleware_Branches(t *testing.T) {
 	SetupTestEnv()
 	hf := middleware.OptionalAuthMiddleware(sharedRDB)
 
-	// Invalid token falls through to the anonymous path (no 401, no user_id).
 	c, _ := testCtx(http.MethodGet, "/", "")
 	c.Request.Header.Set("Authorization", "Bearer not-a-jwt")
 	hf(c)
@@ -60,7 +55,6 @@ func TestOptionalAuthMiddleware_Branches(t *testing.T) {
 		t.Fatal("invalid token should not set user_id")
 	}
 
-	// Blacklisted token also falls through without setting identity.
 	token, err := utils.GenerateJWT(utils.NewID(), "optauth")
 	if err != nil {
 		t.Fatalf("generate jwt: %v", err)

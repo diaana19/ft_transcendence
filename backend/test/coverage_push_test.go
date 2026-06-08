@@ -8,7 +8,6 @@ import (
 )
 
 func TestJWT_GenerateJWTErrorPath(t *testing.T) {
-	// In test environment, JWT_SECRET might be set, so we test with valid token
 	token, err := utils.GenerateJWT("user1", "testuser")
 	if err != nil {
 		t.Fatalf("GenerateJWT: %v", err)
@@ -50,7 +49,6 @@ func TestJWT_RefreshTokenErrorPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RefreshToken: %v", err)
 	}
-	// Should return same token if not near expiration
 	if refreshed != token {
 		t.Fatal("expected same token when not near expiration")
 	}
@@ -238,19 +236,16 @@ func TestCheckEmailFormat_Comprehensive(t *testing.T) {
 }
 
 func TestCheckUserAge_Comprehensive(t *testing.T) {
-	// Test valid age (over 13)
 	birthDate := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	if !utils.CheckUserAge(birthDate) {
 		t.Error("expected valid age for 2000-01-01")
 	}
 
-	// Test invalid age (under 13)
 	birthDate = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	if utils.CheckUserAge(birthDate) {
 		t.Error("expected invalid age for 2020-01-01")
 	}
 
-	// Test exactly 13 years old
 	now := time.Now()
 	birthDate = time.Date(now.Year()-13, now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	if !utils.CheckUserAge(birthDate) {

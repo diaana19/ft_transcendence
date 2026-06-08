@@ -76,7 +76,6 @@ func TestNotification_UnfriendNotifies(t *testing.T) {
 	alice := registerAndLogin(t, router, "nunf-a", "nunf-a@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "nunf-b", "nunf-b@test.com", "StrongPass123!")
 
-	// Make friends first
 	authedRequest(t, router, "POST", "/api/friends/request/"+bob.ID, alice.Token, "")
 	authedRequest(t, router, "POST", "/api/friends/accept/"+alice.ID, bob.Token, "")
 

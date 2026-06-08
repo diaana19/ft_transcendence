@@ -1,9 +1,5 @@
 package test
 
-// This file holds the shared HTTP test helpers (registerAndLogin, authedRequest)
-// used across the integration suite. Direct-message sending/history now runs over
-// the chat WebSocket; see ws_test.go for that coverage.
-
 import (
 	"bytes"
 	"encoding/json"
@@ -88,9 +84,6 @@ func authedRequest(t *testing.T, router *gin.Engine, method, path, token, body s
 	return w
 }
 
-// seedMessage inserts a direct message straight into the database. DM sending
-// now happens over the chat WebSocket, so HTTP integration tests that just need
-// a message to exist (e.g. search) write one directly instead.
 func seedMessage(t *testing.T, db *gorm.DB, senderID, recipientID, content string) {
 	t.Helper()
 	id, err := uuid.NewV7()

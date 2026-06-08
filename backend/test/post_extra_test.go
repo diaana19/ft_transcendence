@@ -12,8 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// postCommentForm creates a comment via multipart form (the endpoint accepts an
-// optional file alongside the content, so it binds form data, not JSON).
 func postCommentForm(t *testing.T, router *gin.Engine, token, postID, content string) *httptest.ResponseRecorder {
 	t.Helper()
 	var body bytes.Buffer
@@ -31,7 +29,6 @@ func postCommentForm(t *testing.T, router *gin.Engine, token, postID, content st
 	return w
 }
 
-// createComment posts a comment on postID as the given user and returns its id.
 func createComment(t *testing.T, router *gin.Engine, token, postID, content string) string {
 	t.Helper()
 	w := postCommentForm(t, router, token, postID, content)

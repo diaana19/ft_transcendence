@@ -77,9 +77,6 @@ func (m *WSManager) LeaveRoom(client *Client, roomID string) {
 	}
 }
 
-// safeSend writes msg to ch without blocking. Returns true on enqueue,
-// false if the buffer is full or the channel has been closed. Recover guards
-// the send-on-closed-channel panic so callers can keep iterating other clients.
 func safeSend(ch chan []byte, msg []byte) (delivered bool) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -96,10 +93,6 @@ func safeSend(ch chan []byte, msg []byte) (delivered bool) {
 	}
 }
 
-// BroadcastToRoom fans message out to every client in roomID except senderID.
-// The room snapshot is taken under RLock and the actual sends happen after the
-// lock is released, so a slow consumer can never block Register/Unregister/
-// Join/Leave on the manager.
 func (m *WSManager) BroadcastToRoom(roomID string, message []byte, senderID string) {
 	m.mu.RLock()
 	room, ok := m.rooms[roomID]
@@ -132,7 +125,6 @@ func (m *WSManager) GetRoomMembers(roomID string) []string {
 	return members
 }
 
-// IsOnline returns true if the user has an active WebSocket connection.
 func (m *WSManager) IsOnline(userID string) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

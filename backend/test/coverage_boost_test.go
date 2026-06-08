@@ -161,7 +161,7 @@ func TestPost_CreateWithMedia(t *testing.T) {
 		t.Fatalf("create with media: expected 201, got %d - body: %s", w.Code, w.Body.String())
 	}
 	var resp struct {
-		MediaURL *string `json:"media_url"`
+		MediaURL  *string `json:"media_url"`
 		MediaMIME *string `json:"media_mime"`
 	}
 	json.Unmarshal(w.Body.Bytes(), &resp)
