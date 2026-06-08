@@ -1,11 +1,3 @@
-/*
-** File: constants.go
-** Description: Shared response-message constants for the controllers package.
-** Responsibilities:
-** - Centralise repeated user-facing error/status strings so they stay
-**   consistent across handlers.
- */
-
 package controllers
 
 const (

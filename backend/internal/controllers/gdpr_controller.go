@@ -1,12 +1,3 @@
-/*
-** File: gdpr_controller.go
-** Description: Handles GDPR compliance HTTP requests
-** Responsibilities:
-** - Handle user data export requests
-** - Handle user data deletion requests
-** - Extract user identity from JWT token
- */
-
 package controllers
 
 import (

@@ -35,8 +35,6 @@ func NewUserController(userService *services.UserService, friendService *service
 // @Failure   500 {object} map[string]string
 // @Router    /users [get]
 func (uc *UserController) GetUsers(c *gin.Context) {
-	// ?username=foo resolves a single user (used to turn an @mention into a
-	// profile link). username is unique-indexed, so this is a cheap lookup.
 	if username := c.Query("username"); username != "" {
 		user, err := uc.userService.GetUserByUsername(username)
 		if err != nil {

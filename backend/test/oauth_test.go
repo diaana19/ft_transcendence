@@ -14,9 +14,6 @@ import (
 )
 
 func TestOAuthLogin_Redirects(t *testing.T) {
-	// OAuthService.IsConfigured short-circuits when client_id or client_secret
-	// is empty, so the test must supply non-empty values to exercise the real
-	// happy path. t.Setenv auto-restores the original value when the test ends.
 	t.Setenv("GITHUB_CLIENT_ID", "test-client-id")
 	t.Setenv("GITHUB_CLIENT_SECRET", "test-client-secret")
 	router, _ := SetupTestEnv()
@@ -37,10 +34,6 @@ func TestOAuthLogin_Redirects(t *testing.T) {
 	}
 }
 
-// TestOAuthLogin_NotConfigured covers the fail-fast guard: when the GitHub
-// credentials are not set, /api/auth/oauth/github/login redirects to the SPA
-// login page with an error query param rather than handing the browser a
-// github.com URL with client_id= empty (which renders as a 404 on GitHub).
 func TestOAuthLogin_NotConfigured(t *testing.T) {
 	t.Setenv("GITHUB_CLIENT_ID", "")
 	t.Setenv("GITHUB_CLIENT_SECRET", "")
@@ -101,17 +94,14 @@ func TestOAuthService_VerifyAndConsumeState(t *testing.T) {
 	svc := newOAuthService(t)
 	ctx := context.Background()
 
-	// empty state is rejected without touching redis
 	if ok, err := svc.VerifyAndConsumeState(ctx, ""); err != nil || ok {
 		t.Fatalf("empty state: expected (false,nil), got (%v,%v)", ok, err)
 	}
 
-	// unknown state is rejected
 	if ok, err := svc.VerifyAndConsumeState(ctx, "never-stored"); err != nil || ok {
 		t.Fatalf("unknown state: expected (false,nil), got (%v,%v)", ok, err)
 	}
 
-	// a state produced by GenerateState verifies exactly once
 	state, err := svc.GenerateState(ctx)
 	if err != nil {
 		t.Fatalf("generate state: %v", err)
@@ -162,7 +152,6 @@ func TestOAuthService_FindOrCreateUser(t *testing.T) {
 		t.Fatalf("unexpected created user: %+v", created)
 	}
 
-	// second call with the same github id returns the existing user
 	again, err := svc.FindOrCreateUser(ctx, gh)
 	if err != nil {
 		t.Fatalf("find or create (existing by github id): %v", err)
@@ -177,7 +166,6 @@ func TestOAuthService_FindOrCreateUser_LinksExistingEmail(t *testing.T) {
 	svc := newOAuthService(t)
 	ctx := context.Background()
 
-	// a local account already exists with this email
 	registerAndLogin(t, router, "linklocal", "linkme@example.com", "StrongPass123!")
 
 	gh := &services.GitHubUser{
@@ -204,7 +192,6 @@ func TestOAuthService_FindOrCreateUser_UsernameCollision(t *testing.T) {
 	svc := newOAuthService(t)
 	ctx := context.Background()
 
-	// occupy the desired username with a local user
 	registerAndLogin(t, router, "octocat", "octocat@example.com", "StrongPass123!")
 
 	gh := &services.GitHubUser{

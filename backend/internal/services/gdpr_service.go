@@ -1,11 +1,3 @@
-/*
-** File: gdpr_service.go
-** Description: Handles GDPR compliance operations
-** Responsibilities:
-** - Export all user data in JSON format
-** - Permanently delete all user data from the database
- */
-
 package services
 
 import (

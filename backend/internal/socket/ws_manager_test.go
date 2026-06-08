@@ -2,8 +2,6 @@ package socket
 
 import "testing"
 
-// newTestClient builds a Client usable for in-memory manager tests (no real
-// network connection is needed for room bookkeeping).
 func newTestClient(id string, buffer int) *Client {
 	return &Client{ID: id, Username: id, Send: make(chan []byte, buffer)}
 }
@@ -36,7 +34,6 @@ func TestWSManager_RoomMembershipAndBroadcast(t *testing.T) {
 	default:
 	}
 
-	// broadcasting to an unknown room is a no-op
 	m.BroadcastToRoom("ghost-room", []byte("x"), "")
 
 	m.LeaveRoom(c1, "room1")
@@ -44,7 +41,6 @@ func TestWSManager_RoomMembershipAndBroadcast(t *testing.T) {
 		t.Fatalf("expected 1 member after leave, got %d", got)
 	}
 
-	// leaving the last member removes the room entirely
 	m.LeaveRoom(c2, "room1")
 	if got := len(m.GetRoomMembers("room1")); got != 0 {
 		t.Fatalf("expected empty room after last leave, got %d", got)
@@ -59,19 +55,16 @@ func TestWSManager_Unregister(t *testing.T) {
 
 	m.UnregisterClient(c)
 
-	// Send channel is closed by UnregisterClient; receiving must not block.
 	if _, open := <-c.Send; open {
 		t.Fatal("expected Send channel to be closed after unregister")
 	}
 }
 
 func TestSafeSend_BufferFullAndClosed(_ *testing.T) {
-	// full buffer: message is dropped without blocking
 	full := make(chan []byte, 1)
 	full <- []byte("first")
 	safeSend(full, []byte("dropped"))
 
-	// closed channel: the panic is recovered, not propagated
 	closed := make(chan []byte, 1)
 	close(closed)
 	safeSend(closed, []byte("after-close"))

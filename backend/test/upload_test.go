@@ -15,8 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// pngBytes returns the encoded bytes of a tiny valid PNG image. http.DetectContentType
-// relies on the PNG magic header, so this passes the upload MIME check.
 func pngBytes(t *testing.T) []byte {
 	t.Helper()
 	img := image.NewNRGBA(image.Rect(0, 0, 1, 1))
@@ -28,8 +26,6 @@ func pngBytes(t *testing.T) []byte {
 	return buf.Bytes()
 }
 
-// uploadFile performs a multipart upload of the given bytes under filename and
-// returns the recorder. visibility may be empty to use the server default.
 func uploadFile(t *testing.T, router *gin.Engine, token, filename, visibility string, content []byte) *httptest.ResponseRecorder {
 	t.Helper()
 	var body bytes.Buffer
@@ -164,9 +160,6 @@ func TestServeFile_NotFound(t *testing.T) {
 	}
 }
 
-// For an existing public file, access is always granted; the file is not on the
-// serving disk path in the test environment, so the handler reports 404 from disk
-// rather than 403 — confirming canAccess returned true.
 func TestServeFile_PublicAccessGranted(t *testing.T) {
 	t.Cleanup(func() { os.RemoveAll("./uploads") })
 	router, _ := SetupTestEnv()
@@ -194,7 +187,6 @@ func TestServeFile_PrivateForbiddenForOthers(t *testing.T) {
 		t.Fatalf("private file to non-owner: expected 403, got %d", w.Code)
 	}
 
-	// owner is allowed past canAccess (then 404 from disk in test env)
 	w = authedRequest(t, router, "GET", "/api/files/"+fileID, owner.Token, "")
 	if w.Code == http.StatusForbidden {
 		t.Fatalf("owner must access own private file, got 403")
@@ -224,8 +216,6 @@ func TestServeFile_FriendsVisibility(t *testing.T) {
 	}
 }
 
-// anonRequest makes a GET without an Authorization header — used to verify
-// that ServeFile lets public files through to unauthenticated callers.
 func anonRequest(t *testing.T, router *gin.Engine, path string) *httptest.ResponseRecorder {
 	t.Helper()
 	req, _ := http.NewRequest("GET", path, nil)

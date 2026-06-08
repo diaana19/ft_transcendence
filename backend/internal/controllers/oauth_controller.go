@@ -34,9 +34,6 @@ func NewOAuthController(service *services.OAuthService, cfg *config.Config) *OAu
 func (oc *OAuthController) OAuthLogin(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	// Fail early if GITHUB_CLIENT_ID/SECRET aren't set. Otherwise we'd hand
-	// the browser a github.com authorize URL with client_id= empty, which
-	// just renders a GitHub 404 and confuses the user.
 	if !oc.service.IsConfigured() {
 		c.Redirect(http.StatusTemporaryRedirect, oc.frontendURL+"/login?error=oauth_not_configured")
 		return
@@ -124,8 +121,8 @@ func (oc *OAuthController) OAuthCallback(c *gin.Context) {
 		24*3600,
 		"/",
 		"",
-		true, // Secure: only send over HTTPS
-		true, // HttpOnly: not accessible via JavaScript
+		true,
+		true,
 	)
 	c.Redirect(http.StatusTemporaryRedirect, oc.frontendURL+"/")
 }

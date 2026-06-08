@@ -8,17 +8,12 @@ import (
 )
 
 type Post struct {
-	ID       string  `gorm:"primaryKey;type:uuid"`
-	AuthorID string  `gorm:"type:uuid;not null"`
-	Author   User    `gorm:"foreignKey:AuthorID;references:ID"`
-	Content  string  `gorm:"type:text;not null"`
-	MediaURL *string `gorm:"type:text" json:"media_url,omitempty"`
-	MediaMIME *string `gorm:"type:varchar(100)" json:"media_mime,omitempty"`
-	// Tags holds the distinct lowercased hashtags extracted from Content at
-	// write time (see utils.ExtractHashtags). Stored as a Postgres text[] with a
-	// GIN index so trends can be aggregated with unnest() without re-scanning
-	// content. Kept denormalized alongside Content so it survives a Redis flush
-	// and powers real-time trend counts straight from the source of truth.
+	ID            string         `gorm:"primaryKey;type:uuid"`
+	AuthorID      string         `gorm:"type:uuid;not null"`
+	Author        User           `gorm:"foreignKey:AuthorID;references:ID"`
+	Content       string         `gorm:"type:text;not null"`
+	MediaURL      *string        `gorm:"type:text" json:"media_url,omitempty"`
+	MediaMIME     *string        `gorm:"type:varchar(100)" json:"media_mime,omitempty"`
 	Tags          pq.StringArray `gorm:"type:text[];index:idx_posts_tags,type:gin" json:"tags,omitempty"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
@@ -29,8 +24,6 @@ type Post struct {
 	Comments      []Reply        `gorm:"foreignKey:PostID" json:"comments,omitempty"`
 }
 
-// TagCount is one row of the trends aggregation: a hashtag and how many posts
-// used it within the queried window.
 type TagCount struct {
 	Tag   string `json:"tag"`
 	Count int64  `json:"count"`
@@ -74,11 +67,6 @@ func (p *Post) ToResponse() PostResponse {
 	}
 }
 
-// PostReaction is a user's like (Value=+1) or dislike (Value=-1) on a post. A
-// user has at most one reaction per post (enforced by the composite unique
-// index), so liking switches an existing dislike and vice-versa. The table is
-// still named "likes" so the original like rows are preserved on migration —
-// the added value column defaults to 1, marking every legacy like as a like.
 type PostReaction struct {
 	ID        string `gorm:"primaryKey;type:uuid"`
 	UserID    string `gorm:"type:uuid;not null;uniqueIndex:idx_like_user_post"`
@@ -91,8 +79,6 @@ type PostReaction struct {
 
 func (PostReaction) TableName() string { return "likes" }
 
-// ReplyReaction is the reply counterpart of PostReaction: a user's like
-// (Value=+1) or dislike (Value=-1) on a single reply, unique per user/reply.
 type ReplyReaction struct {
 	ID        string `gorm:"primaryKey;type:uuid"`
 	UserID    string `gorm:"type:uuid;not null;uniqueIndex:idx_reply_reaction_user_reply"`
@@ -103,9 +89,6 @@ type ReplyReaction struct {
 	CreatedAt time.Time
 }
 
-// ReactionResponse is returned by the post and comment react endpoints.
-// UserReaction is the caller's resulting reaction: +1 liked, -1 disliked, 0
-// cleared. Exactly one of PostID / CommentID is set.
 type ReactionResponse struct {
 	PostID        string `json:"post_id,omitempty"`
 	CommentID     string `json:"comment_id,omitempty"`

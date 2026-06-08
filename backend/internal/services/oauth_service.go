@@ -100,10 +100,6 @@ func (s *OAuthService) BuildAuthURL(state string) string {
 	return s.oauthConfig.AuthCodeURL(state)
 }
 
-// IsConfigured reports whether the service has the credentials needed to
-// initiate a GitHub OAuth flow. If false, the controller should fail early
-// with a clear message instead of redirecting the user to a 404 on GitHub
-// (which is what happens when client_id is empty).
 func (s *OAuthService) IsConfigured() bool {
 	return s.oauthConfig.ClientID != "" && s.oauthConfig.ClientSecret != ""
 }

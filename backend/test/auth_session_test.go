@@ -41,7 +41,6 @@ func TestAuth_LogoutRevokesToken(t *testing.T) {
 		t.Fatalf("logout: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 
-	// the token must now be rejected on a protected route
 	w = authedRequest(t, router, "GET", "/api/users", u.Token, "")
 	if w.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401 after logout, got %d", w.Code)

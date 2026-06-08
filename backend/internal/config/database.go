@@ -33,7 +33,6 @@ func (pg *Postgres) Connect() (*gorm.DB, error) {
 		&models.Reply{},
 		&models.ReplyReaction{},
 		&models.Repost{},
-		// &models.Group{},
 		&models.Message{},
 		&models.Notification{},
 		&models.File{},

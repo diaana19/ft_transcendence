@@ -11,9 +11,6 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// ghRoundTripper intercepts calls to api.github.com so the GitHub-dependent OAuth
-// paths can be exercised without reaching the real API. Any other host (the mock
-// token server) is delegated to the default transport.
 type ghRoundTripper struct {
 	userStatus  int
 	userBody    string

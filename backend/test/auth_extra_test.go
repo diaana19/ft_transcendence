@@ -170,10 +170,6 @@ func TestLogout_MissingToken(t *testing.T) {
 	}
 }
 
-// TestAuthMe verifies /api/auth/me returns the authenticated user via JWT
-// (and, by extension, via the auth_token cookie set by the OAuth callback —
-// AuthMiddleware accepts both transports). Used by the SPA on mount to
-// recover an OAuth-only session where JS can't read the HttpOnly cookie.
 func TestAuthMe(t *testing.T) {
 	router, _ := SetupTestEnv()
 	u := registerAndLogin(t, router, "authme", "authme@test.com", "StrongPass123!")

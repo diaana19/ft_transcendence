@@ -22,7 +22,6 @@ import (
 	"ft_transcendence/backend/internal/services"
 )
 
-// chatHistoryLimit caps how many past messages an "open" returns.
 const chatHistoryLimit = 50
 
 type ChatHandler struct {
@@ -37,8 +36,6 @@ type ChatHandler struct {
 	subscribedMu        sync.Mutex
 }
 
-// IncomingMessage is a client frame. "open" loads a conversation with PeerID;
-// "message" sends Content (and/or a FileID attachment) to RecipientID.
 type IncomingMessage struct {
 	Action      string  `json:"action"`
 	PeerID      string  `json:"peer_id"`
@@ -47,8 +44,6 @@ type IncomingMessage struct {
 	FileID      *string `json:"file_id,omitempty"`
 }
 
-// OutgoingMessage is a server frame. "history" carries Messages for PeerID;
-// "message" carries a single Message.
 type OutgoingMessage struct {
 	Type     string                   `json:"type"`
 	Message  *models.MessageResponse  `json:"message,omitempty"`
@@ -56,10 +51,6 @@ type OutgoingMessage struct {
 	PeerID   string                   `json:"peer_id,omitempty"`
 }
 
-// NewChatHandler builds a ChatHandler whose WebSocket upgrader accepts
-// connections from frontendURL (the SPA's public origin) and from clients
-// that omit the Origin header (non-browser tools, smoke tests). "null" is
-// also allowed for sandboxed iframes and file:// origins during local dev.
 func NewChatHandler(
 	manager *WSManager,
 	rdb *redis.Client,
@@ -105,9 +96,6 @@ func (h *ChatHandler) sendPendingNotifications(client *Client) {
 			allDelivered = false
 		}
 	}
-	// Only flag the backlog as read if every notification actually reached the
-	// client's send buffer. If anything dropped, leave them unread so they
-	// resurface on next connect rather than disappearing silently.
 	if allDelivered {
 		_ = h.notificationService.MarkAllRead(client.ID)
 	}
@@ -133,8 +121,6 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 	h.manager.RegisterClient(client)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	// LIFO: cancel fires first so the notifications subscriber goroutine starts
-	// winding down before UnregisterClient closes client.Send.
 	defer h.manager.UnregisterClient(client)
 	defer cancel()
 
@@ -183,9 +169,6 @@ func (h *ChatHandler) HandleMessage(client *Client, raw []byte) {
 	}
 }
 
-// dmChannel returns the deterministic pub/sub channel for a pair of users.
-// Sorting the IDs makes both participants derive the same channel regardless of
-// who opened the conversation. It is a transport detail only — not stored.
 func dmChannel(a, b string) string {
 	if a > b {
 		a, b = b, a
@@ -193,8 +176,6 @@ func dmChannel(a, b string) string {
 	return "dm:" + a + ":" + b
 }
 
-// handleOpen subscribes the client to its conversation with peerID and replies
-// with the recent history so the UI can render it immediately.
 func (h *ChatHandler) handleOpen(client *Client, peerID string) {
 	if peerID == "" || peerID == client.ID {
 		return
@@ -227,8 +208,6 @@ func (h *ChatHandler) handleOpen(client *Client, peerID string) {
 	safeSend(client.Send, payload)
 }
 
-// handleDM persists a direct message (sender_id + recipient_id), pushes it to
-// both participants over their dm channel, and notifies the recipient.
 func (h *ChatHandler) handleDM(client *Client, incoming IncomingMessage) {
 	content := strings.TrimSpace(incoming.Content)
 	if content == "" && incoming.FileID == nil {
@@ -284,7 +263,6 @@ func (h *ChatHandler) handleDM(client *Client, incoming IncomingMessage) {
 	)
 }
 
-// toResponses maps stored messages to their wire form, oldest first.
 func toResponses(msgs []models.Message) []models.MessageResponse {
 	out := make([]models.MessageResponse, len(msgs))
 	for i := range msgs {
@@ -305,9 +283,6 @@ func (h *ChatHandler) publishToRoom(roomID string, out OutgoingMessage) {
 	}
 }
 
-// grantAttachment validates a private file owned by the sender and grants the
-// recipient read access so a DM attachment is viewable by exactly the two
-// participants.
 func (h *ChatHandler) grantAttachment(senderID, recipientID, fileID string) error {
 	file, err := h.fileRepo.GetByID(fileID)
 	if err != nil {

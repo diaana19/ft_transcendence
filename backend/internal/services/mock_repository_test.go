@@ -134,7 +134,7 @@ func (m *mockUserRepository) LinkGithub(userID, githubID string) error {
 	if !ok {
 		return errors.New("record not found")
 	}
-	gid := githubID // need pointer
+	gid := githubID
 	user.GithubID = &gid
 	user.Provider = "github"
 	return nil

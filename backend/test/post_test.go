@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// createPost creates a post as the given user and returns its id.
 func createPost(t *testing.T, router *gin.Engine, token, content string) string {
 	t.Helper()
 	w := authedRequest(t, router, "POST", "/api/posts", token, `{"content":"`+content+`"}`)
@@ -79,15 +78,12 @@ func TestPost_ListLimitOffset(t *testing.T) {
 		return r
 	}
 
-	// limit caps the page; total stays the full count.
 	if r := get("?limit=2"); len(r.Data) != 2 || r.Limit != 2 || r.Offset != 0 || r.Total != 3 {
 		t.Fatalf("limit=2: got len=%d limit=%d offset=%d total=%d", len(r.Data), r.Limit, r.Offset, r.Total)
 	}
-	// offset skips into the list.
 	if r := get("?limit=2&offset=2"); len(r.Data) != 1 || r.Offset != 2 {
 		t.Fatalf("offset=2: got len=%d offset=%d", len(r.Data), r.Offset)
 	}
-	// out-of-range values are clamped: limit>50 → 50, negative offset → 0.
 	if r := get("?limit=9999&offset=-5"); r.Limit != 50 || r.Offset != 0 {
 		t.Fatalf("clamp: got limit=%d offset=%d", r.Limit, r.Offset)
 	}
@@ -180,15 +176,12 @@ func TestPost_LikeDislike(t *testing.T) {
 	id := createPost(t, router, author.Token, "like me")
 	path := "/api/posts/" + id + "/react"
 
-	// like → like count 1
 	if r := react(t, router, path, liker.Token, 1); r.UserReaction != 1 || r.LikesCount != 1 || r.DislikesCount != 0 {
 		t.Fatalf("expected reaction=1 likes=1 dislikes=0, got %+v", r)
 	}
-	// switch to dislike → likes back to 0, dislikes 1
 	if r := react(t, router, path, liker.Token, -1); r.UserReaction != -1 || r.LikesCount != 0 || r.DislikesCount != 1 {
 		t.Fatalf("expected reaction=-1 likes=0 dislikes=1, got %+v", r)
 	}
-	// press dislike again → cleared
 	if r := react(t, router, path, liker.Token, -1); r.UserReaction != 0 || r.LikesCount != 0 || r.DislikesCount != 0 {
 		t.Fatalf("expected reaction=0 likes=0 dislikes=0 after toggle off, got %+v", r)
 	}
@@ -199,8 +192,6 @@ func TestPost_ReactValidation(t *testing.T) {
 	author := registerAndLogin(t, router, "prv", "prv@test.com", "StrongPass123!")
 	id := createPost(t, router, author.Token, "react to me")
 
-	// value out of range, value 0 (binding:required treats 0 as missing), and an
-	// empty body all map to 400.
 	for _, body := range []string{`{"value":2}`, `{"value":0}`, `{}`} {
 		w := authedRequest(t, router, "POST", "/api/posts/"+id+"/react", author.Token, body)
 		if w.Code != http.StatusBadRequest {
@@ -225,8 +216,6 @@ func TestPost_ReactRequiresAuth(t *testing.T) {
 	}
 }
 
-// An author can like their own post (Twitter-style); doing so must not generate
-// a self-notification.
 func TestPost_AuthorCanReactOwnPostNoSelfNotify(t *testing.T) {
 	router, _ := SetupTestEnv()
 	author := registerAndLogin(t, router, "psr", "psr@test.com", "StrongPass123!")
@@ -246,7 +235,6 @@ func TestPost_AuthorCanReactOwnPostNoSelfNotify(t *testing.T) {
 	}
 }
 
-// Likes from distinct users aggregate on the denormalized counter.
 func TestPost_ReactionsAggregateAcrossUsers(t *testing.T) {
 	router, _ := SetupTestEnv()
 	author := registerAndLogin(t, router, "pagg", "pagg@test.com", "StrongPass123!")
@@ -282,7 +270,6 @@ func TestPost_CommentLikeDislike(t *testing.T) {
 		t.Fatalf("expected comment reaction=1 likes=1, got %+v", r)
 	}
 
-	// the viewer's reaction is reflected back when listing comments
 	w = authedRequest(t, router, "GET", "/api/posts/"+postID+"/comments", reactor.Token, "")
 	var list struct {
 		Data []struct {
@@ -297,7 +284,6 @@ func TestPost_CommentLikeDislike(t *testing.T) {
 		t.Fatalf("expected liked comment with likes=1, got %+v", list.Data)
 	}
 
-	// switch like → dislike, then toggle the dislike off
 	if r := react(t, router, path, reactor.Token, -1); r.UserReaction != -1 || r.LikesCount != 0 || r.DislikesCount != 1 {
 		t.Fatalf("expected comment reaction=-1 likes=0 dislikes=1, got %+v", r)
 	}
@@ -305,7 +291,6 @@ func TestPost_CommentLikeDislike(t *testing.T) {
 		t.Fatalf("expected comment reaction cleared, got %+v", r)
 	}
 
-	// a logged-out viewer gets counts but no personal reaction flags
 	w = authedRequest(t, router, "GET", "/api/posts/"+postID+"/comments", "", "")
 	json.Unmarshal(w.Body.Bytes(), &list)
 	if len(list.Data) != 1 || list.Data[0].Liked || list.Data[0].Disliked {
@@ -358,14 +343,10 @@ func TestPost_Trends(t *testing.T) {
 	router, _ := SetupTestEnv()
 	u := registerAndLogin(t, router, "ptrend", "ptrend@test.com", "StrongPass123!")
 
-	// #golang appears once per post (deduped + case-insensitive within a post),
-	// in two posts → count 2. #redis in one post → count 1. The last post has no
-	// tags and must not appear.
 	createPost(t, router, u.Token, "love #golang and #Golang and #redis")
 	createPost(t, router, u.Token, "more #golang here")
 	createPost(t, router, u.Token, "no tags at all")
 
-	// Public endpoint — no token needed.
 	w := authedRequest(t, router, "GET", "/api/trends", "", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("trends: expected 200, got %d - body: %s", w.Code, w.Body.String())

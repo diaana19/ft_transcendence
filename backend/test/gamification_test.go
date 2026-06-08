@@ -54,15 +54,12 @@ func TestGamification_AggregatesPostsLikesFollowersFollowing(t *testing.T) {
 	post2 := createPost(t, router, alice.Token, "second")
 	createPost(t, router, alice.Token, "third")
 
-	// Bob follows Alice (alice gains a follower).
 	if w := authedRequest(t, router, "POST", "/api/friends/follow/"+alice.ID, bob.Token, ""); w.Code != http.StatusOK {
 		t.Fatalf("bob follow alice: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
-	// Alice follows Bob (alice gains a "following").
 	if w := authedRequest(t, router, "POST", "/api/friends/follow/"+bob.ID, alice.Token, ""); w.Code != http.StatusOK {
 		t.Fatalf("alice follow bob: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
-	// Bob likes two of alice's posts (alice gains 2 received likes).
 	if w := authedRequest(t, router, "POST", "/api/posts/"+post1+"/react", bob.Token, `{"value":1}`); w.Code != http.StatusOK {
 		t.Fatalf("bob like post1: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
@@ -70,8 +67,6 @@ func TestGamification_AggregatesPostsLikesFollowersFollowing(t *testing.T) {
 		t.Fatalf("bob like post2: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 
-	// Alice: 3 posts + 2 likes received + 1 follower + 1 following = 7
-	// 2^2 = 4 <= 7 < 8 = 2^3, so level = 2.
 	w := authedRequest(t, router, "GET", "/api/users/"+alice.ID+"/gamification", alice.Token, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("alice gamification: expected 200, got %d - body: %s", w.Code, w.Body.String())
@@ -80,8 +75,8 @@ func TestGamification_AggregatesPostsLikesFollowersFollowing(t *testing.T) {
 	wantAlice := gamificationResponse{
 		Level:     2,
 		Total:     7,
-		Posts:     metricResponse{Level: 1, Count: 3}, // 2^1 <= 3 < 2^2
-		Likes:     metricResponse{Level: 1, Count: 2}, // 2^1 = 2
+		Posts:     metricResponse{Level: 1, Count: 3},
+		Likes:     metricResponse{Level: 1, Count: 2},
 		Followers: metricResponse{Level: 0, Count: 1},
 		Following: metricResponse{Level: 0, Count: 1},
 	}
@@ -89,7 +84,6 @@ func TestGamification_AggregatesPostsLikesFollowersFollowing(t *testing.T) {
 		t.Fatalf("alice stats wrong:\n got  %+v\n want %+v", stats, wantAlice)
 	}
 
-	// Bob: 0 posts + 0 likes received + 1 follower (alice) + 1 following (alice) = 2 → level 1.
 	w = authedRequest(t, router, "GET", "/api/users/"+bob.ID+"/gamification", bob.Token, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("bob gamification: expected 200, got %d - body: %s", w.Code, w.Body.String())
@@ -108,8 +102,6 @@ func TestGamification_AggregatesPostsLikesFollowersFollowing(t *testing.T) {
 	}
 }
 
-// Likes on a user's replies count toward their received-likes score, the same
-// as likes on their posts.
 func TestGamification_CountsReplyLikes(t *testing.T) {
 	router, _ := SetupTestEnv()
 	alice := registerAndLogin(t, router, "grl-a", "grl-a@test.com", "StrongPass123!")
@@ -128,8 +120,6 @@ func TestGamification_CountsReplyLikes(t *testing.T) {
 		t.Fatalf("gamification: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 	stats := decodeGamification(t, w.Body.Bytes())
-	// 1 post + 1 like received (on the reply) = total 2; the reply itself is not
-	// counted as a post.
 	if stats.Likes.Count != 1 || stats.Posts.Count != 1 || stats.Total != 2 {
 		t.Fatalf("expected posts=1 likes=1 total=2, got %+v", stats)
 	}
@@ -147,14 +137,11 @@ func TestLeaderboard_ListsUsersWithStats(t *testing.T) {
 	alice := registerAndLogin(t, router, "boardalice", "boardalice@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "boardbob", "boardbob@test.com", "StrongPass123!")
 
-	// Give alice an avatar so the non-nil branch of stringVal is exercised; bob
-	// keeps the default empty avatar (nil → "").
 	avatarBody := `{"displayname":"Alice","username":"boardalice","bio":"","avatar":"https://example.com/alice.png"}`
 	if w := authedRequest(t, router, "PUT", "/api/users/"+alice.ID, alice.Token, avatarBody); w.Code != http.StatusOK {
 		t.Fatalf("set alice avatar: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 
-	// Alice: 1 post + 1 like received = total 2 → level 1. Bob stays at 0.
 	post := createPost(t, router, alice.Token, "hello")
 	if w := authedRequest(t, router, "POST", "/api/posts/"+post+"/react", bob.Token, `{"value":1}`); w.Code != http.StatusOK {
 		t.Fatalf("bob like alice post: expected 200, got %d - body: %s", w.Code, w.Body.String())
@@ -214,7 +201,6 @@ func TestGamification_RequiresAuth(t *testing.T) {
 	router, _ := SetupTestEnv()
 	u := registerAndLogin(t, router, "gameranon", "gameranon@test.com", "StrongPass123!")
 
-	// No Authorization header → handled by the protected group's AuthMiddleware.
 	w := authedRequest(t, router, "GET", "/api/users/"+u.ID+"/gamification", "", "")
 	if w.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401 without token, got %d - body: %s", w.Code, w.Body.String())

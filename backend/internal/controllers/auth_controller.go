@@ -14,7 +14,6 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
-// Identifier can be either email or username
 type LoginInput struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
@@ -133,7 +132,6 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 		return
 	}
 
-	// determine identifier
 	identifier := input.Email
 	if identifier == "" {
 		identifier = input.Username
@@ -181,8 +179,8 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 		int((24 * time.Hour).Seconds()),
 		"/",
 		"",
-		true, // Secure: only send over HTTPS
-		true, // HttpOnly: not accessible via JavaScript
+		true,
+		true,
 	)
 	c.JSON(http.StatusOK, gin.H{"token": token, "user": user.ToResponse()})
 }
@@ -321,7 +319,6 @@ func (ac *AuthController) Verify2FA(c *gin.Context) {
 		return
 	}
 
-	// Code is valid: consume the pending token so it can't be reused.
 	ac.authService.ConsumePendingLogin(input.PendingToken, ac.rdb)
 
 	user, err := ac.authService.GetUserByID(userID)
@@ -342,8 +339,8 @@ func (ac *AuthController) Verify2FA(c *gin.Context) {
 		int((24 * time.Hour).Seconds()),
 		"/",
 		"",
-		true, // Secure: only send over HTTPS
-		true, // HttpOnly: not accessible via JavaScript
+		true,
+		true,
 	)
 
 	c.JSON(http.StatusOK, gin.H{

@@ -115,10 +115,8 @@ func (uc *UploadController) ServeFile(c *gin.Context) {
 	uc.streamFile(c, file)
 }
 
-// streamFile writes the file to the response with inline content headers.
 func (uc *UploadController) streamFile(c *gin.Context, file *models.File) {
 	c.Header("Content-Type", file.MimeType)
-	// Sanitize filename to prevent header injection - only allow safe characters
 	safeFilename := strings.NewReplacer(
 		"\n", "_",
 		"\r", "_",
@@ -129,8 +127,6 @@ func (uc *UploadController) streamFile(c *gin.Context, file *models.File) {
 	c.File(file.Path)
 }
 
-// canAccess reports whether userID may read file, based on ownership and the
-// file's visibility (public, friends, or private).
 func (uc *UploadController) canAccess(file *models.File, userID string) bool {
 	if file.OwnerID == userID {
 		return true

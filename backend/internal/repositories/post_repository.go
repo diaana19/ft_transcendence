@@ -68,10 +68,6 @@ func (r *postRepository) GetByAuthorID(authorID string) ([]models.Post, error) {
 	return posts, result.Error
 }
 
-// GetByTag returns non-deleted posts whose denormalized tags array contains the
-// given tag (already normalized to the stored lowercased, '#'-prefixed form),
-// newest first, with limit/offset paging. The @> containment check is served by
-// the GIN index on tags, so it stays fast as the table grows.
 func (r *postRepository) GetByTag(tag string, limit, offset int) ([]models.Post, int64, error) {
 	var posts []models.Post
 	var total int64
@@ -105,10 +101,6 @@ func (r *postRepository) Update(id string, input models.UpdatePostInput) (*model
 	return &post, nil
 }
 
-// TopTags aggregates the most-used hashtags across non-deleted posts created at
-// or after since. It unnests the denormalized tags array and counts per tag, so
-// the result is computed live from current rows — new posts show immediately
-// and deleted posts drop out, with no separate counter to keep in sync.
 func (r *postRepository) TopTags(since time.Time, limit int) ([]models.TagCount, error) {
 	var out []models.TagCount
 	err := r.db.Raw(`
@@ -132,8 +124,6 @@ func (r *postRepository) Delete(id string) error {
 	return nil
 }
 
-// reactionDelta is the change a reaction transition makes to a single counter:
-// +1 when the new value enters the bucket, -1 when the old value leaves it.
 func reactionDelta(oldValue, newValue, bucket int) int {
 	d := 0
 	if newValue == bucket {
@@ -150,6 +140,8 @@ func reactionDelta(oldValue, newValue, bucket int) int {
 // the denormalized likes_count / dislikes_count by the transition delta. The
 // whole reconciliation runs in one transaction so a row and its counters can
 // never drift apart.
+//
+//nolint:dupl // Intentionally parallel to SetReplyReaction; different model types.
 func (r *postRepository) SetPostReaction(userID, postID string, value int) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		var existing models.PostReaction
@@ -201,9 +193,6 @@ func (r *postRepository) GetPostReaction(userID, postID string) (int, error) {
 	return reaction.Value, err
 }
 
-// adjustReactionCounts moves the likes_count / dislikes_count columns of the
-// given model row by the like/dislike deltas implied by oldValue→newValue,
-// clamping at 0 so a stale row can never push a counter negative.
 func adjustReactionCounts(tx *gorm.DB, model any, id string, oldValue, newValue int) error {
 	if d := reactionDelta(oldValue, newValue, 1); d != 0 {
 		if err := tx.Model(model).Where("id = ?", id).
@@ -285,6 +274,8 @@ func (r *postRepository) DeleteComment(id string) error {
 // SetReplyReaction is the reply counterpart of SetPostReaction: it reconciles a
 // user's reaction on a reply and adjusts that reply's denormalized counters in
 // one transaction.
+//
+//nolint:dupl // Intentionally parallel to SetPostReaction; different model types.
 func (r *postRepository) SetReplyReaction(userID, replyID string, value int) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		var existing models.ReplyReaction

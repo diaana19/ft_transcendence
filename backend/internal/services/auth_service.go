@@ -50,7 +50,6 @@ func (s *AuthService) CreateAuthUserService(user *models.User) (*models.UserResp
 		user.Provider = "local"
 	}
 
-	// Display name defaults to the login, so it is never null or empty.
 	if user.DisplayName == "" {
 		user.DisplayName = user.Username
 	}
@@ -119,8 +118,6 @@ func (s *AuthService) CreatePendingLogin(userID string, rdb *redis.Client) (stri
 	return pendingToken, nil
 }
 
-// PeekPendingLogin returns the userID for a pending login token without
-// consuming it, so a failed 2FA attempt can be retried with the same token.
 func (s *AuthService) PeekPendingLogin(pendingToken string, rdb *redis.Client) (string, error) {
 	ctx := context.Background()
 	key := "pending_login:" + pendingToken
@@ -137,8 +134,6 @@ func (s *AuthService) PeekPendingLogin(pendingToken string, rdb *redis.Client) (
 	return userID, nil
 }
 
-// ConsumePendingLogin deletes a pending login token. Call this only after the
-// 2FA code has been validated successfully.
 func (s *AuthService) ConsumePendingLogin(pendingToken string, rdb *redis.Client) {
 	ctx := context.Background()
 	key := "pending_login:" + pendingToken

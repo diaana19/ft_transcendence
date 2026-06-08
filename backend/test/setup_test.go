@@ -23,11 +23,8 @@ import (
 func TestMain(m *testing.M) {
 	ctx := context.Background()
 
-	// Ryuk's resource reaper fails to start under rootless podman, so disable it;
-	// containers are torn down explicitly via TerminateContainer below.
 	os.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
 
-	// Effectively disable rate limiting so the shared test client IP is not throttled.
 	os.Setenv("RATE_LIMIT_MAX", "1000000")
 
 	dbName := os.Getenv("DB_NAME")
@@ -97,10 +94,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// sharedDB and sharedRDB are initialised once and reused across every test.
-// Tests run serially, so a single connection pool avoids exhausting Postgres'
-// connection limit (each cfg.Postgres.Connect call would otherwise open a pool
-// that is never closed).
 var (
 	sharedDB  *gorm.DB
 	sharedRDB *goredis.Client

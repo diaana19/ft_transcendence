@@ -8,7 +8,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// testSecret is at least jwtMinSecretLen (32) bytes so loadSecret accepts it.
 const testSecret = "test-secret-key-for-unit-tests-min-32-bytes"
 
 func setupJWTSecret(t *testing.T) {
@@ -98,9 +97,6 @@ func TestValidateJWT_InvalidSignature(t *testing.T) {
 	}
 }
 
-// TestValidateJWT_WrongIssuer ensures that a token signed with the right
-// secret but a different issuer is rejected — defends against accidental
-// cross-service token reuse.
 func TestValidateJWT_WrongIssuer(t *testing.T) {
 	setupJWTSecret(t)
 	secret := os.Getenv("JWT_SECRET")
@@ -139,9 +135,6 @@ func TestValidateJWT_EmptyToken(t *testing.T) {
 	}
 }
 
-// TestLoadSecret_EmptyEnvFailsFast guards against the silent fail-open where
-// an unset JWT_SECRET would otherwise sign / verify with []byte("") and
-// accept any forged token.
 func TestLoadSecret_EmptyEnvFailsFast(t *testing.T) {
 	os.Unsetenv("JWT_SECRET")
 
@@ -153,8 +146,6 @@ func TestLoadSecret_EmptyEnvFailsFast(t *testing.T) {
 	}
 }
 
-// TestLoadSecret_ShortEnvFailsFast covers the under-32-byte case. HS256 keys
-// shorter than the hash output are weak; refuse them outright.
 func TestLoadSecret_ShortEnvFailsFast(t *testing.T) {
 	os.Setenv("JWT_SECRET", "too-short")
 	t.Cleanup(func() { os.Unsetenv("JWT_SECRET") })

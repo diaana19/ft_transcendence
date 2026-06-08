@@ -14,8 +14,6 @@ import (
 
 const testUserPassword = "StrongPass123!"
 
-// createUserAndGetID registers a fresh user through the public endpoint and
-// returns its generated id. Registration is unauthenticated.
 func createUserAndGetID(router *gin.Engine, t *testing.T) string {
 	t.Helper()
 
@@ -45,9 +43,6 @@ func createUserAndGetID(router *gin.Engine, t *testing.T) string {
 	return id
 }
 
-// tokenFor mints a valid JWT for the given user id. The auth middleware only
-// validates the signature and reads the id from the claims, so this is enough
-// to authenticate (and to satisfy ownership checks keyed on the id).
 func tokenFor(userID string) string {
 	token, err := utils.GenerateJWT(userID, "tester")
 	if err != nil {

@@ -61,13 +61,6 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	}
 }
 
-// OptionalAuthMiddleware accepts requests with or without a token. When a
-// token is present it is validated through the same blacklist + signature
-// pipeline as AuthMiddleware — so a logged-out user (whose JWT was just
-// blacklisted) does not get personalized treatment on public endpoints like
-// GET /api/posts. Invalid or revoked tokens silently fall through to the
-// anonymous path rather than returning 401, because the caller did not ask
-// for auth.
 func OptionalAuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)

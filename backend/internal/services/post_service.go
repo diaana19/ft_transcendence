@@ -29,8 +29,6 @@ func (s *PostService) GetPostsByAuthor(authorID string) ([]models.Post, error) {
 	return s.repo.GetByAuthorID(authorID)
 }
 
-// GetPostsByTag returns posts carrying tag (caller passes the canonical stored
-// form, see utils.NormalizeHashtag), newest first, with limit/offset paging.
 func (s *PostService) GetPostsByTag(tag string, limit, offset int) ([]models.Post, int64, error) {
 	return s.repo.GetByTag(tag, limit, offset)
 }
@@ -56,13 +54,8 @@ func (s *PostService) CreatePost(content, authorID string, media *string, mediaM
 	return post, err
 }
 
-// trendWindow is how far back GetTrends looks; tags are "trending" based on
-// posts from the last week.
 const trendWindow = 7 * 24 * time.Hour
 
-// GetTrends returns the most-used hashtags across posts from the last week,
-// most popular first, capped at limit. The count is computed live on each call,
-// so it reflects posts created or deleted right up to the moment of the request.
 func (s *PostService) GetTrends(limit int) ([]models.TagCount, error) {
 	return s.repo.TopTags(time.Now().Add(-trendWindow), limit)
 }
@@ -89,9 +82,6 @@ func (s *PostService) DeletePost(id string, authorID string) error {
 	return s.repo.Delete(id)
 }
 
-// resolveReaction maps a pressed button (+1 like, -1 dislike) against the
-// caller's current reaction into the resulting value: pressing the button you
-// already have clears it (toggle off), otherwise it becomes your new reaction.
 func resolveReaction(current, pressed int) int {
 	if current == pressed {
 		return 0
@@ -99,8 +89,6 @@ func resolveReaction(current, pressed int) int {
 	return pressed
 }
 
-// ReactToPost applies a like/dislike press to a post and returns the caller's
-// resulting reaction (+1/-1/0) along with the post carrying fresh counts.
 func (s *PostService) ReactToPost(userID, postID string, pressed int) (int, *models.Post, error) {
 	if _, err := s.repo.GetByID(postID); err != nil {
 		return 0, nil, err
@@ -112,7 +100,7 @@ func (s *PostService) ReactToPost(userID, postID string, pressed int) (int, *mod
 	}
 
 	value := resolveReaction(current, pressed)
-	if err := s.repo.SetPostReaction(userID, postID, value); err != nil {
+	if err = s.repo.SetPostReaction(userID, postID, value); err != nil {
 		return 0, nil, err
 	}
 
@@ -127,7 +115,6 @@ func (s *PostService) GetPostReaction(userID, postID string) (int, error) {
 	return s.repo.GetPostReaction(userID, postID)
 }
 
-// ReactToComment is the reply counterpart of ReactToPost.
 func (s *PostService) ReactToComment(userID, commentID string, pressed int) (int, *models.Reply, error) {
 	if _, err := s.repo.GetCommentByID(commentID); err != nil {
 		return 0, nil, err
@@ -139,7 +126,7 @@ func (s *PostService) ReactToComment(userID, commentID string, pressed int) (int
 	}
 
 	value := resolveReaction(current, pressed)
-	if err := s.repo.SetReplyReaction(userID, commentID, value); err != nil {
+	if err = s.repo.SetReplyReaction(userID, commentID, value); err != nil {
 		return 0, nil, err
 	}
 

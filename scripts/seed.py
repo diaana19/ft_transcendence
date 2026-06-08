@@ -5,9 +5,9 @@ using nothing but the Python standard library (urllib). No third-party packages
 required, and it talks only to the HTTP API — no container engine access.
 
 What it creates:
-  - N users (default 500) with real names + photos pulled from randomuser.me
+  - N users (default 50) with real names + photos pulled from randomuser.me
     (an open demo-data API), profile bios and avatars set via the REST API
-  - POSTS_TARGET posts (default 2000) with unique, randomly-composed content
+  - POSTS_TARGET posts (default 500) with unique, randomly-composed content
   - likes and comments (the app's "replies") across them
   - a social graph: follows + friend requests that get accepted
 
@@ -21,7 +21,7 @@ calls to stay under that ceiling, so it never trips a 429 — set RATE_LIMIT_MAX
 to the same value the backend runs with to seed at full speed.
 
 Usage:
-  scripts/seed.py                       # 500 users, 2000 posts
+  scripts/seed.py                       # 50 users, 500 posts
   USERS=200 POSTS_TARGET=800 scripts/seed.py
   PAR=20 scripts/seed.py                # more parallelism
   RATE_LIMIT_MAX=1000 scripts/seed.py   # match a backend with a raised limit
@@ -47,13 +47,13 @@ from threading import Lock
 # Config (all overridable via environment)
 # ---------------------------------------------------------------------------
 API = os.environ.get("API", "https://localhost:3000/api")  # public API base (through nginx)
-USERS = int(os.environ.get("USERS", "500"))                # how many users to create
-POSTS_TARGET = int(os.environ.get("POSTS_TARGET", "2000")) # total posts to create (unique content)
-PAR = int(os.environ.get("PAR", "12"))                     # max concurrent requests
+USERS = int(os.environ["USERS"])                           # how many users to create
+POSTS_TARGET = int(os.environ["POSTS_TARGET"])             # total posts to create (unique content)
+PAR = int(os.environ["PAR"])                               # max concurrent requests
 PASSWORD = os.environ.get("SEED_PASSWORD", "Tr@nscend42")  # shared password (meets policy)
 RU_SEED = os.environ.get("RU_SEED", "ftt")                 # randomuser seed → reproducible people
 EMAIL_DOMAIN = os.environ.get("EMAIL_DOMAIN", "seed.test") # avoids clashing with real domains
-RATE_LIMIT_MAX = int(os.environ.get("RATE_LIMIT_MAX", "20"))  # backend /auth ceiling, req/min/IP
+RATE_LIMIT_MAX = int(os.environ["RATE_LIMIT_MAX"])         # backend /auth ceiling, req/min/IP
 
 # Resolve the repo root so relative paths work no matter where we're invoked from.
 ROOT = Path(__file__).resolve().parent.parent
