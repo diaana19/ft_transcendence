@@ -124,7 +124,8 @@ func TestPostRepository_DBErrors(t *testing.T) {
 
 func doJSON(router interface {
 	ServeHTTP(http.ResponseWriter, *http.Request)
-}, method, path, body string) *httptest.ResponseRecorder {
+}, method, path, body string,
+) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()

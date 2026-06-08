@@ -24,6 +24,7 @@ type UserRepository interface {
 	SetTwoFASecret(userID, secret string) error
 	SetTwoFAEnabled(userID string, enabled bool) error
 	ClearTwoFA(userID string) error
+	UpdatePassword(userID, hashedPassword string) error
 }
 
 func NewUserRepository(db *gorm.DB) UserRepository {
@@ -108,6 +109,10 @@ func (r *userRepository) GetByUsername(username string) (*models.User, error) {
 	var user models.User
 	result := r.db.First(&user, "username = ?", username)
 	return &user, result.Error
+}
+
+func (r *userRepository) UpdatePassword(userID, hashedPassword string) error {
+	return r.db.Model(&models.User{}).Where("id = ?", userID).Update("password", hashedPassword).Error
 }
 
 func (r *userRepository) GetByIdentifier(identifier string) (*models.User, error) {

@@ -39,6 +39,14 @@ func (s *GDPRService) ExportUserData(userID string) (*GDPRExportData, error) {
 	}, nil
 }
 
+func (s *GDPRService) GetUserContact(userID string) (email, username string, err error) {
+	var user models.User
+	if err := s.db.First(&user, "id = ?", userID).Error; err != nil {
+		return "", "", err
+	}
+	return user.Email, user.Username, nil
+}
+
 func (s *GDPRService) DeleteUserData(userID string) error {
 	if err := s.db.Where("author_id = ?", userID).Delete(&models.Post{}).Error; err != nil {
 		return err

@@ -52,7 +52,8 @@ function TwoFASetup() {
                     <div className="border border-gray-200 rounded-2xl p-6">
                         <h2 className="text-base font-bold text-gray-900 mb-1">Enable 2FA</h2>
                         <p className="text-sm text-gray-500 mb-4">
-                            Add an extra layer of security to your account using Google Authenticator or any TOTP app.
+                            Add an extra layer of security to your account using Google
+                            Authenticator or any TOTP app.
                         </p>
                         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
                         <button

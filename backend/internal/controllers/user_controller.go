@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,14 +15,19 @@ import (
 type UserController struct {
 	userService   *services.UserService
 	friendService *services.FriendService
+	mailService   *services.MailService
 }
 
 type DeleteAccountInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func NewUserController(userService *services.UserService, friendService *services.FriendService) *UserController {
-	return &UserController{userService: userService, friendService: friendService}
+func NewUserController(
+	userService *services.UserService,
+	friendService *services.FriendService,
+	mailService *services.MailService,
+) *UserController {
+	return &UserController{userService: userService, friendService: friendService, mailService: mailService}
 }
 
 // GetUsers godoc
@@ -181,6 +187,8 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 		return
 	}
 
+	deletedUser, _ := uc.userService.GetUser(targetID)
+
 	if err := uc.userService.DeleteUser(targetID); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": msgUserNotFound})
@@ -189,5 +197,18 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	if deletedUser != nil && deletedUser.Email != "" {
+		go func(email, username string) {
+			subject := "Your Synk account has been deleted"
+			body := "Hi " + username + ",\n\nThis confirms that your Synk account and all associated data " +
+				"have been permanently deleted, as you requested.\n\n" +
+				"If you did not request this, please contact us immediately.\n"
+			if err := uc.mailService.SendMail([]string{email}, subject, body); err != nil {
+				log.Printf("gdpr: deletion confirmation email failed for %s: %v", email, err)
+			}
+		}(deletedUser.Email, deletedUser.Username)
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted"})
 }

@@ -1,6 +1,7 @@
 package test
 
 import (
+	"strings"
 	"testing"
 
 	"ft_transcendence/backend/internal/utils"
@@ -150,11 +151,11 @@ func TestCheckPasswordFormat_NoSpecial(t *testing.T) {
 }
 
 func TestCheckUsernameFormat_TooLong(t *testing.T) {
-	longUsername := ""
-	for i := 0; i < 50; i++ {
-		longUsername += "a"
+	var longUsername strings.Builder
+	for range 50 {
+		longUsername.WriteString("a")
 	}
-	if utils.CheckUsernameFormat(longUsername) {
+	if utils.CheckUsernameFormat(longUsername.String()) {
 		t.Fatal("expected long username to be invalid")
 	}
 }

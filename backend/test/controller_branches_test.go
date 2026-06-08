@@ -363,7 +363,7 @@ func TestPostController_CreateCommentValidation(t *testing.T) {
 		t.Fatalf("CreateComment empty: expected 400, got %d", w.Code)
 	}
 
-	form := url_Values("content", strings.Repeat("a", 300))
+	form := urlValues("content", strings.Repeat("a", 300))
 	c, w = testCtx(http.MethodPost, "/", "")
 	c.Request = httptest.NewRequest(http.MethodPost, "/", strings.NewReader(form))
 	c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -373,7 +373,7 @@ func TestPostController_CreateCommentValidation(t *testing.T) {
 		t.Fatalf("CreateComment too long: expected 400, got %d", w.Code)
 	}
 
-	form = url_Values("content", "nice")
+	form = urlValues("content", "nice")
 	c, w = testCtx(http.MethodPost, "/", "")
 	c.Request = httptest.NewRequest(http.MethodPost, "/", strings.NewReader(form))
 	c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -418,6 +418,6 @@ func TestPostController_DBErrors(t *testing.T) {
 	}
 }
 
-func url_Values(key, value string) string {
+func urlValues(key, value string) string {
 	return key + "=" + strings.ReplaceAll(value, " ", "+")
 }

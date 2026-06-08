@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
 
-
     // clearLocalSession wipes the in-memory + localStorage state. Used by
     // recovery paths (token expired, malformed JWT) where calling the backend
     // would just bounce a 401 — there is no useful token to blacklist.
@@ -44,6 +43,12 @@ export function AuthProvider({ children }) {
     const isExpired = (exp) => exp * 1000 < Date.now()
 
     useEffect(() => {
+        const onExpired = () => clearLocalSession()
+        window.addEventListener('auth:expired', onExpired)
+        return () => window.removeEventListener('auth:expired', onExpired)
+    }, [])
+
+    useEffect(() => {
         const storedToken = localStorage.getItem('token')
 
         if (storedToken) {
@@ -54,21 +59,14 @@ export function AuthProvider({ children }) {
                     clearLocalSession()
                 } else {
                     setToken(storedToken)
-                    setUser({ userId: payload.userId,
-                        username: payload.username
-                     })
+                    setUser({ userId: payload.userId, username: payload.username })
+                    setLoading(false)
                 }
-                setLoading(false)
-                return
             } catch {
                 clearLocalSession()
             }
         }
 
-        // No (valid) localStorage token. The OAuth callback only sets an
-        // HttpOnly auth_token cookie, so we probe /api/auth/me to recover
-        // the session — axiosInstance has withCredentials: true so the
-        // cookie travels with this request.
         let cancelled = false
         api.get('/api/auth/me')
             .then((res) => {
@@ -84,30 +82,38 @@ export function AuthProvider({ children }) {
                     })
                 }
             })
-            .catch(() => { /* not logged in — fall through */ })
-            .finally(() => { if (!cancelled) setLoading(false) })
+            .catch((err) => {
+                if (cancelled) return
+                if (err.response?.status === 401) clearLocalSession()
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
 
-        return () => { cancelled = true }
+        return () => {
+            cancelled = true
+        }
     }, [])
 
     const loginUser = (data) => {
         try {
             if (!data?.token) {
-            throw new Error('No token provided')
+                throw new Error('No token provided')
             }
 
             localStorage.setItem('token', data.token)
             const payload = decodeToken(data.token)
-            const fullUser = ({ userId: payload.userId,
+            const fullUser = {
+                userId: payload.userId,
                 username: data.user?.username,
                 email: data.user?.email,
                 avatar: data.user?.avatar,
-                two_fa_enabled: data.user?.two_fa_enabled })
-            
+                two_fa_enabled: data.user?.two_fa_enabled,
+            }
+
             setToken(data.token)
             setUser(fullUser)
-            console.log("FULL USER:", fullUser)
-
+            console.log('FULL USER:', fullUser)
         } catch (err) {
             console.error('Login failed:', err.message)
             clearLocalSession()
@@ -122,8 +128,7 @@ export function AuthProvider({ children }) {
     }
 
     return (
-        <AuthContext.Provider value={{ token,
-        user, loginUser, logout, loading, updateUser }}>
+        <AuthContext.Provider value={{ token, user, loginUser, logout, loading, updateUser }}>
             {children}
         </AuthContext.Provider>
     )

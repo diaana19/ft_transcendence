@@ -19,6 +19,7 @@ type PostRepository interface {
 	GetByID(id string) (*models.Post, error)
 	GetByAuthorID(authorID string) ([]models.Post, error)
 	GetByTag(tag string, limit, offset int) ([]models.Post, int64, error)
+	GetRepliedByUser(userID string, limit, offset int) ([]models.Post, int64, error)
 	Create(post *models.Post) error
 	Update(id string, input models.UpdatePostInput) (*models.Post, error)
 	Delete(id string) error
@@ -66,6 +67,19 @@ func (r *postRepository) GetByAuthorID(authorID string) ([]models.Post, error) {
 	var posts []models.Post
 	result := r.db.Preload("Author").Where("author_id = ?", authorID).Order("created_at DESC").Find(&posts)
 	return posts, result.Error
+}
+
+func (r *postRepository) GetRepliedByUser(userID string, limit, offset int) ([]models.Post, int64, error) {
+	var posts []models.Post
+	var total int64
+
+	repliedPostIDs := r.db.Model(&models.Reply{}).Select("post_id").Where("author_id = ?", userID)
+
+	r.db.Model(&models.Post{}).Where("id IN (?)", repliedPostIDs).Count(&total)
+	result := r.db.Preload("Author").Where("id IN (?)", repliedPostIDs).
+		Order("created_at DESC").Offset(offset).Limit(limit).Find(&posts)
+
+	return posts, total, result.Error
 }
 
 func (r *postRepository) GetByTag(tag string, limit, offset int) ([]models.Post, int64, error) {
@@ -135,12 +149,6 @@ func reactionDelta(oldValue, newValue, bucket int) int {
 	return d
 }
 
-// SetPostReaction reconciles a user's reaction on a post to value (+1 like, -1
-// dislike, 0 none), upserting/deleting the single reaction row and adjusting
-// the denormalized likes_count / dislikes_count by the transition delta. The
-// whole reconciliation runs in one transaction so a row and its counters can
-// never drift apart.
-//
 //nolint:dupl // Intentionally parallel to SetReplyReaction; different model types.
 func (r *postRepository) SetPostReaction(userID, postID string, value int) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
@@ -271,10 +279,6 @@ func (r *postRepository) DeleteComment(id string) error {
 	return nil
 }
 
-// SetReplyReaction is the reply counterpart of SetPostReaction: it reconciles a
-// user's reaction on a reply and adjusts that reply's denormalized counters in
-// one transaction.
-//
 //nolint:dupl // Intentionally parallel to SetPostReaction; different model types.
 func (r *postRepository) SetReplyReaction(userID, replyID string, value int) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {

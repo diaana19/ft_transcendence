@@ -13,7 +13,6 @@
 NAME       := ft_transcendence
 ENGINE     ?= $(shell command -v podman >/dev/null 2>&1 && echo podman || echo docker)
 COMPOSE    ?= $(ENGINE) compose -f infra/docker-compose.yml
-GO_IMAGE   := golang:1.25
 
 .PHONY: help build up down stop restart re clean ps \
         logs logs-backend logs-frontend logs-nginx logs-db \
@@ -43,7 +42,7 @@ help:
 	@echo "  make logs-db       Database"
 	@echo ""
 	@echo "Tests:"
-	@echo "  make test          Backend tests inside a $(GO_IMAGE) container"
+	@echo "  make test          Backend tests with the host Go toolchain"
 	@echo "  make test-frontend Frontend tests (inside the frontend container)"
 	@echo ""
 	@echo "Database:"
@@ -59,7 +58,7 @@ help:
 	@echo "  make shell-redis     Open a redis-cli prompt in the Redis container"
 	@echo ""
 	@echo "Tools:"
-	@echo "  make fmt             Format Go code (go fmt ./...)"
+	@echo "  make fmt             Format Go (go fmt) and frontend JS/JSX (prettier)"
 	@echo "  make lint            Vet Go code (go vet ./...)"
 	@echo "  make swagger         Regenerate OpenAPI spec (backend/docs)"
 	@echo "  make prune           Reclaim unused engine resources"
@@ -110,23 +109,22 @@ logs-db:
 
 # ==================== Tests ====================
 
-# Backend tests run inside a Go container. The suite uses testcontainers, so the
-# container talks to the host engine through its socket to spin up Postgres.
-# Podman (rootless) needs its API socket enabled once:
+# Backend tests run with the host Go toolchain. The suite uses testcontainers to
+# spin up Postgres/Redis, talking directly to the host engine's API socket — no
+# Docker-out-of-Docker, no socket bind-mount into a build container (which fails
+# under rootless Podman + SELinux). Podman (rootless) needs its API socket once:
 #   systemctl --user enable --now podman.socket
 test:
-	@echo "Running backend tests in $(GO_IMAGE) via $(ENGINE)..."
+	@command -v go >/dev/null 2>&1 || { echo "go not found on host; install Go to run backend tests"; exit 1; }
+	@echo "Running backend tests on host ($$(go version | awk '{print $$3}')) via $(ENGINE)..."
 	@sock=$$( [ "$(ENGINE)" = "podman" ] \
 		&& echo "$${XDG_RUNTIME_DIR:-/run/user/$$(id -u)}/podman/podman.sock" \
 		|| echo /var/run/docker.sock ); \
-	$(ENGINE) run --rm \
-		-v "$(CURDIR)/backend":/app:z -w /app \
-		-v "$$sock":/var/run/docker.sock:z \
-		-v transcendence-gomod:/go/pkg/mod \
-		-e DOCKER_HOST=unix:///var/run/docker.sock \
-		-e TESTCONTAINERS_RYUK_DISABLED=true \
-		--env-file infra/.env \
-		$(GO_IMAGE) go test ./test/... -count=1
+	set -a; . infra/.env; set +a; \
+	cd backend && \
+	DOCKER_HOST="unix://$$sock" \
+	TESTCONTAINERS_RYUK_DISABLED=true \
+	go test ./test/... -count=1
 
 test-frontend:
 	@$(COMPOSE) exec -T frontend npm test
@@ -168,7 +166,10 @@ shell-redis:
 	@$(COMPOSE) exec redis redis-cli
 
 fmt:
+	@echo "Formatting Go code (go fmt) ..."
 	@cd backend && go fmt ./...
+	@echo "Formatting frontend JS/JSX code (prettier) ..."
+	@cd frontend && npm run format
 
 lint: swagger
 	@cd backend && go vet ./...

@@ -232,7 +232,7 @@ func TestPost_Pagination(t *testing.T) {
 	router, _ := SetupTestEnv()
 	author := registerAndLogin(t, router, "page-a", "page-a@test.com", "StrongPass123!")
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		createPost(t, router, author.Token, "post "+string(rune('a'+i)))
 	}
 
