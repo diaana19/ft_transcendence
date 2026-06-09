@@ -30,6 +30,7 @@ export default function Profile() {
     const [isFriend, setIsFriend] = useState(false)
     const [followModal, setFollowModal] = useState(null)
     const [isOnline, setIsOnline] = useState(false)
+    const [userLevel, setUserLevel] = useState(null)
 
     useEffect(() => {
         let active = true
@@ -82,6 +83,12 @@ export default function Profile() {
         try {
             const onlineRes = await api.get(`/api/users/${userId}/online`)
             setIsOnline(onlineRes.data?.online ?? false)
+        } catch (err) {
+            console.error(err)
+        }
+        try {
+            const gamif = await api.get(`/api/users/${userId}/gamification`)
+            setUserLevel(gamif.data?.level ?? 0)
         } catch (err) {
             console.error(err)
         }
@@ -240,9 +247,23 @@ export default function Profile() {
                     </div>
 
                     <div className="mt-12 pb-3">
-                        <h2 className="text-xl font-bold" style={{ color: '#2c2c2a' }}>
-                            {user.displayname}
-                        </h2>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h2 className="text-xl font-bold" style={{ color: '#2c2c2a' }}>
+                                {user.displayname}
+                            </h2>
+                            {userLevel !== null && (
+                                <span
+                                    className="text-xs px-2 py-0.5 rounded-full font-bold"
+                                    style={{
+                                        background:
+                                            'linear-gradient(135deg, #ede8fd 0%, #fde8f0 100%)',
+                                        color: '#534ab7',
+                                    }}
+                                >
+                                    ⭐ Level {userLevel}
+                                </span>
+                            )}
+                        </div>
                         <p className="text-sm" style={{ color: '#afa9ec' }}>
                             @{user.username}
                         </p>
