@@ -169,8 +169,8 @@ func TestAuthController_MeAndLogout(t *testing.T) {
 	c, w = testCtx(http.MethodGet, "/", "")
 	c.Set("user_id", utils.NewID())
 	ctrl.Auth.Me(c)
-	if w.Code != http.StatusNotFound {
-		t.Fatalf("Me not found: expected 404, got %d", w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("Me not found: expected 401, got %d", w.Code)
 	}
 
 	c, w = testCtx(http.MethodPost, "/", "")
