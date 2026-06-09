@@ -42,6 +42,7 @@ export function AuthProvider({ children }) {
     // On mount, restore the session from the stored token and confirm it with /me.
     useEffect(() => {
         const storedToken = localStorage.getItem('token')
+        let validToken = false
 
         if (storedToken) {
             try {
@@ -52,11 +53,16 @@ export function AuthProvider({ children }) {
                 } else {
                     setToken(storedToken)
                     setUser({ userId: payload.userId, username: payload.username })
-                    setLoading(false)
+                    validToken = true
                 }
             } catch {
                 clearLocalSession()
             }
+        }
+
+        if (!validToken) {
+            setLoading(false)
+            return
         }
 
         let cancelled = false
