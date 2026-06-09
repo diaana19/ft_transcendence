@@ -62,7 +62,7 @@ function Feed() {
             }
         }
         checkBadges()
-        const interval = setInterval(checkBadges, 10000)
+        const interval = setInterval(checkBadges, 3000)
         return () => clearInterval(interval)
     }, [user?.userId])
 
