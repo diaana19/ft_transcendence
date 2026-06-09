@@ -93,6 +93,6 @@ export async function deleteComment(postId, commentId) {
 }
 
 export const getRepliesByUser = async (userId) => {
-  const { data } = await api.get(`/api/posts?repliedBy=${userId}`)
-  return data.data
+    const { data } = await api.get(`/api/posts?repliedBy=${userId}`)
+    return data.data
 }

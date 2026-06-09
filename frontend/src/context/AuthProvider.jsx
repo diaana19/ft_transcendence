@@ -21,7 +21,11 @@ export function AuthProvider({ children }) {
 
     const decodeToken = (token) => {
         const payload = JSON.parse(atob(token.split('.')[1]))
-        return { userId: payload.sub ?? payload.user_id, username: payload.username, exp: payload.exp }
+        return {
+            userId: payload.sub ?? payload.user_id,
+            username: payload.username,
+            exp: payload.exp,
+        }
     }
 
     const isExpired = (exp) => exp * 1000 < Date.now()
