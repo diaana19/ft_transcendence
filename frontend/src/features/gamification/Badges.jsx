@@ -89,6 +89,7 @@ const CATEGORY_STYLE = {
         pillBg: '#eeedfe',
         pillText: '#534ab7',
         emojiBg: '#ede8fd',
+        progressBg: '#534ab7',
     },
     posts: {
         border: '#c5dbc4',
@@ -99,10 +100,20 @@ const CATEGORY_STYLE = {
         pillBg: '#eaf3de',
         pillText: '#3b6d11',
         emojiBg: '#c5dbc4',
+        progressBg: '#3b6d11',
     },
 }
 const CATEGORY_ICON = { social: 'ti-users', posts: 'ti-pencil' }
 const CATEGORY_LABEL = { social: 'Social', posts: 'Posts' }
+
+const CATEGORY_PROGRESS = {
+    social: (s) => ({
+        value: Math.min(s.followers, 50),
+        max: 50,
+        label: `${s.followers}/50 followers`,
+    }),
+    posts: (s) => ({ value: Math.min(s.posts, 25), max: 25, label: `${s.posts}/25 posts` }),
+}
 
 export default function Badges() {
     const { user: authUser } = useAuth()
@@ -122,6 +133,12 @@ export default function Badges() {
         } catch (err) {
             console.error(err)
         }
+    }
+
+    const userStats = {
+        posts: stats?.posts?.count ?? 0,
+        likes: stats?.likes?.count ?? 0,
+        followers: stats?.followers?.count ?? 0,
     }
 
     return (
@@ -147,23 +164,46 @@ export default function Badges() {
 
             {BADGES.map((section) => {
                 const c = CATEGORY_STYLE[section.category]
+                const progress = CATEGORY_PROGRESS[section.category]?.(userStats)
+                const pct = progress ? Math.round((progress.value / progress.max) * 100) : 0
+
                 return (
                     <div key={section.category} className="mb-6">
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-2">
+                                <div
+                                    className="w-5 h-5 rounded flex items-center justify-center"
+                                    style={{ background: c.icon }}
+                                >
+                                    <i
+                                        className={`ti ${CATEGORY_ICON[section.category]}`}
+                                        aria-hidden="true"
+                                        style={{ color: c.iconText, fontSize: '11px' }}
+                                    />
+                                </div>
+                                <span className="text-xs font-semibold" style={{ color: c.title }}>
+                                    {CATEGORY_LABEL[section.category]}
+                                </span>
+                            </div>
+                            {progress && (
+                                <span className="text-xs" style={{ color: c.title }}>
+                                    {progress.label}
+                                </span>
+                            )}
+                        </div>
+
+                        {progress && (
                             <div
-                                className="w-5 h-5 rounded flex items-center justify-center"
-                                style={{ background: c.icon }}
+                                className="mb-3 rounded-full overflow-hidden"
+                                style={{ background: '#f1efe8', height: '6px' }}
                             >
-                                <i
-                                    className={`ti ${CATEGORY_ICON[section.category]}`}
-                                    aria-hidden="true"
-                                    style={{ color: c.iconText, fontSize: '11px' }}
+                                <div
+                                    className="h-full rounded-full transition-all"
+                                    style={{ width: `${pct}%`, background: c.progressBg }}
                                 />
                             </div>
-                            <span className="text-xs font-semibold" style={{ color: c.title }}>
-                                {CATEGORY_LABEL[section.category]}
-                            </span>
-                        </div>
+                        )}
+
                         <div
                             className="grid gap-3"
                             style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}

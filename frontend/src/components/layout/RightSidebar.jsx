@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import axiosInstance from '../../services/axiosInstance'
+import { useAuth } from '../../hooks/useAuth'
 
-// Trends reflect hashtags used in posts over the last week, counted live by the
-// backend. Refetched on mount and every 60s so the list stays current without
-// a manual refresh.
 function Trends() {
     const [trends, setTrends] = useState([])
     const [loading, setLoading] = useState(true)
-
     useEffect(() => {
         let active = true
         const load = async () => {
@@ -28,14 +25,8 @@ function Trends() {
             clearInterval(id)
         }
     }, [])
-
-    if (loading) {
-        return <p className="text-xs text-gray-400">Loading...</p>
-    }
-    if (trends.length === 0) {
-        return <p className="text-xs text-gray-400">Nothing here yet...</p>
-    }
-
+    if (loading) return <p className="text-xs text-gray-400">Loading...</p>
+    if (trends.length === 0) return <p className="text-xs text-gray-400">Nothing here yet...</p>
     return (
         <ul className="space-y-2">
             {trends.map((t) => (
@@ -56,24 +47,86 @@ function Trends() {
     )
 }
 
+function Suggestions() {
+    const { user } = useAuth()
+    const navigate = useNavigate()
+    const [suggestions, setSuggestions] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        if (!user?.userId) return
+        const load = async () => {
+            try {
+                const [usersRes, followingRes] = await Promise.all([
+                    axiosInstance.get('/api/users'),
+                    axiosInstance.get(`/api/users/${user.userId}/following`),
+                ])
+                const following = (followingRes.data?.data || followingRes.data || []).map(
+                    (f) => f.id
+                )
+                const filtered = (usersRes.data || [])
+                    .filter((u) => u.id !== user.userId && !following.includes(u.id))
+                    .slice(0, 3)
+                setSuggestions(filtered)
+            } catch (err) {
+                console.error(err)
+            } finally {
+                setLoading(false)
+            }
+        }
+        load()
+    }, [user?.userId])
+
+    if (!user?.userId) return <p className="text-xs text-gray-400">Log in to see suggestions</p>
+    if (loading) return <p className="text-xs text-gray-400">Loading...</p>
+    if (suggestions.length === 0) return <p className="text-xs text-gray-400">No suggestions yet</p>
+
+    return (
+        <ul className="space-y-3">
+            {suggestions.map((u) => (
+                <li
+                    key={u.id}
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => navigate(`/profile/${u.id}`)}
+                >
+                    <div
+                        className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center font-bold text-xs"
+                        style={{ background: '#ede8fd', color: '#534ab7' }}
+                    >
+                        {u.avatar ? (
+                            <img
+                                src={u.avatar}
+                                alt={u.username}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            u.username?.[0]?.toUpperCase()
+                        )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold truncate" style={{ color: '#2c2c2a' }}>
+                            {u.displayname || u.username}
+                        </p>
+                        <p className="text-xs truncate" style={{ color: '#afa9ec' }}>
+                            @{u.username}
+                        </p>
+                    </div>
+                </li>
+            ))}
+        </ul>
+    )
+}
+
 export default function RightSidebar() {
     return (
-        <aside
-            className="w-80 h-screen fixed right-0 top-0
-                      backdrop-blur-xl
-                      border-r border-transparent
-                      px-4 py-6 hidden lg:block"
-        >
+        <aside className="w-80 h-screen fixed right-0 top-0 backdrop-blur-xl border-r border-transparent px-4 py-6 hidden lg:block">
             <div className="bg-white/60 border border-gray-200 rounded-xl p-4 mb-4">
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">Trends</h3>
                 <Trends />
             </div>
-
             <div className="bg-white/60 border border-gray-200 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Suggestions</h3>
-                <p className="text-xs text-gray-400">
-                    Future feature: users / posts recommendations
-                </p>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Who to follow</h3>
+                <Suggestions />
             </div>
         </aside>
     )

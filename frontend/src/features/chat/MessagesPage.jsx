@@ -18,6 +18,7 @@ export default function MessagesPage() {
     const [fetching, setFetching] = useState(false)
     const [selectedUser, setSelectedUser] = useState(null)
     const [onlineUsers, setOnlineUsers] = useState({})
+    const [userOrder, setUserOrder] = useState([])
     const lastMessageRef = useRef(null)
 
     const fetchOnlineStatus = async (usersList) => {
@@ -41,6 +42,7 @@ export default function MessagesPage() {
                 const res = await axiosInstance.get('/api/users')
                 const filtered = res.data.filter((u) => u.id !== currentUser?.userId)
                 setUsers(filtered)
+                setUserOrder(filtered.map((u) => u.id))
                 fetchOnlineStatus(filtered)
             } catch (err) {
                 console.error(err)
@@ -76,6 +78,11 @@ export default function MessagesPage() {
                     (m.sender_id === me && m.recipient_id === peerId)
                 if (!belongs) return
                 setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]))
+                const conversationPeer = m.sender_id === me ? m.recipient_id : m.sender_id
+                setUserOrder((prev) => [
+                    conversationPeer,
+                    ...prev.filter((id) => id !== conversationPeer),
+                ])
             }
         })
         return unsubscribe
@@ -87,13 +94,22 @@ export default function MessagesPage() {
 
     const handleSend = (content) => {
         send({ action: 'message', recipient_id: peerId, content })
+        setUserOrder((prev) => [peerId, ...prev.filter((id) => id !== peerId)])
     }
 
-    const filteredUsers = users.filter(
-        (u) =>
-            u.username?.toLowerCase().includes(search.toLowerCase()) ||
-            u.displayname?.toLowerCase().includes(search.toLowerCase())
-    )
+    const filteredUsers = users
+        .filter(
+            (u) =>
+                u.username?.toLowerCase().includes(search.toLowerCase()) ||
+                u.displayname?.toLowerCase().includes(search.toLowerCase())
+        )
+        .sort((a, b) => {
+            const ai = userOrder.indexOf(a.id)
+            const bi = userOrder.indexOf(b.id)
+            if (ai === -1) return 1
+            if (bi === -1) return -1
+            return ai - bi
+        })
 
     return (
         <div className="flex h-screen overflow-hidden">
@@ -182,7 +198,6 @@ export default function MessagesPage() {
                 </div>
             </div>
 
-            {/* Right — chat */}
             <div
                 className={`${peerId ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}
                 style={{ background: '#faf5ff' }}
