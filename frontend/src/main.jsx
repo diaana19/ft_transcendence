@@ -9,19 +9,19 @@ import './styles/index.css'
 import { registerSW } from 'virtual:pwa-register'
 
 registerSW({
-  immediate: true,
+    immediate: true,
 })
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-  <BrowserRouter>
-      <AuthProvider>
-        <SocketProvider>
-          <NotificationProvider>
-            <App />
-          </NotificationProvider>
-        </SocketProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </React.StrictMode>
+    <React.StrictMode>
+        <BrowserRouter>
+            <AuthProvider>
+                <SocketProvider>
+                    <NotificationProvider>
+                        <App />
+                    </NotificationProvider>
+                </SocketProvider>
+            </AuthProvider>
+        </BrowserRouter>
+    </React.StrictMode>
 )

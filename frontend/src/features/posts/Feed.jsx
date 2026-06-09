@@ -1,23 +1,3 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { useAuth } from '../../hooks/useAuth'
-import { getPosts } from './postService'
-import PostCard from './PostCard'
-import CreatePost from './CreatePost'
-import api from '../../services/axiosInstance'
-
-const PAGE_SIZE = 20
-
-const BADGES_CHECK = [
-  { key: "welcome", name: "Welcome", check: (s) => true },
-  { key: "first_bond", name: "First bond", check: (s) => s.followers >= 1 },
-  { key: "first_words", name: "First words", check: (s) => s.posts >= 1 },
-  { key: "first_spark", name: "First spark", check: (s) => s.likes >= 1 },
-  { key: "network_builder", name: "Network builder", check: (s) => s.followers >= 10 },
-  { key: "content_creator", name: "Content creator", check: (s) => s.posts >= 25 },
-  { key: "rising_star", name: "Rising star", check: (s) => s.likes >= 20 },
-  { key: "social_butterfly", name: "Social butterfly", check: (s) => s.followers >= 50 },
-]
-
 function Feed() {
   const { user } = useAuth()
   const [posts, setPosts] = useState([])

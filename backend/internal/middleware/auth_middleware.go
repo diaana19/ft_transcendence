@@ -28,6 +28,12 @@ func extractToken(c *gin.Context) string {
 	return ""
 }
 
+func clearAuthCookie(c *gin.Context) {
+	if _, err := c.Cookie("auth_token"); err == nil {
+		c.SetCookie("auth_token", "", -1, "/", "", true, true)
+	}
+}
+
 func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)
@@ -41,6 +47,7 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 		ctx := context.Background()
 		exists, err := rdb.Exists(ctx, "blacklist:"+token).Result()
 		if err == nil && exists > 0 {
+			clearAuthCookie(c)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "token revoked",
 			})
@@ -49,6 +56,7 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 
 		claims, err := utils.ValidateJWT(token)
 		if err != nil {
+			clearAuthCookie(c)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "invalid token",
 			})

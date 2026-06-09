@@ -95,7 +95,6 @@ export default function MessagesPage() {
 	return (
 		<div className="flex h-screen overflow-hidden">
 
-			{/* Left — user list */}
 			<div className={`${peerId ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col`}
 				style={{ borderRight: '1px solid #ede8fd', background: 'linear-gradient(135deg, #faf5ff 0%, #eef2ff 100%)' }}>
 				<div className="px-4 py-4" style={{ borderBottom: '1px solid #ede8fd' }}>

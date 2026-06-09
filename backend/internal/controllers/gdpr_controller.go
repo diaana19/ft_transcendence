@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,10 +11,11 @@ import (
 
 type GDPRController struct {
 	gdprService *services.GDPRService
+	mailService *services.MailService
 }
 
-func NewGDPRController(gdprService *services.GDPRService) *GDPRController {
-	return &GDPRController{gdprService: gdprService}
+func NewGDPRController(gdprService *services.GDPRService, mailService *services.MailService) *GDPRController {
+	return &GDPRController{gdprService: gdprService, mailService: mailService}
 }
 
 // ExportUserData godoc
@@ -38,6 +40,18 @@ func (gc *GDPRController) ExportUserData(c *gin.Context) {
 		return
 	}
 
+	if data.User.Email != "" {
+		go func(email, username string) {
+			subject := "Your Synk data export"
+			body := "Hi " + username + ",\n\nThis confirms that you requested an export of your personal data " +
+				"from Synk. The export was generated and downloaded from your browser.\n\n" +
+				"If you did not request this, please secure your account and change your password.\n"
+			if err := gc.mailService.SendMail([]string{email}, subject, body); err != nil {
+				log.Printf("gdpr: export confirmation email failed for %s: %v", email, err)
+			}
+		}(data.User.Email, data.User.Username)
+	}
+
 	c.JSON(http.StatusOK, data)
 }
 
@@ -57,9 +71,23 @@ func (gc *GDPRController) DeleteUserData(c *gin.Context) {
 		return
 	}
 
+	email, username, _ := gc.gdprService.GetUserContact(userID.(string))
+
 	if err := gc.gdprService.DeleteUserData(userID.(string)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete user data"})
 		return
+	}
+
+	if email != "" {
+		go func(email, username string) {
+			subject := "Your Synk data has been deleted"
+			body := "Hi " + username + ",\n\nThis confirms that your personal data has been permanently " +
+				"deleted from Synk, as you requested.\n\n" +
+				"If you did not request this, please contact us immediately.\n"
+			if err := gc.mailService.SendMail([]string{email}, subject, body); err != nil {
+				log.Printf("gdpr: deletion confirmation email failed for %s: %v", email, err)
+			}
+		}(email, username)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "all user data has been permanently deleted"})

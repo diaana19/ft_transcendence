@@ -101,6 +101,28 @@ func (s *AuthService) GetUserByID(id string) (*models.User, error) {
 	return s.repo.GetByID(id)
 }
 
+func (s *AuthService) GetUserByEmail(email string) (*models.User, error) {
+	return s.repo.GetByEmail(email)
+}
+
+func (s *AuthService) ResetPassword(userID string, deliver func(newPassword string) error) error {
+	newPassword, err := utils.GenerateRandomPassword()
+	if err != nil {
+		return fmt.Errorf("generate password: %w", err)
+	}
+	if err = deliver(newPassword); err != nil {
+		return fmt.Errorf("deliver password: %w", err)
+	}
+	hashed, err := utils.HashString(newPassword)
+	if err != nil {
+		return fmt.Errorf("hash password: %w", err)
+	}
+	if err = s.repo.UpdatePassword(userID, hashed); err != nil {
+		return fmt.Errorf("persist password: %w", err)
+	}
+	return nil
+}
+
 func (s *AuthService) CreatePendingLogin(userID string, rdb *redis.Client) (string, error) {
 	randomBytes := make([]byte, 32)
 	if _, err := rand.Read(randomBytes); err != nil {

@@ -63,6 +63,10 @@ func (m *mockPostRepo) GetByTag(tag string, _, _ int) ([]models.Post, int64, err
 	return out, int64(len(out)), nil
 }
 
+func (m *mockPostRepo) GetRepliedByUser(_ string, _, _ int) ([]models.Post, int64, error) {
+	return nil, 0, nil
+}
+
 func (m *mockPostRepo) Create(post *models.Post) error {
 	m.posts[post.ID] = post
 	return nil

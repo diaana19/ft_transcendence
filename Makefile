@@ -58,7 +58,7 @@ help:
 	@echo "  make shell-redis     Open a redis-cli prompt in the Redis container"
 	@echo ""
 	@echo "Tools:"
-	@echo "  make fmt             Format Go code (go fmt ./...)"
+	@echo "  make fmt             Format Go (go fmt) and frontend JS/JSX (prettier)"
 	@echo "  make lint            Vet Go code (go vet ./...)"
 	@echo "  make swagger         Regenerate OpenAPI spec (backend/docs)"
 	@echo "  make prune           Reclaim unused engine resources"
@@ -166,7 +166,10 @@ shell-redis:
 	@$(COMPOSE) exec redis redis-cli
 
 fmt:
+	@echo "Formatting Go code (go fmt) ..."
 	@cd backend && go fmt ./...
+	@echo "Formatting frontend JS/JSX code (prettier) ..."
+	@cd frontend && npm run format
 
 lint: swagger
 	@cd backend && go vet ./...

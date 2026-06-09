@@ -1,12 +1,12 @@
 /*
-** File: username.js
-** Description: Single source of truth for the username rule, used everywhere on
-** the frontend (registration validation + @mention detection).
-**
-** GitHub's rule: alphanumeric + single hyphens, no leading/trailing or
-** consecutive hyphens, 1-39 chars.
-**   https://github.com/shinnn/github-username-regex
-*/
+ ** File: username.js
+ ** Description: Single source of truth for the username rule, used everywhere on
+ ** the frontend (registration validation + @mention detection).
+ **
+ ** GitHub's rule: alphanumeric + single hyphens, no leading/trailing or
+ ** consecutive hyphens, 1-39 chars.
+ **   https://github.com/shinnn/github-username-regex
+ */
 
 // The username body without anchors (so it can be embedded in other patterns,
 // e.g. an @mention token). The lookahead makes a hyphen only match when followed

@@ -4,10 +4,14 @@ import (
 	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
+
 	"ft_transcendence/backend/internal/models"
 	"ft_transcendence/backend/internal/repositories"
 	"ft_transcendence/backend/internal/utils"
 )
+
+var ErrAuthorNotFound = errors.New("author does not exist")
 
 type PostService struct {
 	repo repositories.PostRepository
@@ -33,6 +37,10 @@ func (s *PostService) GetPostsByTag(tag string, limit, offset int) ([]models.Pos
 	return s.repo.GetByTag(tag, limit, offset)
 }
 
+func (s *PostService) GetRepliedPosts(userID string, limit, offset int) ([]models.Post, int64, error) {
+	return s.repo.GetRepliedByUser(userID, limit, offset)
+}
+
 func (s *PostService) CreatePost(content, authorID string, media *string, mediaMIME *string) (*models.Post, error) {
 	if content == "" {
 		return nil, errors.New("content is required")
@@ -50,8 +58,14 @@ func (s *PostService) CreatePost(content, authorID string, media *string, mediaM
 		Tags:      utils.ExtractHashtags(content),
 	}
 
-	err := s.repo.Create(post)
-	return post, err
+	if err := s.repo.Create(post); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return nil, ErrAuthorNotFound
+		}
+		return nil, err
+	}
+	return post, nil
 }
 
 const trendWindow = 7 * 24 * time.Hour

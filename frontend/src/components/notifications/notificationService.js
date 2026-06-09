@@ -1,19 +1,19 @@
 import axiosInstance from '../../services/axiosInstance'
 
 export async function getUnreadNotifications() {
-  const res = await axiosInstance.get('/api/notification')
+    const res = await axiosInstance.get('/api/notification')
 
-  return res.data.data
+    return res.data.data
 }
 
 export async function markAllNotificationsRead() {
-  const res = await axiosInstance.patch('/api/notification/read')
+    const res = await axiosInstance.patch('/api/notification/read')
 
-  return res.data
+    return res.data
 }
 
 export async function markNotificationRead(id) {
-  const res = await axiosInstance.patch(`/api/notification/${id}/read`)
+    const res = await axiosInstance.patch(`/api/notification/${id}/read`)
 
-  return res.data
+    return res.data
 }

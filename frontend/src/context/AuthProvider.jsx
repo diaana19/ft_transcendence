@@ -15,8 +15,7 @@ export function AuthProvider({ children }) {
     const logout = async () => {
         try {
             await api.post('/api/auth/logout')
-        } catch {
-        }
+        } catch {}
         clearLocalSession()
     }
 
@@ -26,6 +25,12 @@ export function AuthProvider({ children }) {
     }
 
     const isExpired = (exp) => exp * 1000 < Date.now()
+
+    useEffect(() => {
+        const onExpired = () => clearLocalSession()
+        window.addEventListener('auth:expired', onExpired)
+        return () => window.removeEventListener('auth:expired', onExpired)
+    }, [])
 
     useEffect(() => {
         const storedToken = localStorage.getItem('token')
@@ -38,16 +43,17 @@ export function AuthProvider({ children }) {
                     clearLocalSession()
                 } else {
                     setToken(storedToken)
-                    setUser({ userId: payload.userId,
-                        username: payload.username
-                     })
+                    setUser({ userId: payload.userId, username: payload.username })
+                    setLoading(false)
                 }
-                setLoading(false)
-                return
             } catch {
                 clearLocalSession()
             }
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
         let cancelled = false
         api.get('/api/auth/me')
             .then((res) => {
@@ -63,43 +69,49 @@ export function AuthProvider({ children }) {
                     })
                 }
             })
-            .catch(() => { })
-            .finally(() => { if (!cancelled) setLoading(false) })
+            .catch((err) => {
+                if (cancelled) return
+                if (err.response?.status === 401) clearLocalSession()
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
 
-        return () => { cancelled = true }
+        return () => {
+            cancelled = true
+        }
     }, [])
 
     const loginUser = (data) => {
         try {
             if (!data?.token) {
-            throw new Error('No token provided')
+                throw new Error('No token provided')
             }
 
             localStorage.setItem('token', data.token)
             const payload = decodeToken(data.token)
-            const fullUser = ({ userId: payload.userId,
+            const fullUser = {
+                userId: payload.userId,
                 username: data.user?.username,
                 email: data.user?.email,
                 avatar: data.user?.avatar,
-                two_fa_enabled: data.user?.two_fa_enabled })
-            
+                two_fa_enabled: data.user?.two_fa_enabled,
+            }
+
             setToken(data.token)
             setUser(fullUser)
-            console.log("FULL USER:", fullUser)
-
+            console.log('FULL USER:', fullUser)
         } catch (err) {
             console.error('Login failed:', err.message)
             clearLocalSession()
         }
     }
-    
     const updateUser = (patch) => {
         setUser((prev) => (prev ? { ...prev, ...patch } : prev))
     }
 
     return (
-        <AuthContext.Provider value={{ token,
-        user, loginUser, logout, loading, updateUser }}>
+        <AuthContext.Provider value={{ token, user, loginUser, logout, loading, updateUser }}>
             {children}
         </AuthContext.Provider>
     )
