@@ -1,12 +1,3 @@
-/*
- ** File: postService.js
- ** Description: Handles all API calls related to posts
- ** Responsibilities:
- ** - Fetch all posts with pagination
- ** - Fetch single post by ID
- ** - Create, update, and delete posts
- */
-
 import axiosInstance from '../../services/axiosInstance'
 
 function getToken() {

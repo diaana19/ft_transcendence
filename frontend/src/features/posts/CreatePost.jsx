@@ -1,13 +1,3 @@
-/*
- ** File: CreatePost.jsx
- ** Description: Component for creating new posts
- ** Responsibilities:
- ** - Render post creation form
- ** - Handle post submission
- ** - Show character count
- ** - Notify parent component when post is created
- */
-
 import { useState } from 'react'
 import { createPost } from './postService.js'
 import { Image } from 'lucide-react'
@@ -24,11 +14,6 @@ function CreatePost({ onPostCreated }) {
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0]
         if (!selectedFile) return
-        // if (!selectedFile.type.startsWith('image/')) {
-        //   setError('Only image files are allowed')
-        //   setFile(null)
-        //   return
-        // }
         if (selectedFile.size > 25 * 1024 * 1024) {
             setError('File too large. Maximum size is 25MB')
             setFile(null)

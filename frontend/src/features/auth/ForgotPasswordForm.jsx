@@ -1,13 +1,3 @@
-/*
- ** File: ForgotPasswordForm.jsx
- ** Description: Forgot-password form component
- ** Responsibilities:
- ** - Render an email field to request a password reset
- ** - Submit the request to the backend
- ** - Show a generic confirmation (the API never reveals if the email exists)
- ** - Link back to login
- */
-
 import { useState } from 'react'
 import { forgotPassword } from './authService.js'
 import { useNavigate } from 'react-router-dom'

@@ -1,12 +1,3 @@
-/*
- ** File: tokens.js
- ** Description: Design system tokens - color palette, typography and spacing
- ** Responsibilities:
- ** - Define consistent color palette across the app
- ** - Define typography scale
- ** - Define spacing and border radius values
- */
-
 export const colors = {
     primary: {
         50: '#eff6ff',

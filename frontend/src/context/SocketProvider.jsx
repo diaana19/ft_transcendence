@@ -27,7 +27,7 @@ export function SocketProvider({ children }) {
             try {
                 msg = JSON.parse(event.data)
             } catch {
-                return // non-JSON frame — ignore
+                return
             }
             handlersRef.current.forEach((handler) => {
                 try {

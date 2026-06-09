@@ -18,7 +18,6 @@ func NewGDPRController(gdprService *services.GDPRService, mailService *services.
 	return &GDPRController{gdprService: gdprService, mailService: mailService}
 }
 
-// ExportUserData godoc
 // @Summary  Export the authenticated user's data
 // @Tags     gdpr
 // @Security BearerAuth
@@ -55,7 +54,6 @@ func (gc *GDPRController) ExportUserData(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-// DeleteUserData godoc
 // @Summary  Permanently delete the authenticated user's data
 // @Tags     gdpr
 // @Security BearerAuth

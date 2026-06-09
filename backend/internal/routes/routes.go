@@ -34,7 +34,6 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	registerGamificationRoutes(protected, c.Gamification)
 }
 
-// onlineStatusHandler godoc
 // @Summary   Check whether a user is currently online (has an active WebSocket connection)
 // @Tags      users
 // @Produce   json

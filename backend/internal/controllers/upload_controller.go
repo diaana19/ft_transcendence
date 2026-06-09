@@ -19,7 +19,6 @@ type UploadController struct {
 	FriendService *services.FriendService
 }
 
-// UploadFile godoc
 // @Summary  Upload a file
 // @Tags     uploads
 // @Security BearerAuth
@@ -65,7 +64,6 @@ func (uc *UploadController) UploadFile(c *gin.Context) {
 	})
 }
 
-// ServeFile godoc
 // @Summary  Serve a stored file
 // @Description Public files are accessible to anyone; friends/private files require an authenticated, authorised user.
 // @Tags     uploads

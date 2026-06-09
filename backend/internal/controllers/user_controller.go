@@ -30,7 +30,6 @@ func NewUserController(
 	return &UserController{userService: userService, friendService: friendService, mailService: mailService}
 }
 
-// GetUsers godoc
 // @Summary   List all users, or look one up by exact username
 // @Tags      users
 // @Security  BearerAuth
@@ -71,7 +70,6 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, responses)
 }
 
-// GetUser godoc
 // @Summary   Get a user by id
 // @Tags      users
 // @Security  BearerAuth
@@ -100,7 +98,6 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// UpdateUser godoc
 // @Summary   Update a user's profile
 // @Tags      users
 // @Security  BearerAuth
@@ -145,7 +142,6 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user.ToResponse())
 }
 
-// DeleteUser godoc
 // @Summary   Delete a user's account
 // @Tags      users
 // @Security  BearerAuth

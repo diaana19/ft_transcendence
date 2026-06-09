@@ -1,11 +1,3 @@
-/*
- ** File: Help.jsx
- ** Description: Help center page with FAQ accordion sections
- ** Responsibilities:
- ** - Display categorized FAQ sections
- ** - Toggle answers via accordion interaction
- */
-
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { UserIcon, PencilIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline'

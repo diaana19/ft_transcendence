@@ -18,7 +18,6 @@ func NewNotificationController(notifService *services.NotificationService) *Noti
 	return &NotificationController{notifService: notifService}
 }
 
-// GetUnread godoc
 // @Summary   List unread notifications
 // @Tags      notifications
 // @Security  BearerAuth
@@ -43,7 +42,6 @@ func (nc *NotificationController) GetUnread(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": notifs, "total": len(notifs)})
 }
 
-// MarkAllRead godoc
 // @Summary   Mark all notifications as read
 // @Tags      notifications
 // @Security  BearerAuth
@@ -67,7 +65,6 @@ func (nc *NotificationController) MarkAllRead(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "all notification marked as read"})
 }
 
-// MarkRead godoc
 // @Summary   Mark a single notification as read
 // @Tags      notifications
 // @Security  BearerAuth

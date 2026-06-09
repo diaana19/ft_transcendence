@@ -101,7 +101,6 @@ func (h *ChatHandler) sendPendingNotifications(client *Client) {
 	}
 }
 
-// HandleWS godoc
 // @Summary      Real-time chat WebSocket
 // @Description  Upgrades the connection to a WebSocket for real-time chat and presence. This is not a regular
 // @Description  REST call: the client must perform a WebSocket handshake. Authentication is via the "auth_token"

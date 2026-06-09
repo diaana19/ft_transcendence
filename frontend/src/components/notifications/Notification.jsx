@@ -1,14 +1,3 @@
-/*
- ** File: Notification.jsx
- ** Description: Notifications page showing likes and comments on user posts
- ** Responsibilities:
- ** - Display list of unread notifications
- ** - Show notification type (like, comment, friend request)
- ** - Allow user to mark all notifications as read
- ** - Navigate to relevant content on click
- ** - Accept friend requests inline
- */
-
 import { useNavigate } from 'react-router-dom'
 import { useNotifications } from '../../context/NotificationProvider'
 import { Heart, MessageCircle, UserPlus, Bell, Mail, Check } from 'lucide-react'

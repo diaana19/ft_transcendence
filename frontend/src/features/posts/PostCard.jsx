@@ -1,14 +1,3 @@
-/*
- ** File: PostCard.jsx
- ** Description: Displays a single post card in the feed
- ** Responsibilities:
- ** - Render post content, author info and timestamp
- ** - Handle post editing and deletion
- ** - Show edit/delete buttons only to post author
- ** - Handle like/unlike toggle
- ** - Show login modal if user is not authenticated
- */
-
 import { useState } from 'react'
 import { deletePost, updatePost, reactToPost } from './postService.js'
 import { Pencil, Trash2, MessageCircle, ThumbsUp, ThumbsDown } from 'lucide-react'

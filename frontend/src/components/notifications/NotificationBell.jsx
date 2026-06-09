@@ -1,12 +1,3 @@
-/*
- ** File: NotificationBell.jsx
- ** Description: Notification bell icon with unread count badge
- ** Responsibilities:
- ** - Display bell icon in sidebar or navbar
- ** - Show unread notification count badge
- ** - Navigate to notifications page on click
- */
-
 import { useNavigate } from 'react-router-dom'
 import { useNotifications } from '../../context/NotificationProvider'
 import { BellIcon } from '@heroicons/react/24/outline'

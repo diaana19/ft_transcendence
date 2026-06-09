@@ -1,12 +1,3 @@
-/*
- ** File: CommentItem.jsx
- ** Description: Renders a single comment (reply) with like/dislike controls
- ** Responsibilities:
- ** - Display comment author, content and the connecting thread line
- ** - Handle like/dislike toggle for the comment
- ** - Show login modal if the user is not authenticated
- */
-
 import { useState } from 'react'
 import RichText from '../../components/common/RichText'
 import LoginModal from '../../components/common/LoginModal'

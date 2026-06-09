@@ -49,7 +49,6 @@ type RegisterInput struct {
 	DateOfBirth string `json:"dateOfBirth" binding:"required"`
 }
 
-// RegisterUser godoc
 // @Summary   Register a new user
 // @Description Create a local account after validating age and password strength
 // @Tags      auth
@@ -131,7 +130,6 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 	c.JSON(200, response)
 }
 
-// LoginUser godoc
 // @Summary   Authenticate a user
 // @Description Log in with email or username and password; may require a 2FA step
 // @Tags      auth
@@ -203,7 +201,6 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token, "user": user.ToResponse()})
 }
 
-// RefreshToken godoc
 // @Summary   Refresh a JWT
 // @Description Issue a new JWT from a valid bearer token
 // @Tags      auth
@@ -232,7 +229,6 @@ type ForgotPasswordInput struct {
 	Email string `json:"email" binding:"required,email"`
 }
 
-// ForgotPassword godoc
 // @Summary   Request a password reset
 // @Description Generate a new password for the account with the given email and send it to that address.
 // @Description Always returns 200 so it can't be used to discover which emails are registered.
@@ -281,11 +277,6 @@ func (ac *AuthController) ForgotPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": genericMsg})
 }
 
-// Me returns the authenticated user's profile. Used by the SPA on mount to
-// resolve "who am I via cookie?" — the OAuth callback only sets the HttpOnly
-// auth_token cookie, so JS can't read the JWT directly and needs an endpoint
-// to recover the user identity from a cookie-only session.
-// Me godoc
 // @Summary   Get current user
 // @Description Return the authenticated user's profile resolved from the session
 // @Tags      auth
@@ -310,7 +301,6 @@ func (ac *AuthController) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": user.ToResponse()})
 }
 
-// LogoutUser godoc
 // @Summary   Log out the current user
 // @Description Blacklist the active token and clear the auth cookie
 // @Tags      auth
@@ -356,7 +346,6 @@ type Verify2FAInput struct {
 	Code         string `json:"code" binding:"required,len=6,numeric"`
 }
 
-// Verify2FA godoc
 // @Summary   Verify a 2FA code
 // @Description Complete a pending login by validating the user's TOTP code
 // @Tags      auth

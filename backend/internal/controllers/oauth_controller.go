@@ -23,7 +23,6 @@ func NewOAuthController(service *services.OAuthService, cfg *config.Config) *OAu
 	}
 }
 
-// OAuthLogin godoc
 // @Summary   Start GitHub OAuth login
 // @Description Redirect the user to GitHub's authorization page to begin the OAuth flow
 // @Tags      oauth
@@ -51,7 +50,6 @@ func (oc *OAuthController) OAuthLogin(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-// OAuthCallback godoc
 // @Summary   Handle GitHub OAuth callback
 // @Description Validate state, exchange the code for a token, resolve the user,
 // @Description set the auth cookie, and redirect to the frontend

@@ -45,7 +45,6 @@ func respondOwnedResourceError(c *gin.Context, err error, notFoundMsg string) {
 	}
 }
 
-// GetTrends godoc
 // @Summary   Trending hashtags (most-used in posts over the last week)
 // @Tags      posts
 // @Produce   json
@@ -89,7 +88,6 @@ func parseLimitOffset(c *gin.Context) (limit, offset int) {
 	return limit, offset
 }
 
-// GetPosts godoc
 // @Summary   List posts (limit/offset pagination), optionally filtered by hashtag or replied-to
 // @Tags      posts
 // @Produce   json
@@ -141,7 +139,6 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 	})
 }
 
-// GetPost godoc
 // @Summary   Get a single post by id
 // @Tags      posts
 // @Produce   json
@@ -172,7 +169,6 @@ func (pc *PostController) GetPost(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// GetPostsByUser godoc
 // @Summary   List posts authored by a user
 // @Tags      posts
 // @Produce   json
@@ -204,7 +200,6 @@ func (pc *PostController) GetPostsByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses})
 }
 
-// CreatePost godoc
 // @Summary   Create a new post
 // @Tags      posts
 // @Security  BearerAuth
@@ -249,7 +244,6 @@ func (pc *PostController) CreatePost(c *gin.Context) {
 	c.JSON(http.StatusCreated, post.ToResponse())
 }
 
-// UpdatePost godoc
 // @Summary   Update a post
 // @Tags      posts
 // @Security  BearerAuth
@@ -287,7 +281,6 @@ func (pc *PostController) UpdatePost(c *gin.Context) {
 	c.JSON(http.StatusOK, post.ToResponse())
 }
 
-// DeletePost godoc
 // @Summary   Delete a post
 // @Tags      posts
 // @Security  BearerAuth
@@ -330,7 +323,6 @@ func bindReactionValue(c *gin.Context) (int, bool) {
 	return input.Value, true
 }
 
-// React godoc
 // @Summary   Like or dislike a post
 // @Tags      posts
 // @Security  BearerAuth
@@ -389,7 +381,6 @@ func (pc *PostController) React(c *gin.Context) {
 	})
 }
 
-// ReactComment godoc
 // @Summary   Like or dislike a comment
 // @Tags      posts
 // @Security  BearerAuth
@@ -436,7 +427,6 @@ func (pc *PostController) ReactComment(c *gin.Context) {
 	})
 }
 
-// GetComments godoc
 // @Summary   List comments for a post
 // @Tags      posts
 // @Produce   json
@@ -473,7 +463,6 @@ func (pc *PostController) GetComments(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses, "total": len(responses)})
 }
 
-// CreateComment godoc
 // @Summary   Add a comment to a post
 // @Tags      posts
 // @Security  BearerAuth
@@ -557,7 +546,6 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 	c.JSON(http.StatusCreated, comment.ToResponse())
 }
 
-// UpdateComment godoc
 // @Summary   Update a comment (text, and optionally its media attachment)
 // @Tags      posts
 // @Security  BearerAuth
@@ -589,11 +577,6 @@ func (pc *PostController) UpdateComment(c *gin.Context) {
 
 	var input models.UpdateCommentInput
 
-	// Two accepted formats:
-	//   - application/json: text-only edit (backward compatible). Optionally
-	//     {"remove_file": true} to detach the current attachment.
-	//   - multipart/form-data: text + an optional new "file" (replaces the
-	//     attachment) or remove_file=true (detaches it).
 	if strings.HasPrefix(c.ContentType(), "application/json") {
 		if err := c.ShouldBindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -642,7 +625,6 @@ func (pc *PostController) UpdateComment(c *gin.Context) {
 	c.JSON(http.StatusOK, comment.ToResponse())
 }
 
-// DeleteComment godoc
 // @Summary   Delete a comment
 // @Tags      posts
 // @Security  BearerAuth

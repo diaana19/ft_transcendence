@@ -15,8 +15,6 @@ function CommentForm({ postId, onCommentAdded }) {
         setLoading(true)
         setError(null)
         try {
-            // The endpoint accepts an optional file attachment, so it binds multipart
-            // form data (not JSON) — send content (and the file, if any) as FormData.
             const formData = new FormData()
             formData.append('content', content)
             if (file) formData.append('file', file)

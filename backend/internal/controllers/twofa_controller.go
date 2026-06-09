@@ -16,7 +16,6 @@ func NewTwoFAController(service *services.TwoFAService) *TwoFAController {
 	return &TwoFAController{service: service}
 }
 
-// Setup godoc
 // @Summary  Begin 2FA setup and return provisioning data
 // @Tags     2fa
 // @Security BearerAuth
@@ -46,7 +45,6 @@ type Enable2FAInput struct {
 	Code string `json:"code" binding:"required,len=6,numeric"`
 }
 
-// Enable godoc
 // @Summary  Enable 2FA using a TOTP code
 // @Tags     2fa
 // @Security BearerAuth
@@ -85,7 +83,6 @@ type Disable2FAInput struct {
 	Code string `json:"code" binding:"required,len=6,numeric"`
 }
 
-// Disable godoc
 // @Summary  Disable 2FA using a TOTP code
 // @Tags     2fa
 // @Security BearerAuth

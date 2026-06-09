@@ -89,7 +89,6 @@ func main() {
 		})
 	})
 
-	// Health godoc
 	// @Summary  Liveness probe
 	// @Tags     health
 	// @Produce  json

@@ -15,7 +15,6 @@ type FriendController struct {
 	NotificationService *services.NotificationService
 }
 
-// SendFriendRequest godoc
 // @Summary   Send a friend request to a user
 // @Tags      friends
 // @Security  BearerAuth
@@ -55,7 +54,6 @@ func (fc *FriendController) SendFriendRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "request sent"})
 }
 
-// AcceptFriend godoc
 // @Summary   Accept a pending friend request
 // @Tags      friends
 // @Security  BearerAuth
@@ -93,7 +91,6 @@ func (fc *FriendController) AcceptFriend(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "friend request accepted"})
 }
 
-// FollowUser godoc
 // @Summary   Follow a user
 // @Tags      friends
 // @Security  BearerAuth
@@ -124,7 +121,6 @@ func (fc *FriendController) FollowUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "user followed"})
 }
 
-// UnfollowUser godoc
 // @Summary   Unfollow a user
 // @Tags      friends
 // @Security  BearerAuth
@@ -155,7 +151,6 @@ func (fc *FriendController) UnfollowUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "user unfollowed"})
 }
 
-// RemoveFriend godoc
 // @Summary   Remove an existing friend
 // @Tags      friends
 // @Security  BearerAuth
@@ -186,7 +181,6 @@ func (fc *FriendController) RemoveFriend(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "friend removed"})
 }
 
-// RejectFriendRequest godoc
 // @Summary   Reject a pending friend request
 // @Tags      friends
 // @Security  BearerAuth
@@ -210,7 +204,6 @@ func (fc *FriendController) RejectFriendRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "request rejected"})
 }
 
-// GetFollowers godoc
 // @Summary   List the followers of a user
 // @Tags      friends
 // @Security  BearerAuth
@@ -234,7 +227,6 @@ func (fc *FriendController) GetFollowers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses})
 }
 
-// GetFollowing godoc
 // @Summary   List the users a user is following
 // @Tags      friends
 // @Security  BearerAuth
@@ -258,7 +250,6 @@ func (fc *FriendController) GetFollowing(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses})
 }
 
-// GetFriends godoc
 // @Summary   List the friends of a user
 // @Tags      friends
 // @Security  BearerAuth

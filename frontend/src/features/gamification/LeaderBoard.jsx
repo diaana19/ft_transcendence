@@ -9,21 +9,14 @@ const WEEKLY_TABS = [
     { key: 'followers', label: 'Followers' },
 ]
 
-// metricValue extracts the number shown for the active tab from an entry.
 function metricValue(entry, tab) {
     return (tab === 'total' ? entry.stats?.total : entry.stats?.[tab]?.count) ?? 0
 }
 
-// metricLevel is the level for the active tab — the per-metric level for a
-// specific tab (e.g. likes), or the overall level on the "Score" tab. Keeps the
-// shown level consistent with the count: 0 likes reads as lv. 0, not the global
-// level driven by posts/followers.
 function metricLevel(entry, tab) {
     return (tab === 'total' ? entry.stats?.level : entry.stats?.[tab]?.level) ?? 0
 }
 
-// ScoreBar fills relative to the leader: the top entry is 100%, everyone else
-// is their share of the leader's value for the active tab.
 function ScoreBar({ pct }) {
     return (
         <div
@@ -62,8 +55,6 @@ export default function LeaderBoard() {
     const sortedBoard = [...leaderboard]
         .sort((a, b) => metricValue(b, activeTab) - metricValue(a, activeTab))
         .slice(0, 10)
-    // The leader (first, after the descending sort) defines 100%; every other
-    // bar is its share of that value.
     const topValue = sortedBoard.length ? metricValue(sortedBoard[0], activeTab) : 0
     localStorage.getItem('token')
     return (
