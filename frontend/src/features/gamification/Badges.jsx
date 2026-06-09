@@ -33,7 +33,6 @@ const CATEGORY_LABEL = { social: "Social", posts: "Posts" }
 export default function Badges() {
   const { user: authUser } = useAuth()
   const [stats, setStats] = useState(null)
-  const [newBadge, setNewBadge] = useState(null)
 
   useEffect(() => {
     if (!authUser?.userId) return
@@ -46,55 +45,18 @@ export default function Badges() {
     try {
       const { data } = await api.get(`/api/users/${authUser?.userId}/gamification`)
       setStats(data)
-      checkNewBadges(data)
     } catch (err) {
       console.error(err)
     }
   }
 
-  const checkNewBadges = (newStats) => {
-    const userStats = {
-      posts: newStats?.posts?.count ?? 0,
-      likes: newStats?.likes?.count ?? 0,
-      followers: newStats?.followers?.count ?? 0,
-    }
-    const earned = BADGES.flatMap(s => s.items).filter(b => b.check(userStats))
-    const prev = JSON.parse(localStorage.getItem('earned_badges') || 'null')
-
-    if (prev === null) {
-      localStorage.setItem('earned_badges', JSON.stringify(earned.map(b => b.key)))
-      return
-    }
-
-    const newOnes = earned.filter(b => !prev.includes(b.key))
-    if (newOnes.length > 0) {
-      setNewBadge(newOnes[0])
-      setTimeout(() => setNewBadge(null), 4000)
-      localStorage.setItem('earned_badges', JSON.stringify(earned.map(b => b.key)))
-    }
-  }
-
-  const userStats = {
-    posts: stats?.posts?.count ?? 0,
-    likes: stats?.likes?.count ?? 0,
-    followers: stats?.followers?.count ?? 0,
-  }
-
-  const earnedCount = BADGES.flatMap(s => s.items).filter(b => b.check(userStats)).length
-  const totalBadges = BADGES.flatMap(s => s.items).length
-
   return (
     <div>
-      <div className="flex items-center justify-between gap-3 mb-4 pb-2" style={{ borderBottom: '1.5px solid #c5dbc4' }}>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#c5dbc4' }}>
-            <i className="ti ti-award" aria-hidden="true" style={{ color: '#3b6d11', fontSize: '15px' }} />
-          </div>
-          <span className="text-sm font-semibold" style={{ color: '#3b6d11' }}>Badges</span>
+      <div className="flex items-center gap-3 mb-4 pb-2" style={{ borderBottom: '1.5px solid #c5dbc4' }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#c5dbc4' }}>
+          <i className="ti ti-award" aria-hidden="true" style={{ color: '#3b6d11', fontSize: '15px' }} />
         </div>
-        <span className="text-xs px-2 py-1 rounded-full font-semibold" style={{ background: '#eaf3de', color: '#3b6d11' }}>
-          {earnedCount}/{totalBadges} earned
-        </span>
+        <span className="text-sm font-semibold" style={{ color: '#3b6d11' }}>Badges</span>
       </div>
 
       {BADGES.map(section => {
@@ -108,44 +70,26 @@ export default function Badges() {
               <span className="text-xs font-semibold" style={{ color: c.title }}>{CATEGORY_LABEL[section.category]}</span>
             </div>
             <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
-              {section.items.map(badge => {
-                const earned = badge.check(userStats)
-                return (
-                  <div
-                    key={badge.key}
-                    className="rounded-2xl p-4 flex flex-col items-center text-center gap-2 transition-all cursor-pointer hover:scale-105"
-                    style={{ background: 'white', border: `0.5px solid ${c.cardBorder}`, opacity: earned ? 1 : 0.6 }}
-                  >
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: c.emojiBg }}>
-                      <i className={`ti ${badge.icon}`} aria-hidden="true" style={{ color: c.iconText, fontSize: '22px' }} />
-                    </div>
-                    <div className="text-xs font-semibold" style={{ color: earned ? c.title : '#888780' }}>{badge.name}</div>
-                    <div className="text-xs leading-relaxed" style={{ color: '#888780' }}>{badge.desc}</div>
-                    {earned ? (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: c.pillBg, color: c.pillText }}>{badge.condition}</span>
-                    ) : (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: '#f1efe8', color: '#888780' }}>
-                        <i className="ti ti-lock" aria-hidden="true" style={{ fontSize: '10px', marginRight: '3px' }} />{badge.condition}
-                      </span>
-                    )}
+              {section.items.map(badge => (
+                <div
+                  key={badge.key}
+                  className="rounded-2xl p-4 flex flex-col items-center text-center gap-2 transition-all cursor-pointer hover:scale-105"
+                  style={{ background: 'white', border: `0.5px solid ${c.cardBorder}` }}
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: c.emojiBg }}>
+                    <i className={`ti ${badge.icon}`} aria-hidden="true" style={{ color: c.iconText, fontSize: '22px' }} />
                   </div>
-                )
-              })}
+                  <div className="text-xs font-semibold" style={{ color: c.title }}>{badge.name}</div>
+                  <div className="text-xs leading-relaxed" style={{ color: '#888780' }}>{badge.desc}</div>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: c.pillBg, color: c.pillText }}>
+                    {badge.condition}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )
       })}
-
-      {newBadge && (
-        <div className="fixed bottom-20 left-1/2 z-50 px-4 py-3 rounded-2xl shadow-lg flex items-center gap-3"
-          style={{ background: 'white', border: '1.5px solid #ede8fd', transform: 'translateX(-50%)' }}>
-          <span className="text-xl">🏆</span>
-          <div>
-            <p className="text-xs font-bold" style={{ color: '#534ab7' }}>New badge unlocked!</p>
-            <p className="text-xs" style={{ color: '#b4b2a9' }}>{newBadge.name}</p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
