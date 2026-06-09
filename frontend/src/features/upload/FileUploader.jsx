@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import axios from 'axios'
 
+// FileUploader lets the user pick a file, preview it and upload it to /api/upload.
 function FileUploader({ onUploadSuccess }) {
     const [file, setFile] = useState(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [success, setSuccess] = useState(null)
 
+    // handleFileChange validates the picked file and rejects files over 25MB.
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0]
         if (!selectedFile) return

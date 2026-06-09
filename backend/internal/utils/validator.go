@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// CheckUserAge returns true when the user has 13 years or more.
 func CheckUserAge(birthDate time.Time) bool {
 	now := time.Now()
 
@@ -18,6 +19,7 @@ func CheckUserAge(birthDate time.Time) bool {
 	return age >= 13
 }
 
+// CheckEmailFormat returns true when the email has a valid format.
 func CheckEmailFormat(email string) bool {
 	re := regexp.MustCompile(`^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`)
 	return re.MatchString(email)
@@ -25,6 +27,7 @@ func CheckEmailFormat(email string) bool {
 
 var usernameRe = regexp.MustCompile(`^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$`)
 
+// CheckUsernameFormat returns true when the username is valid (letters, numbers and dash).
 func CheckUsernameFormat(username string) bool {
 	if len(username) < 1 || len(username) > 39 {
 		return false
@@ -32,6 +35,8 @@ func CheckUsernameFormat(username string) bool {
 	return usernameRe.MatchString(username)
 }
 
+// CheckPasswordFormat checks the password rules. It returns false and a code
+// that tells which rule failed, or true and -1 when the password is good.
 func CheckPasswordFormat(password string, username string) (bool, int) {
 	lowerPass := strings.ToLower(strings.TrimSpace(password))
 	lowerUser := strings.ToLower(strings.TrimSpace(username))

@@ -5,6 +5,7 @@ import RichText from '../../components/common/RichText'
 import CommentForm from './CommentForm'
 import CommentItem from './CommentItem'
 
+// PostPage shows one full post with its comments and the reply form.
 export default function PostPage() {
     const { id } = useParams()
 
@@ -16,6 +17,7 @@ export default function PostPage() {
         fetchPost()
     }, [id])
 
+    // fetchPost loads the post and its comments in parallel.
     const fetchPost = async () => {
         try {
             const [postRes, commentsRes] = await Promise.all([

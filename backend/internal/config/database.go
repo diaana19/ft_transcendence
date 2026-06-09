@@ -11,6 +11,7 @@ import (
 	"ft_transcendence/backend/internal/models"
 )
 
+// Connect opens the Postgres database and runs AutoMigrate. It fails if the connection or migration fails.
 func (pg *Postgres) Connect() (*gorm.DB, error) {
 	connString := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",

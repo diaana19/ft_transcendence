@@ -1,3 +1,4 @@
+// Info explains how the score, levels and badges work.
 export default function Info() {
     return (
         <div>

@@ -7,6 +7,7 @@ import LoginModal from '../../components/common/LoginModal'
 import RichText from '../../components/common/RichText'
 import { useAuth } from '../../hooks/useAuth'
 
+// PostCard shows one post with react, comment, edit and delete actions.
 function PostCard({ post, onDelete, onUpdate, currentUserId }) {
     const navigate = useNavigate()
     const { user } = useAuth()
@@ -33,6 +34,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
         }
     }
 
+    // handleUpdate saves the edit, uploading a new file first if one was picked.
     const handleUpdate = async () => {
         setLoading(true)
         try {
@@ -56,6 +58,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
         }
     }
 
+    // handleReact sends a like/dislike, or opens the login modal for guests.
     const handleReact = async (value) => {
         if (!user) {
             setShowLoginModal(true)
@@ -81,6 +84,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
         setEditMediaUrl(URL.createObjectURL(selected))
     }
 
+    // handleComment opens the post page, or the login modal for guests.
     const handleComment = () => {
         if (!user) {
             setShowLoginModal(true)

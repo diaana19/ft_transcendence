@@ -10,11 +10,13 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
+// NotificationService creates and delivers notifications to users.
 type NotificationService struct {
 	repo   *repositories.NotificationRepositories
 	pubsub *repositories.NotificationPubSub
 }
 
+// NewNotificationService creates a new NotificationService.
 func NewNotificationService(
 	repo *repositories.NotificationRepositories,
 	pubsub *repositories.NotificationPubSub,
@@ -22,6 +24,7 @@ func NewNotificationService(
 	return &NotificationService{repo: repo, pubsub: pubsub}
 }
 
+// SendNotification saves a notification and publishes it to the user in real time.
 func (s *NotificationService) SendNotification(
 	userID, userUsername, actorID, actorUsername, notifType, content, postID string,
 ) error {
@@ -59,18 +62,22 @@ func (s *NotificationService) SendNotification(
 	return nil
 }
 
+// GetUnread returns the unread notifications of the user.
 func (s *NotificationService) GetUnread(userID string) ([]models.Notification, error) {
 	return s.repo.FindUnreadByUserID(userID)
 }
 
+// MarkAllRead marks all notifications of the user as read.
 func (s *NotificationService) MarkAllRead(userID string) error {
 	return s.repo.MarkAllReadByUserID(userID)
 }
 
+// MarkRead marks one notification of the user as read.
 func (s *NotificationService) MarkRead(userID, notifID string) error {
 	return s.repo.MarkReadByID(userID, notifID)
 }
 
+// SendCommentNotification builds and sends a notification when someone comments on a post.
 func (s *NotificationService) SendCommentNotification(
 	receiverID, actorID, actorUsername, postID, commentPreview string,
 ) error {

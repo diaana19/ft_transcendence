@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// User is the account of a person.
 type User struct {
 	ID        string         `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
 	GithubID  *string        `gorm:"type:varchar(255);uniqueIndex" json:"github_id"`
@@ -29,6 +30,7 @@ type User struct {
 	Bio       string  `json:"bio"`
 }
 
+// UpdateUserInput holds the fields a user can change in the profile.
 type UpdateUserInput struct {
 	DisplayName string  `json:"displayname"`
 	Username    string  `json:"username"`
@@ -38,6 +40,7 @@ type UpdateUserInput struct {
 	Wallpaper   *string `json:"wallpaper"`
 }
 
+// UserResponse is the user data we send to the client.
 type UserResponse struct {
 	ID             string    `json:"id"`
 	Username       string    `json:"username"`
@@ -52,6 +55,7 @@ type UserResponse struct {
 	FollowingCount int64     `json:"following_count"`
 }
 
+// ToResponse converts the User into a UserResponse.
 func (u *User) ToResponse() UserResponse {
 	return UserResponse{
 		ID:           u.ID,
@@ -66,6 +70,7 @@ func (u *User) ToResponse() UserResponse {
 	}
 }
 
+// Friend is the relation between two users.
 type Friend struct {
 	ID       string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
 	UserID   string `gorm:"type:uuid;not null;index" json:"user_id"`

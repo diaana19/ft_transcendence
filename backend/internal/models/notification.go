@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// Notification is an alert sent to a user about an action of another user.
 type Notification struct {
 	ID            string    `gorm:"primaryKey;type:varchar(36)" json:"id"`
 	CreatedAt     time.Time `json:"created_at"`

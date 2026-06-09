@@ -6,6 +6,7 @@ import OAuthButton from './OAuthButton'
 import Button from '../../components/common/Button'
 import Input from '../../components/common/Input'
 
+// LoginForm is the full login page. It sends to 2FA when the account needs it.
 function LoginForm() {
     const navigate = useNavigate()
     const { loginUser } = useAuth()
@@ -23,6 +24,7 @@ function LoginForm() {
         setError(null)
         try {
             const data = await login(formData.email, formData.password)
+            // If 2FA is on, go to the verify page carrying the pending token.
             if (data.needs_2fa) {
                 navigate('/login/2fa', { state: { pendingToken: data.pending_token } })
                 return

@@ -15,14 +15,17 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
+// AuthService handles register, login, logout and password reset.
 type AuthService struct {
 	repo repositories.UserRepository
 }
 
+// NewAuthService creates a new AuthService.
 func NewAuthService(repo repositories.UserRepository) *AuthService {
 	return &AuthService{repo: repo}
 }
 
+// CreateAuthUserService registers a new user. It checks for duplicate email and username and hashes the password.
 func (s *AuthService) CreateAuthUserService(user *models.User) (*models.UserResponse, error) {
 	if user.ID == "" {
 		user.ID = utils.NewID()
@@ -70,6 +73,7 @@ func (s *AuthService) CreateAuthUserService(user *models.User) (*models.UserResp
 	return &response, nil
 }
 
+// LoginAuthUserService checks the credentials and returns the user without the password.
 func (s *AuthService) LoginAuthUserService(identifier, password string) (*models.User, error) {
 	user, err := s.repo.GetByIdentifier(identifier)
 	if err != nil {
@@ -88,6 +92,7 @@ func (s *AuthService) LoginAuthUserService(identifier, password string) (*models
 	return user, nil
 }
 
+// LogoutAuthUserService puts the token in the redis blacklist until it expires.
 func (s *AuthService) LogoutAuthUserService(token string, expire time.Duration, rdb *redis.Client) error {
 	ctx := context.Background()
 	err := rdb.Set(ctx, "blacklist:"+token, "1", expire).Err()
@@ -97,14 +102,17 @@ func (s *AuthService) LogoutAuthUserService(token string, expire time.Duration, 
 	return nil
 }
 
+// GetUserByID returns one user by ID.
 func (s *AuthService) GetUserByID(id string) (*models.User, error) {
 	return s.repo.GetByID(id)
 }
 
+// GetUserByEmail returns one user by email.
 func (s *AuthService) GetUserByEmail(email string) (*models.User, error) {
 	return s.repo.GetByEmail(email)
 }
 
+// ResetPassword generates a new password, delivers it with deliver and stores the hash.
 func (s *AuthService) ResetPassword(userID string, deliver func(newPassword string) error) error {
 	newPassword, err := utils.GenerateRandomPassword()
 	if err != nil {
@@ -123,6 +131,7 @@ func (s *AuthService) ResetPassword(userID string, deliver func(newPassword stri
 	return nil
 }
 
+// CreatePendingLogin stores a pending login in redis and returns its token. It expires in 5 minutes.
 func (s *AuthService) CreatePendingLogin(userID string, rdb *redis.Client) (string, error) {
 	randomBytes := make([]byte, 32)
 	if _, err := rand.Read(randomBytes); err != nil {
@@ -140,6 +149,7 @@ func (s *AuthService) CreatePendingLogin(userID string, rdb *redis.Client) (stri
 	return pendingToken, nil
 }
 
+// PeekPendingLogin returns the user ID of a pending login without removing it.
 func (s *AuthService) PeekPendingLogin(pendingToken string, rdb *redis.Client) (string, error) {
 	ctx := context.Background()
 	key := "pending_login:" + pendingToken
@@ -156,6 +166,7 @@ func (s *AuthService) PeekPendingLogin(pendingToken string, rdb *redis.Client) (
 	return userID, nil
 }
 
+// ConsumePendingLogin removes a pending login from redis.
 func (s *AuthService) ConsumePendingLogin(pendingToken string, rdb *redis.Client) {
 	ctx := context.Background()
 	key := "pending_login:" + pendingToken

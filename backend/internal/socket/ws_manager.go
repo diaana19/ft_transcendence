@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Client is one connected WebSocket user. Send is the buffered channel for outgoing messages.
 type Client struct {
 	ID       string
 	Username string
@@ -14,12 +15,15 @@ type Client struct {
 	Send     chan []byte
 }
 
+// WSManager keeps track of connected clients and the rooms they are in. It is safe for
+// concurrent use.
 type WSManager struct {
 	mu      sync.RWMutex
 	rooms   map[string]map[string]*Client
 	clients map[string]*Client
 }
 
+// NewWSManager creates an empty WSManager.
 func NewWSManager() *WSManager {
 	return &WSManager{
 		rooms:   make(map[string]map[string]*Client),
@@ -27,6 +31,7 @@ func NewWSManager() *WSManager {
 	}
 }
 
+// RegisterClient adds the client to the manager so it is marked as online.
 func (m *WSManager) RegisterClient(client *Client) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -35,6 +40,8 @@ func (m *WSManager) RegisterClient(client *Client) {
 	log.Printf("Client %s connected\n", client.Username)
 }
 
+// UnregisterClient removes the client from all rooms and from the manager, and closes its
+// Send channel.
 func (m *WSManager) UnregisterClient(client *Client) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -53,6 +60,7 @@ func (m *WSManager) UnregisterClient(client *Client) {
 	log.Printf("Client %s disconnect\n", client.ID)
 }
 
+// JoinRoom adds the client to the room, creating the room when it does not exist.
 func (m *WSManager) JoinRoom(client *Client, roomID string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -64,6 +72,7 @@ func (m *WSManager) JoinRoom(client *Client, roomID string) {
 	log.Printf("Client %s has joined room [%s]\n", client.Username, roomID)
 }
 
+// LeaveRoom removes the client from the room and deletes the room when it becomes empty.
 func (m *WSManager) LeaveRoom(client *Client, roomID string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -77,6 +86,8 @@ func (m *WSManager) LeaveRoom(client *Client, roomID string) {
 	}
 }
 
+// safeSend sends a message to the channel without blocking. It returns false and drops the
+// message when the channel is closed or its buffer is full.
 func safeSend(ch chan []byte, msg []byte) (delivered bool) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -93,6 +104,7 @@ func safeSend(ch chan []byte, msg []byte) (delivered bool) {
 	}
 }
 
+// BroadcastToRoom sends the message to every client in the room, except the sender.
 func (m *WSManager) BroadcastToRoom(roomID string, message []byte, senderID string) {
 	m.mu.RLock()
 	room, ok := m.rooms[roomID]
@@ -114,6 +126,7 @@ func (m *WSManager) BroadcastToRoom(roomID string, message []byte, senderID stri
 	}
 }
 
+// GetRoomMembers returns the ids of all clients in the room.
 func (m *WSManager) GetRoomMembers(roomID string) []string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -125,6 +138,7 @@ func (m *WSManager) GetRoomMembers(roomID string) []string {
 	return members
 }
 
+// IsOnline returns true when the user has an active connection.
 func (m *WSManager) IsOnline(userID string) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -133,6 +147,8 @@ func (m *WSManager) IsOnline(userID string) bool {
 	return ok
 }
 
+// WritePump reads from the client's Send channel and writes each message to the connection.
+// It returns and closes the connection when a write fails or the channel is closed.
 func (c *Client) WritePump() {
 	defer func() { _ = c.Conn.Close() }()
 	for message := range c.Send {

@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { ThumbsUp, ThumbsDown, Pencil, Trash2 } from 'lucide-react'
 import { reactToComment, updateComment, deleteComment } from './postService.js'
 
+// CommentItem shows one comment with react, edit and delete actions.
 function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
     const { user } = useAuth()
     const [userReaction, setUserReaction] = useState(comment.liked ? 1 : comment.disliked ? -1 : 0)
@@ -17,6 +18,7 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
     const [editFileUrl, setEditFileUrl] = useState(null)
     const [editFile, setEditFile] = useState(null)
 
+    // handleReact sends a like/dislike, or opens the login modal for guests.
     const handleReact = async (value) => {
         if (!user) {
             setShowLoginModal(true)

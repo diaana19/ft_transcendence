@@ -1,5 +1,6 @@
 import { useAuth } from '../../hooks/useAuth'
 
+// MessageList shows the chat bubbles, aligning my own messages to the right.
 function MessageList({ messages }) {
     const { user } = useAuth()
 

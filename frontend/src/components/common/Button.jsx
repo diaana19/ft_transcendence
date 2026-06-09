@@ -1,5 +1,6 @@
 import { colors } from '../../styles/tokens'
 
+// Button is the shared button with variant, size and loading state.
 function Button({
     children,
     onClick,

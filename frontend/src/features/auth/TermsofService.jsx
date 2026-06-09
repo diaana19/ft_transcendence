@@ -1,3 +1,4 @@
+// TermsOfService is a static page that renders the terms of service sections.
 export default function TermsOfService() {
     return (
         <div className="w-full mx-auto px-6 py-8 bg-transparent">

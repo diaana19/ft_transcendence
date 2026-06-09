@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth'
 import axiosInstance from '../../services/axiosInstance'
 import { PhotoIcon } from '@heroicons/react/24/outline'
 
+// CommentForm is the box to reply to a post, with optional image or video.
 function CommentForm({ postId, onCommentAdded }) {
     const { user } = useAuth()
     const [content, setContent] = useState('')
@@ -28,6 +29,7 @@ function CommentForm({ postId, onCommentAdded }) {
             setLoading(false)
         }
     }
+    // handleFileChange accepts only image/video files up to 25MB.
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0]
         if (!selectedFile) return

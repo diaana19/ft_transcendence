@@ -8,14 +8,17 @@ import (
 	"ft_transcendence/backend/internal/services"
 )
 
+// TwoFAController handles the 2FA setup, enable and disable endpoints.
 type TwoFAController struct {
 	service *services.TwoFAService
 }
 
+// NewTwoFAController creates a new TwoFAController.
 func NewTwoFAController(service *services.TwoFAService) *TwoFAController {
 	return &TwoFAController{service: service}
 }
 
+// Setup starts the 2FA setup and returns the provisioning data.
 // @Summary  Begin 2FA setup and return provisioning data
 // @Tags     2fa
 // @Security BearerAuth
@@ -41,10 +44,12 @@ func (tc *TwoFAController) Setup(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// Enable2FAInput holds the TOTP code used to enable 2FA.
 type Enable2FAInput struct {
 	Code string `json:"code" binding:"required,len=6,numeric"`
 }
 
+// Enable turns on 2FA after checking the TOTP code.
 // @Summary  Enable 2FA using a TOTP code
 // @Tags     2fa
 // @Security BearerAuth
@@ -79,10 +84,12 @@ func (tc *TwoFAController) Enable(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "2FA enabled successfully"})
 }
 
+// Disable2FAInput holds the TOTP code used to disable 2FA.
 type Disable2FAInput struct {
 	Code string `json:"code" binding:"required,len=6,numeric"`
 }
 
+// Disable turns off 2FA after checking the TOTP code.
 // @Summary  Disable 2FA using a TOTP code
 // @Tags     2fa
 // @Security BearerAuth

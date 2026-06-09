@@ -7,6 +7,7 @@ import (
 
 var hashtagRe = regexp.MustCompile(`#\w+`)
 
+// NormalizeHashtag puts the tag in lower case and adds the # when it is missing.
 func NormalizeHashtag(raw string) string {
 	raw = strings.ToLower(strings.TrimSpace(raw))
 	if !strings.HasPrefix(raw, "#") {
@@ -15,6 +16,7 @@ func NormalizeHashtag(raw string) string {
 	return hashtagRe.FindString(raw)
 }
 
+// ExtractHashtags returns all the unique hashtags found in the content.
 func ExtractHashtags(content string) []string {
 	matches := hashtagRe.FindAllString(content, -1)
 	if len(matches) == 0 {

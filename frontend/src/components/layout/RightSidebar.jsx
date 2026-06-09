@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import axiosInstance from '../../services/axiosInstance'
 import { useAuth } from '../../hooks/useAuth'
 
+// Trends shows the top hashtags and refreshes them every minute.
 function Trends() {
     const [trends, setTrends] = useState([])
     const [loading, setLoading] = useState(true)
@@ -19,6 +20,7 @@ function Trends() {
             }
         }
         load()
+        // Reload trends every 60 seconds.
         const id = setInterval(load, 60000)
         return () => {
             active = false
@@ -47,6 +49,7 @@ function Trends() {
     )
 }
 
+// Suggestions shows up to 3 users that the current user does not follow yet.
 function Suggestions() {
     const { user } = useAuth()
     const navigate = useNavigate()
@@ -64,6 +67,7 @@ function Suggestions() {
                 const following = (followingRes.data?.data || followingRes.data || []).map(
                     (f) => f.id
                 )
+                // Keep only users that are not me and that I do not follow, max 3.
                 const filtered = (usersRes.data || [])
                     .filter((u) => u.id !== user.userId && !following.includes(u.id))
                     .slice(0, 3)
@@ -117,6 +121,7 @@ function Suggestions() {
     )
 }
 
+// RightSidebar shows the Trends and Who to follow boxes.
 export default function RightSidebar() {
     return (
         <aside className="w-80 h-screen fixed right-0 top-0 backdrop-blur-xl border-r border-transparent px-4 py-6 hidden lg:block">

@@ -1,3 +1,4 @@
+// Modal is the shared dialog with a title, content and optional confirm button.
 function Modal({
     isOpen,
     onClose,

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useNotifications } from '../../context/NotificationProvider'
 import { BellIcon } from '@heroicons/react/24/outline'
 
+// NotificationBell is the sidebar link with a badge showing the unread count.
 export default function NotificationBell() {
     const { notifications } = useNotifications()
     const navigate = useNavigate()

@@ -11,6 +11,8 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
+// extractToken reads the JWT from the Authorization Bearer header or the auth_token cookie.
+// It returns an empty string when no token is found.
 func extractToken(c *gin.Context) string {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader != "" {
@@ -28,12 +30,15 @@ func extractToken(c *gin.Context) string {
 	return ""
 }
 
+// clearAuthCookie removes the auth_token cookie from the client when it exists.
 func clearAuthCookie(c *gin.Context) {
 	if _, err := c.Cookie("auth_token"); err == nil {
 		c.SetCookie("auth_token", "", -1, "/", "", true, true)
 	}
 }
 
+// AuthMiddleware checks the JWT and blocks the request when it is not valid. It also rejects
+// tokens that are in the Redis blacklist, and sets user_id and username in the context.
 func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)
@@ -69,6 +74,8 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	}
 }
 
+// OptionalAuthMiddleware tries to read the JWT but never blocks the request. When the token
+// is valid it sets user_id and username in the context, otherwise it just continues.
 func OptionalAuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)

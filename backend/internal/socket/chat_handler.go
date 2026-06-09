@@ -22,8 +22,11 @@ import (
 	"ft_transcendence/backend/internal/services"
 )
 
+// chatHistoryLimit is the max number of past messages loaded when a conversation is opened.
 const chatHistoryLimit = 50
 
+// ChatHandler manages the WebSocket chat. It handles the connection, direct messages,
+// notifications and the Redis pub/sub used to share messages between server instances.
 type ChatHandler struct {
 	manager             *WSManager
 	rdb                 *redis.Client
@@ -36,6 +39,7 @@ type ChatHandler struct {
 	subscribedMu        sync.Mutex
 }
 
+// IncomingMessage is the message the client sends over the WebSocket.
 type IncomingMessage struct {
 	Action      string  `json:"action"`
 	PeerID      string  `json:"peer_id"`
@@ -44,6 +48,7 @@ type IncomingMessage struct {
 	FileID      *string `json:"file_id,omitempty"`
 }
 
+// OutgoingMessage is the message the server sends back to the client over the WebSocket.
 type OutgoingMessage struct {
 	Type     string                   `json:"type"`
 	Message  *models.MessageResponse  `json:"message,omitempty"`
@@ -51,6 +56,8 @@ type OutgoingMessage struct {
 	PeerID   string                   `json:"peer_id,omitempty"`
 }
 
+// NewChatHandler creates a ChatHandler. It also sets the WebSocket upgrader to only
+// accept connections from the allowed origins.
 func NewChatHandler(
 	manager *WSManager,
 	rdb *redis.Client,
@@ -77,6 +84,8 @@ func NewChatHandler(
 	}
 }
 
+// sendPendingNotifications sends all unread notifications to the client. It marks them
+// as read only when every notification was delivered.
 func (h *ChatHandler) sendPendingNotifications(client *Client) {
 	notifs, err := h.notificationService.GetUnread(client.ID)
 	if err != nil || len(notifs) == 0 {
@@ -110,6 +119,9 @@ func (h *ChatHandler) sendPendingNotifications(client *Client) {
 // @Success      101 {string} string "Switching Protocols — WebSocket established"
 // @Failure      401 {object} map[string]string "missing or invalid token"
 // @Router       /ws/chat [get]
+//
+// HandleWS upgrades the request to a WebSocket. It registers the client, subscribes to its
+// notification channel, sends pending notifications and starts the read and write pumps.
 func (h *ChatHandler) HandleWS(c *gin.Context) {
 	userID := c.GetString("user_id")
 	username := c.GetString("username")
@@ -146,6 +158,8 @@ func (h *ChatHandler) HandleWS(c *gin.Context) {
 	h.readPump(client)
 }
 
+// readPump reads messages from the client until the connection closes. It passes each
+// message to HandleMessage.
 func (h *ChatHandler) readPump(client *Client) {
 	defer func() { _ = client.Conn.Close() }()
 
@@ -161,6 +175,8 @@ func (h *ChatHandler) readPump(client *Client) {
 	}
 }
 
+// HandleMessage parses the raw message and routes it by action. It supports "open" to open
+// a conversation and "message" to send a direct message.
 func (h *ChatHandler) HandleMessage(client *Client, raw []byte) {
 	var incoming IncomingMessage
 	if err := json.Unmarshal(raw, &incoming); err != nil {
@@ -178,6 +194,8 @@ func (h *ChatHandler) HandleMessage(client *Client, raw []byte) {
 	}
 }
 
+// dmChannel builds the channel name for a direct message between two users. It always
+// sorts the ids so both users get the same channel name.
 func dmChannel(a, b string) string {
 	if a > b {
 		a, b = b, a
@@ -185,6 +203,8 @@ func dmChannel(a, b string) string {
 	return "dm:" + a + ":" + b
 }
 
+// handleOpen joins the client to the DM room, subscribes the room to Redis once, and
+// sends the conversation history back to the client.
 func (h *ChatHandler) handleOpen(client *Client, peerID string) {
 	if peerID == "" || peerID == client.ID {
 		return
@@ -217,6 +237,8 @@ func (h *ChatHandler) handleOpen(client *Client, peerID string) {
 	safeSend(client.Send, payload)
 }
 
+// handleDM validates and saves a direct message, then publishes it to the room and sends
+// a notification to the recipient. It ignores empty or self-addressed messages.
 func (h *ChatHandler) handleDM(client *Client, incoming IncomingMessage) {
 	content := strings.TrimSpace(incoming.Content)
 	if content == "" && incoming.FileID == nil {
@@ -272,6 +294,7 @@ func (h *ChatHandler) handleDM(client *Client, incoming IncomingMessage) {
 	)
 }
 
+// toResponses converts a slice of messages to the response model sent to the client.
 func toResponses(msgs []models.Message) []models.MessageResponse {
 	out := make([]models.MessageResponse, len(msgs))
 	for i := range msgs {
@@ -280,6 +303,7 @@ func toResponses(msgs []models.Message) []models.MessageResponse {
 	return out
 }
 
+// publishToRoom marshals the message and publishes it to the room's Redis channel.
 func (h *ChatHandler) publishToRoom(roomID string, out OutgoingMessage) {
 	payload, err := json.Marshal(out)
 	if err != nil {
@@ -292,6 +316,8 @@ func (h *ChatHandler) publishToRoom(roomID string, out OutgoingMessage) {
 	}
 }
 
+// grantAttachment gives the recipient access to a file sent in a DM. The file must be
+// owned by the sender and uploaded as private, otherwise it returns an error.
 func (h *ChatHandler) grantAttachment(senderID, recipientID, fileID string) error {
 	file, err := h.fileRepo.GetByID(fileID)
 	if err != nil {

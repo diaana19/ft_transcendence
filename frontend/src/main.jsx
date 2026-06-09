@@ -8,9 +8,12 @@ import App from './app/App.jsx'
 import './styles/index.css'
 import { registerSW } from 'virtual:pwa-register'
 
+// Register the PWA service worker right away.
 registerSW({
     immediate: true,
 })
+
+// Mount the app wrapped by the router and all context providers.
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>

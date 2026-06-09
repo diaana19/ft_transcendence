@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// Publish sends a message to the Redis channel. It returns an error when the publish fails.
 func Publish(rdb *redis.Client, channel, message string) error {
 	ctx := context.Background()
 	err := rdb.Publish(ctx, channel, message).Err()
@@ -19,6 +20,8 @@ func Publish(rdb *redis.Client, channel, message string) error {
 	return nil
 }
 
+// RoundTrip publishes a message and waits to receive it back on the same channel. It is
+// used as a health check, and returns an error when the payload does not match.
 func RoundTrip(ctx context.Context, rdb *redis.Client, channel, message string) error {
 	sub := rdb.Subscribe(ctx, channel)
 	defer func() { _ = sub.Close() }()
@@ -41,6 +44,8 @@ func RoundTrip(ctx context.Context, rdb *redis.Client, channel, message string) 
 	return nil
 }
 
+// Subscribe listens to a Redis channel in a goroutine and calls handler for each message.
+// The subscription stops when the context is canceled.
 func Subscribe(ctx context.Context, rdb *redis.Client, channel string, handler func(message string)) {
 	sub := rdb.Subscribe(ctx, channel)
 

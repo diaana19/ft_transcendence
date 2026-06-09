@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { verifyTwoFA } from './authService'
 import { useAuth } from '../../hooks/useAuth'
 
+// TwoFAVerify finishes the login by checking the 2FA code with the pending token.
 function TwoFAVerify() {
     const location = useLocation()
     const navigate = useNavigate()
@@ -13,6 +14,7 @@ function TwoFAVerify() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
 
+    // Without a pending token there is nothing to verify, go back to login.
     useEffect(() => {
         if (!pendingToken) {
             navigate('/login', { replace: true })

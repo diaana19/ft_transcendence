@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth'
 import api from '../../services/axiosInstance'
 import Modal from '../../components/common/Modal'
 
+// SettingsPage shows account, security, data export and account delete options.
 export default function SettingsPage() {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
@@ -12,6 +13,7 @@ export default function SettingsPage() {
     const [error, setError] = useState(null)
     const [loading, setLoading] = useState(false)
 
+    // handleDelete deletes the account after confirming the password, then logs out.
     const handleDelete = async () => {
         if (!password) {
             setError('Please enter your password')
@@ -99,6 +101,7 @@ export default function SettingsPage() {
                     </div>
                     <button
                         onClick={async () => {
+                            // Export the user data and download it as a JSON file.
                             const res = await api.get('/api/gdpr/export')
                             const blob = new Blob([JSON.stringify(res.data, null, 2)], {
                                 type: 'application/json',

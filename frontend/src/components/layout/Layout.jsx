@@ -2,8 +2,10 @@ import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import RightSidebar from './RightSidebar'
 
+// Layout is the page shell with the sidebars and the routed content in the middle.
 export default function Layout() {
     const location = useLocation()
+    // Show the right sidebar only on the home feed.
     const showRightSidebar = location.pathname === '/'
 
     return (

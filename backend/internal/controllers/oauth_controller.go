@@ -11,11 +11,13 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
+// OAuthController handles the GitHub OAuth login flow.
 type OAuthController struct {
 	service     *services.OAuthService
 	frontendURL string
 }
 
+// NewOAuthController creates a new OAuthController.
 func NewOAuthController(service *services.OAuthService, cfg *config.Config) *OAuthController {
 	return &OAuthController{
 		service:     service,
@@ -23,6 +25,7 @@ func NewOAuthController(service *services.OAuthService, cfg *config.Config) *OAu
 	}
 }
 
+// OAuthLogin redirects the user to the GitHub authorization page.
 // @Summary   Start GitHub OAuth login
 // @Description Redirect the user to GitHub's authorization page to begin the OAuth flow
 // @Tags      oauth
@@ -50,6 +53,7 @@ func (oc *OAuthController) OAuthLogin(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
+// OAuthCallback handles the GitHub callback, sets the auth cookie and redirects to the frontend.
 // @Summary   Handle GitHub OAuth callback
 // @Description Validate state, exchange the code for a token, resolve the user,
 // @Description set the auth cookie, and redirect to the frontend

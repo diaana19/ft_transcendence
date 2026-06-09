@@ -9,16 +9,19 @@ import (
 	"ft_transcendence/backend/internal/repositories"
 )
 
+// SetupResponse holds the secret and the QR code URL for 2FA setup.
 type SetupResponse struct {
 	Secret    string `json:"secret"`
 	QRCodeURL string `json:"qr_code_url"`
 }
 
+// TwoFAService handles two-factor authentication with TOTP.
 type TwoFAService struct {
 	userRepo repositories.UserRepository
 	issuer   string
 }
 
+// NewTwoFAService creates a new TwoFAService.
 func NewTwoFAService(repo repositories.UserRepository) *TwoFAService {
 	return &TwoFAService{
 		userRepo: repo,
@@ -26,6 +29,7 @@ func NewTwoFAService(repo repositories.UserRepository) *TwoFAService {
 	}
 }
 
+// GenerateSecret creates a new TOTP secret and stores it for the user. It fails if 2FA is already enabled.
 func (s *TwoFAService) GenerateSecret(userID string) (*SetupResponse, error) {
 	user, err := s.userRepo.GetByID(userID)
 	if err != nil {
@@ -55,6 +59,7 @@ func (s *TwoFAService) GenerateSecret(userID string) (*SetupResponse, error) {
 	}, nil
 }
 
+// EnableTwoFA turns 2FA on for the user after the code is validated.
 func (s *TwoFAService) EnableTwoFA(userID string, code string) error {
 	user, err := s.userRepo.GetByID(userID)
 	if err != nil {
@@ -76,6 +81,7 @@ func (s *TwoFAService) EnableTwoFA(userID string, code string) error {
 	return s.userRepo.SetTwoFAEnabled(userID, true)
 }
 
+// ValidateCode checks if the code is valid for the user. The user must have 2FA enabled.
 func (s *TwoFAService) ValidateCode(userID, code string) (bool, error) {
 	user, err := s.userRepo.GetByID(userID)
 	if err != nil {
@@ -89,6 +95,7 @@ func (s *TwoFAService) ValidateCode(userID, code string) (bool, error) {
 	return totp.Validate(code, *user.TwoFASecret), nil
 }
 
+// DisableTwoFA turns 2FA off and clears the secret of the user.
 func (s *TwoFAService) DisableTwoFA(userID string) error {
 	return s.userRepo.ClearTwoFA(userID)
 }

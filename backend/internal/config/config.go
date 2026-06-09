@@ -6,6 +6,7 @@ import (
 	_ "github.com/lib/pq" // registers the Postgres driver for database/sql
 )
 
+// Postgres holds the Postgres connection settings.
 type Postgres struct {
 	Host     string
 	Port     string
@@ -14,11 +15,13 @@ type Postgres struct {
 	Password string
 }
 
+// Redis holds the Redis connection settings.
 type Redis struct {
 	Host string
 	Port string
 }
 
+// Config holds the app configuration.
 type Config struct {
 	JWT                string
 	GithubClientID     string
@@ -29,6 +32,7 @@ type Config struct {
 	Redis              Redis
 }
 
+// Load reads the configuration from the env and returns it.
 func Load() (*Config, error) {
 	return &Config{
 		JWT:                os.Getenv("JWT_SECRET"),

@@ -5,6 +5,7 @@ import Button from '../../components/common/Button'
 import Input from '../../components/common/Input'
 import { USERNAME_RE } from '../../utils/username'
 
+// RegisterForm is the sign up page. It validates input and creates the account.
 function RegisterForm() {
     const navigate = useNavigate()
     const [formData, setFormData] = useState({
@@ -20,6 +21,7 @@ function RegisterForm() {
         setFormData({ ...formData, [e.target.name]: e.target.value })
     }
 
+    // parseError turns a server error message into a friendly text for the user.
     const parseError = (errMsg) => {
         if (errMsg.includes('Password') || errMsg.includes('password')) {
             return 'Password must be at least 8 characters and contain uppercase, lowercase and a number'
@@ -39,6 +41,7 @@ function RegisterForm() {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        // Check the username format before sending the request.
         if (!USERNAME_RE.test(formData.username)) {
             setError(
                 'Username may only contain alphanumeric characters or single hyphens, ' +

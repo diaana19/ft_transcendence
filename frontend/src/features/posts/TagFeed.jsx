@@ -6,6 +6,7 @@ import PostCard from './PostCard'
 
 const PAGE_SIZE = 20
 
+// TagFeed shows the posts of one hashtag with infinite scroll.
 function TagFeed() {
     const { tag } = useParams()
     const { user } = useAuth()
@@ -19,6 +20,7 @@ function TagFeed() {
     const loadingRef = useRef(false)
     const sentinelRef = useRef(null)
 
+    // loadMore fetches the next page of tagged posts, skipping duplicates.
     const loadMore = useCallback(async () => {
         if (loadingRef.current || !hasMoreRef.current) return
         loadingRef.current = true
@@ -26,6 +28,7 @@ function TagFeed() {
         try {
             const data = await getPostsByTag(tag, PAGE_SIZE, offsetRef.current)
             offsetRef.current += data.length
+            // A full page means there may be more posts to load.
             hasMoreRef.current = data.length === PAGE_SIZE
             setHasMore(hasMoreRef.current)
             setPosts((prev) => {
@@ -41,6 +44,7 @@ function TagFeed() {
         }
     }, [tag])
 
+    // Reset everything and reload when the tag in the URL changes.
     useEffect(() => {
         offsetRef.current = 0
         hasMoreRef.current = true
@@ -51,6 +55,7 @@ function TagFeed() {
         loadMore()
     }, [tag, loadMore])
 
+    // Load more posts when the sentinel div gets near the viewport.
     useEffect(() => {
         const el = sentinelRef.current
         if (!el || !hasMore) return

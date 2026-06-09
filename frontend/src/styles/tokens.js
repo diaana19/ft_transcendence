@@ -1,3 +1,4 @@
+// Design tokens (colors, typography, spacing) shared across the UI.
 export const colors = {
     primary: {
         50: '#eff6ff',

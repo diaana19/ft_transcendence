@@ -9,10 +9,12 @@ const WEEKLY_TABS = [
     { key: 'followers', label: 'Followers' },
 ]
 
+// metricValue reads the value of the active tab from an entry.
 function metricValue(entry, tab) {
     return (tab === 'total' ? entry.stats?.total : entry.stats?.[tab]?.count) ?? 0
 }
 
+// metricLevel reads the level of the active tab from an entry.
 function metricLevel(entry, tab) {
     return (tab === 'total' ? entry.stats?.level : entry.stats?.[tab]?.level) ?? 0
 }
@@ -31,6 +33,7 @@ function ScoreBar({ pct }) {
     )
 }
 
+// LeaderBoard shows the weekly top 10 users for the selected metric.
 export default function LeaderBoard() {
     const { user: authUser } = useAuth()
     const [leaderboard, setLeaderboard] = useState([])
@@ -52,6 +55,7 @@ export default function LeaderBoard() {
         }
     }
 
+    // Sort by the active metric and keep only the top 10.
     const sortedBoard = [...leaderboard]
         .sort((a, b) => metricValue(b, activeTab) - metricValue(a, activeTab))
         .slice(0, 10)

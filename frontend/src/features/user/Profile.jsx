@@ -10,6 +10,7 @@ import { sendFriendRequest, removeFriend } from '../../features/user/userService
 import FollowersModal from './FollowersModal'
 import ProfileBadges from '../gamification/ProfileBadge'
 
+// Profile shows a user page with posts, replies and badges tabs, and edit options.
 export default function Profile() {
     const { user: authUser, updateUser } = useAuth()
     const { id, username } = useParams()
@@ -32,6 +33,7 @@ export default function Profile() {
     const [isOnline, setIsOnline] = useState(false)
     const [userLevel, setUserLevel] = useState(null)
 
+    // Resolve which user id to show: from a username, a route id, or the logged user.
     useEffect(() => {
         let active = true
         if (username) {
@@ -48,6 +50,7 @@ export default function Profile() {
         }
     }, [username, id, authUser?.userId])
 
+    // Load the user data and posts once the id is resolved.
     useEffect(() => {
         if (userId) {
             fetchUser()
@@ -55,6 +58,7 @@ export default function Profile() {
         }
     }, [userId])
 
+    // fetchUser loads the profile and, for other users, the follow/friend state.
     const fetchUser = async () => {
         try {
             setLoading(true)
@@ -106,6 +110,7 @@ export default function Profile() {
         }
     }
 
+    // handleUpdate saves the edited profile and updates the auth user if it is me.
     const handleUpdate = async () => {
         try {
             const { data: updatedUser } = await api.put(`/api/users/${userId}`, form)
@@ -119,6 +124,7 @@ export default function Profile() {
         }
     }
 
+    // handleFriendRequest sends a friend request to this user.
     const handleFriendRequest = async () => {
         try {
             await sendFriendRequest(userId)
@@ -130,6 +136,7 @@ export default function Profile() {
 
     if (loading) return <p>Loading profile...</p>
 
+    // handleRemoveFriend removes this user from friends.
     const handleRemoveFriend = async () => {
         try {
             await removeFriend(userId)

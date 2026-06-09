@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom'
 import { MENTION_RE, MENTION_ONE_RE } from '../../utils/username'
 
+// SPLIT breaks a text into hashtags, mentions and plain text parts.
 const SPLIT = new RegExp(`(#\\w+|${MENTION_RE.source})`, 'gi')
 const IS_TAG = /^#\w+$/
 const IS_MENTION = MENTION_ONE_RE
 
 const accent = { color: '#534ab7', fontWeight: 600 }
 
+// RichText renders text turning hashtags and @mentions into links.
 export default function RichText({ text, className }) {
     if (!text) return null
     return (

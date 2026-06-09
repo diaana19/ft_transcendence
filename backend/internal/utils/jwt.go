@@ -17,11 +17,13 @@ const (
 	jwtMinSecretLen = 32
 )
 
+// Claims is the data we keep inside the JWT token.
 type Claims struct {
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
 
+// loadSecret reads the JWT secret from the env. It must have at least 32 chars.
 func loadSecret() ([]byte, error) {
 	s := os.Getenv("JWT_SECRET")
 	if len(s) < jwtMinSecretLen {
@@ -30,6 +32,7 @@ func loadSecret() ([]byte, error) {
 	return []byte(s), nil
 }
 
+// GenerateJWT creates a new signed token for the user. It is valid for 24 hours.
 func GenerateJWT(userId string, username string) (string, error) {
 	secret, err := loadSecret()
 	if err != nil {
@@ -53,6 +56,7 @@ func GenerateJWT(userId string, username string) (string, error) {
 	return signed, nil
 }
 
+// ValidateJWT checks the token and returns its claims. It fails if the token is not valid.
 func ValidateJWT(tokenStr string) (*Claims, error) {
 	secret, err := loadSecret()
 	if err != nil {
@@ -79,6 +83,7 @@ func ValidateJWT(tokenStr string) (*Claims, error) {
 	return claims, nil
 }
 
+// RefreshToken returns a new token when the old one is near to expire. If not, it returns the same token.
 func RefreshToken(tokenStr string) (string, error) {
 	claims, err := ValidateJWT(tokenStr)
 	if err != nil {

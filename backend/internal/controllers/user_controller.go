@@ -12,16 +12,19 @@ import (
 	"ft_transcendence/backend/internal/services"
 )
 
+// UserController handles the user profile endpoints.
 type UserController struct {
 	userService   *services.UserService
 	friendService *services.FriendService
 	mailService   *services.MailService
 }
 
+// DeleteAccountInput holds the password used to confirm account deletion.
 type DeleteAccountInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// NewUserController creates a new UserController with its services.
 func NewUserController(
 	userService *services.UserService,
 	friendService *services.FriendService,
@@ -30,6 +33,7 @@ func NewUserController(
 	return &UserController{userService: userService, friendService: friendService, mailService: mailService}
 }
 
+// GetUsers lists all users, or returns one user when a username query is given.
 // @Summary   List all users, or look one up by exact username
 // @Tags      users
 // @Security  BearerAuth
@@ -70,6 +74,7 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, responses)
 }
 
+// GetUser returns one user by its id with the follower counts.
 // @Summary   Get a user by id
 // @Tags      users
 // @Security  BearerAuth
@@ -98,6 +103,7 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// UpdateUser updates the profile. The user can only update his own profile.
 // @Summary   Update a user's profile
 // @Tags      users
 // @Security  BearerAuth
@@ -142,6 +148,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user.ToResponse())
 }
 
+// DeleteUser deletes the account after the password is confirmed. The user can only delete his own.
 // @Summary   Delete a user's account
 // @Tags      users
 // @Security  BearerAuth

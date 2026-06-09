@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { UserIcon, PencilIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline'
 
+// sections holds the help center topics with their questions and answers.
 const sections = [
     {
         key: 'account',
@@ -140,6 +141,7 @@ function FaqItem({ faq, colors }) {
     )
 }
 
+// HelpCenter shows the help topics and their questions in expandable sections.
 export default function HelpCenter() {
     return (
         <div className="min-h-screen bg-transparent px-6 py-8 mx-auto">

@@ -7,6 +7,7 @@ import api from '../../services/axiosInstance'
 
 const PAGE_SIZE = 20
 
+// BADGES_CHECK is the list of badges with the rule to know if one is earned.
 const BADGES_CHECK = [
     { key: 'welcome', name: 'Welcome', check: (s) => true },
     { key: 'first_bond', name: 'First bond', check: (s) => s.followers >= 1 },
@@ -18,6 +19,7 @@ const BADGES_CHECK = [
     { key: 'social_butterfly', name: 'Social butterfly', check: (s) => s.followers >= 50 },
 ]
 
+// Feed is the home timeline with infinite scroll and a badge unlock toast.
 function Feed() {
     const { user } = useAuth()
     const [posts, setPosts] = useState([])
@@ -31,6 +33,7 @@ function Feed() {
     const loadingRef = useRef(false)
     const sentinelRef = useRef(null)
 
+    // Poll the gamification stats and show a toast when a new badge is unlocked.
     useEffect(() => {
         if (!user?.userId) return
         const checkBadges = async () => {
@@ -43,6 +46,7 @@ function Feed() {
                 }
                 const earned = BADGES_CHECK.filter((b) => b.check(userStats))
                 const prev = JSON.parse(localStorage.getItem('earned_badges') || 'null')
+                // First run only saves the current badges, no toast.
                 if (prev === null) {
                     localStorage.setItem('earned_badges', JSON.stringify(earned.map((b) => b.key)))
                     return
@@ -62,6 +66,7 @@ function Feed() {
         return () => clearInterval(interval)
     }, [user?.userId])
 
+    // loadMore fetches the next page and appends it, skipping duplicate posts.
     const loadMore = useCallback(async () => {
         if (loadingRef.current || !hasMoreRef.current) return
         loadingRef.current = true
@@ -69,6 +74,7 @@ function Feed() {
         try {
             const data = await getPosts(PAGE_SIZE, offsetRef.current)
             offsetRef.current += data.length
+            // If we got a full page there may be more to load.
             hasMoreRef.current = data.length === PAGE_SIZE
             setHasMore(hasMoreRef.current)
             setPosts((prev) => {
@@ -88,6 +94,7 @@ function Feed() {
         loadMore()
     }, [loadMore])
 
+    // Watch the sentinel div and load more posts when it gets near the viewport.
     useEffect(() => {
         const el = sentinelRef.current
         if (!el || !hasMore) return
@@ -101,6 +108,7 @@ function Feed() {
         return () => obs.disconnect()
     }, [loadMore, hasMore, fetching])
 
+    // reload fetches the first page again from scratch (after creating a post).
     const reload = useCallback(async () => {
         if (loadingRef.current) return
         loadingRef.current = true

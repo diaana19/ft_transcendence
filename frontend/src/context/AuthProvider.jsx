@@ -3,6 +3,7 @@ import api from '../services/axiosInstance'
 
 export const AuthContext = createContext()
 
+// AuthProvider keeps the logged user and token, and shares login/logout helpers.
 export function AuthProvider({ children }) {
     const [token, setToken] = useState(null)
     const [user, setUser] = useState(null)
@@ -19,6 +20,7 @@ export function AuthProvider({ children }) {
         clearLocalSession()
     }
 
+    // decodeToken reads the JWT payload to get the user id, username and exp.
     const decodeToken = (token) => {
         const payload = JSON.parse(atob(token.split('.')[1]))
         return {
@@ -30,12 +32,14 @@ export function AuthProvider({ children }) {
 
     const isExpired = (exp) => exp * 1000 < Date.now()
 
+    // Listen the auth:expired event sent by the axios interceptor on 401.
     useEffect(() => {
         const onExpired = () => clearLocalSession()
         window.addEventListener('auth:expired', onExpired)
         return () => window.removeEventListener('auth:expired', onExpired)
     }, [])
 
+    // On mount, restore the session from the stored token and confirm it with /me.
     useEffect(() => {
         const storedToken = localStorage.getItem('token')
 
@@ -84,6 +88,7 @@ export function AuthProvider({ children }) {
         }
     }, [])
 
+    // loginUser saves the token and sets the user state after a successful login.
     const loginUser = (data) => {
         try {
             if (!data?.token) {
@@ -109,6 +114,7 @@ export function AuthProvider({ children }) {
         }
     }
 
+    // updateUser merges a partial patch into the current user state.
     const updateUser = (patch) => {
         setUser((prev) => (prev ? { ...prev, ...patch } : prev))
     }

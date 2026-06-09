@@ -6,6 +6,7 @@ import { useSocket } from '../../context/SocketProvider'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
 
+// MessagesPage is the chat page: a user list on the left and the conversation on the right.
 export default function MessagesPage() {
     const { peerId } = useParams()
     const navigate = useNavigate()
@@ -21,6 +22,7 @@ export default function MessagesPage() {
     const [userOrder, setUserOrder] = useState([])
     const lastMessageRef = useRef(null)
 
+    // fetchOnlineStatus asks the online state of every user in the list.
     const fetchOnlineStatus = async (usersList) => {
         const statuses = {}
         await Promise.all(
@@ -36,6 +38,7 @@ export default function MessagesPage() {
         setOnlineUsers(statuses)
     }
 
+    // Load the user list once (without me) and their online status.
     useEffect(() => {
         const fetchUsers = async () => {
             try {
@@ -51,6 +54,7 @@ export default function MessagesPage() {
         fetchUsers()
     }, [])
 
+    // Keep the selected user in sync with the peerId in the URL.
     useEffect(() => {
         if (peerId && users.length > 0) {
             const found = users.find((u) => u.id === peerId)
@@ -58,14 +62,17 @@ export default function MessagesPage() {
         }
     }, [peerId, users])
 
+    // Open the conversation: ask for history and listen new messages on the socket.
     useEffect(() => {
         if (!peerId) return
         setMessages([])
         setFetching(true)
+        // Tell the server which conversation we opened so it sends the history.
         send({ action: 'open', peer_id: peerId })
 
         const me = currentUser?.userId
         const unsubscribe = subscribe((msg) => {
+            // History frame: replace the whole message list.
             if (msg.type === 'history' && msg.peer_id === peerId) {
                 setMessages(msg.messages || [])
                 setFetching(false)
@@ -73,11 +80,13 @@ export default function MessagesPage() {
             }
             if (msg.type === 'message' && msg.message) {
                 const m = msg.message
+                // Keep only messages that belong to this conversation.
                 const belongs =
                     (m.sender_id === peerId && m.recipient_id === me) ||
                     (m.sender_id === me && m.recipient_id === peerId)
                 if (!belongs) return
                 setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]))
+                // Move this peer to the top of the conversation list.
                 const conversationPeer = m.sender_id === me ? m.recipient_id : m.sender_id
                 setUserOrder((prev) => [
                     conversationPeer,
@@ -88,10 +97,12 @@ export default function MessagesPage() {
         return unsubscribe
     }, [peerId, subscribe, send, currentUser?.userId])
 
+    // Scroll to the last message whenever the list changes.
     useEffect(() => {
         lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
 
+    // handleSend sends a new message over the socket and bumps the peer to the top.
     const handleSend = (content) => {
         send({ action: 'message', recipient_id: peerId, content })
         setUserOrder((prev) => [peerId, ...prev.filter((id) => id !== peerId)])

@@ -11,6 +11,8 @@ import (
 	"ft_transcendence/backend/internal/socket"
 )
 
+// SetupRoutes registers all API routes on the router. It groups public, WebSocket and
+// protected routes, and applies the auth and rate limit middlewares where needed.
 func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	api := router.Group("/api")
 
@@ -40,12 +42,15 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 // @Param     id path string true "user id"
 // @Success   200 {object} map[string]bool
 // @Router    /users/{id}/online [get]
+//
+// onlineStatusHandler returns whether the user in the path has an active WebSocket connection.
 func onlineStatusHandler(wsManager *socket.WSManager) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"online": wsManager.IsOnline(ctx.Param("id"))})
 	}
 }
 
+// registerPublicAuthRoutes registers the public auth routes, rate limited by client IP.
 func registerPublicAuthRoutes(api *gin.RouterGroup, c *controllers.AuthController, rdb *redis.Client) {
 	auth := api.Group("/auth", middleware.RateLimitMiddleware(rdb))
 	auth.POST("/register", c.RegisterUser)
@@ -55,21 +60,25 @@ func registerPublicAuthRoutes(api *gin.RouterGroup, c *controllers.AuthControlle
 	auth.POST("/forgot-password", c.ForgotPassword)
 }
 
+// registerOAuthRoutes registers the GitHub OAuth login and callback routes.
 func registerOAuthRoutes(api *gin.RouterGroup, c *controllers.OAuthController) {
 	oauth := api.Group("/auth/oauth/github")
 	oauth.GET("/login", c.OAuthLogin)
 	oauth.GET("/callback", c.OAuthCallback)
 }
 
+// registerWebSocketRoutes registers the chat WebSocket route, protected by the WS auth middleware.
 func registerWebSocketRoutes(api *gin.RouterGroup, c *socket.ChatHandler) {
 	api.GET("/ws/chat", middleware.WSAuthMiddleware(), c.HandleWS)
 }
 
+// registerProtectedAuthRoutes registers the auth routes that need a valid token.
 func registerProtectedAuthRoutes(protected *gin.RouterGroup, c *controllers.AuthController) {
 	protected.POST("/auth/logout", c.LogoutUser)
 	protected.GET("/auth/me", c.Me)
 }
 
+// registerUserRoutes registers the user CRUD routes.
 func registerUserRoutes(protected *gin.RouterGroup, c *controllers.UserController) {
 	protected.GET("/users", c.GetUsers)
 	protected.GET("/users/:id", c.GetUser)
@@ -77,6 +86,7 @@ func registerUserRoutes(protected *gin.RouterGroup, c *controllers.UserControlle
 	protected.DELETE("/users/:id", c.DeleteUser)
 }
 
+// registerFriendRoutes registers the friend and follow routes.
 func registerFriendRoutes(protected *gin.RouterGroup, c *controllers.FriendController) {
 	protected.POST("/friends/request/:id", c.SendFriendRequest)
 	protected.POST("/friends/accept/:id", c.AcceptFriend)
@@ -89,12 +99,14 @@ func registerFriendRoutes(protected *gin.RouterGroup, c *controllers.FriendContr
 	protected.GET("/users/:id/friends", c.GetFriends)
 }
 
+// registerNotificationRoutes registers the notification read routes.
 func registerNotificationRoutes(protected *gin.RouterGroup, c *controllers.NotificationController) {
 	protected.GET("/notification", c.GetUnread)
 	protected.PATCH("/notification/read", c.MarkAllRead)
 	protected.PATCH("/notification/:id/read", c.MarkRead)
 }
 
+// registerUploadRoutes registers file serving (optional auth) and the protected upload route.
 func registerUploadRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controllers.UploadController) {
 	api.GET("/files/:id", middleware.OptionalAuthMiddleware(rdb), c.ServeFile)
 
@@ -102,22 +114,27 @@ func registerUploadRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controller
 	protected.POST("/upload", c.UploadFile)
 }
 
+// registerGDPRRoutes registers the GDPR export and delete routes.
 func registerGDPRRoutes(protected *gin.RouterGroup, c *controllers.GDPRController) {
 	protected.GET("/gdpr/export", c.ExportUserData)
 	protected.DELETE("/gdpr/delete", c.DeleteUserData)
 }
 
+// registerTwoFARoutes registers the two-factor auth setup, enable and disable routes.
 func registerTwoFARoutes(protected *gin.RouterGroup, c *controllers.TwoFAController) {
 	protected.POST("/2fa/setup", c.Setup)
 	protected.POST("/2fa/enable", c.Enable)
 	protected.POST("/2fa/disable", c.Disable)
 }
 
+// registerGamificationRoutes registers the gamification and leaderboard routes.
 func registerGamificationRoutes(protected *gin.RouterGroup, c *controllers.GamificationController) {
 	protected.GET("/users/:id/gamification", c.Get)
 	protected.GET("/leaderboard", c.GetLeaderboard)
 }
 
+// registerPostRoutes registers the post and comment routes. Read routes use optional auth,
+// write routes need a valid token.
 func registerPostRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controllers.PostController) {
 	posts := api.Group("/posts")
 	posts.GET("", middleware.OptionalAuthMiddleware(rdb), c.GetPosts)

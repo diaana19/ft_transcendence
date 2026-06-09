@@ -11,14 +11,17 @@ import (
 	"ft_transcendence/backend/internal/models"
 )
 
+// NotificationPubSub sends notifications to users using Redis pub/sub.
 type NotificationPubSub struct {
 	rdb *redis.Client
 }
 
+// NewNotificationPubSub creates a new NotificationPubSub using the given Redis client.
 func NewNotificationPubSub(rdb *redis.Client) *NotificationPubSub {
 	return &NotificationPubSub{rdb: rdb}
 }
 
+// PublishToUser publishes the notification to the user channel.
 func (p *NotificationPubSub) PublishToUser(ctx context.Context, userID string, notif *models.Notification) error {
 	payload, err := json.Marshal(map[string]any{
 		"type":         "notification",

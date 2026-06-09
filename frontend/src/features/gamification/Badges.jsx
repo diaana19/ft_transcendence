@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import api from '../../services/axiosInstance'
 
+// BADGES lists all badges by category with the rule to unlock each one.
 const BADGES = [
     {
         category: 'social',
@@ -115,10 +116,12 @@ const CATEGORY_PROGRESS = {
     posts: (s) => ({ value: Math.min(s.posts, 25), max: 25, label: `${s.posts}/25 posts` }),
 }
 
+// Badges shows the user badges and a progress bar per category.
 export default function Badges() {
     const { user: authUser } = useAuth()
     const [stats, setStats] = useState(null)
 
+    // Load the gamification stats and refresh them every 5 seconds.
     useEffect(() => {
         if (!authUser?.userId) return
         fetchStats()
@@ -126,6 +129,7 @@ export default function Badges() {
         return () => clearInterval(interval)
     }, [authUser?.userId])
 
+    // fetchStats loads the post/like/follower counts of the user.
     const fetchStats = async () => {
         try {
             const { data } = await api.get(`/api/users/${authUser?.userId}/gamification`)

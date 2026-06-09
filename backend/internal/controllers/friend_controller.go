@@ -10,11 +10,13 @@ import (
 	"ft_transcendence/backend/internal/services"
 )
 
+// FriendController handles friend, follow and friend request endpoints.
 type FriendController struct {
 	Service             *services.FriendService
 	NotificationService *services.NotificationService
 }
 
+// SendFriendRequest sends a friend request to the target user and notifies him.
 // @Summary   Send a friend request to a user
 // @Tags      friends
 // @Security  BearerAuth
@@ -54,6 +56,7 @@ func (fc *FriendController) SendFriendRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "request sent"})
 }
 
+// AcceptFriend accepts a pending friend request and notifies the requester.
 // @Summary   Accept a pending friend request
 // @Tags      friends
 // @Security  BearerAuth
@@ -91,6 +94,7 @@ func (fc *FriendController) AcceptFriend(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "friend request accepted"})
 }
 
+// FollowUser makes the current user follow the target user.
 // @Summary   Follow a user
 // @Tags      friends
 // @Security  BearerAuth
@@ -121,6 +125,7 @@ func (fc *FriendController) FollowUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "user followed"})
 }
 
+// UnfollowUser makes the current user stop following the target user.
 // @Summary   Unfollow a user
 // @Tags      friends
 // @Security  BearerAuth
@@ -151,6 +156,7 @@ func (fc *FriendController) UnfollowUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "user unfollowed"})
 }
 
+// RemoveFriend removes the target user from the current user's friends.
 // @Summary   Remove an existing friend
 // @Tags      friends
 // @Security  BearerAuth
@@ -181,6 +187,7 @@ func (fc *FriendController) RemoveFriend(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "friend removed"})
 }
 
+// RejectFriendRequest rejects a pending friend request from the requester.
 // @Summary   Reject a pending friend request
 // @Tags      friends
 // @Security  BearerAuth
@@ -204,6 +211,7 @@ func (fc *FriendController) RejectFriendRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "request rejected"})
 }
 
+// GetFollowers returns the list of users that follow the given user.
 // @Summary   List the followers of a user
 // @Tags      friends
 // @Security  BearerAuth
@@ -227,6 +235,7 @@ func (fc *FriendController) GetFollowers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses})
 }
 
+// GetFollowing returns the list of users that the given user follows.
 // @Summary   List the users a user is following
 // @Tags      friends
 // @Security  BearerAuth
@@ -250,6 +259,7 @@ func (fc *FriendController) GetFollowing(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses})
 }
 
+// GetFriends returns the list of friends of the given user.
 // @Summary   List the friends of a user
 // @Tags      friends
 // @Security  BearerAuth

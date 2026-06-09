@@ -4,6 +4,7 @@ import { Heart, MessageCircle, UserPlus, Bell, Mail, Check } from 'lucide-react'
 import { acceptFriendRequest } from '../../features/user/userService'
 import { useState } from 'react'
 
+// getNotifIcon returns the colored icon for each notification type.
 function getNotifIcon(type) {
     if (type === 'like')
         return (
@@ -87,11 +88,13 @@ function getNotifIcon(type) {
     )
 }
 
+// NotificationsPage lists all notifications and routes to the right page on click.
 function NotificationsPage() {
     const { notifications, markAllRead, markRead } = useNotifications()
     const navigate = useNavigate()
     const [accepted, setAccepted] = useState({})
 
+    // handleClick marks the notification read and navigates by its type.
     const handleClick = (notif) => {
         if (!notif.read) markRead(notif.id)
         if (notif.type === 'message') navigate(`/messages/${notif.actor_id}`)
@@ -112,6 +115,7 @@ function NotificationsPage() {
         }
     }
 
+    // handleAccept accepts a friend request from the notification item.
     const handleAccept = async (e, notif) => {
         e.stopPropagation()
         try {

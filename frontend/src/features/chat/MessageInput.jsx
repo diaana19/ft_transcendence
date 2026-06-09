@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+// MessageInput is the chat text box. Enter sends, Shift+Enter makes a new line.
 function MessageInput({ onSend, loading }) {
     const [content, setContent] = useState('')
 

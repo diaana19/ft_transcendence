@@ -10,14 +10,17 @@ import (
 	"ft_transcendence/backend/internal/services"
 )
 
+// NotificationController handles the notification endpoints.
 type NotificationController struct {
 	notifService *services.NotificationService
 }
 
+// NewNotificationController creates a new NotificationController.
 func NewNotificationController(notifService *services.NotificationService) *NotificationController {
 	return &NotificationController{notifService: notifService}
 }
 
+// GetUnread returns the unread notifications of the logged in user.
 // @Summary   List unread notifications
 // @Tags      notifications
 // @Security  BearerAuth
@@ -42,6 +45,7 @@ func (nc *NotificationController) GetUnread(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": notifs, "total": len(notifs)})
 }
 
+// MarkAllRead marks all notifications of the logged in user as read.
 // @Summary   Mark all notifications as read
 // @Tags      notifications
 // @Security  BearerAuth
@@ -65,6 +69,7 @@ func (nc *NotificationController) MarkAllRead(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "all notification marked as read"})
 }
 
+// MarkRead marks one notification as read by its id.
 // @Summary   Mark a single notification as read
 // @Tags      notifications
 // @Security  BearerAuth

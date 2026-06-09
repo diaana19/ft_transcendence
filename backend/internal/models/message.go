@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Message is a chat message sent by a user.
 type Message struct {
 	ID        string    `gorm:"primaryKey;type:varchar(36);index:idx_msg_sender,priority:2;index:idx_msg_recipient,priority:2" json:"id"` //nolint:lll
 	CreatedAt time.Time `json:"created_at"`
@@ -21,6 +22,7 @@ type Message struct {
 	Replies []Message `json:"replies,omitempty" gorm:"foreignKey:ParentID"`
 }
 
+// MessageResponse is the message data we send to the client.
 type MessageResponse struct {
 	ID          string    `json:"id"`
 	SenderID    string    `json:"sender_id"`
@@ -30,6 +32,7 @@ type MessageResponse struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+// ToResponse converts the Message into a MessageResponse.
 func (m *Message) ToResponse() MessageResponse {
 	return MessageResponse{
 		ID:          m.ID,

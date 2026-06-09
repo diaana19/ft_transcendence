@@ -3,6 +3,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { setupTwoFA, enableTwoFA } from './authService'
 import { useAuth } from '../../hooks/useAuth'
 
+// TwoFASetup shows the QR code and enables 2FA after the user confirms a code.
 function TwoFASetup() {
     const { updateUser } = useAuth()
     const [qrCode, setQrCode] = useState(null)
@@ -12,6 +13,7 @@ function TwoFASetup() {
     const [success, setSuccess] = useState(false)
     const [error, setError] = useState(null)
 
+    // handleSetup asks the server for the secret and QR code.
     const handleSetup = async () => {
         try {
             setLoading(true)
@@ -26,6 +28,7 @@ function TwoFASetup() {
         }
     }
 
+    // handleEnable confirms the typed code and turns 2FA on.
     const handleEnable = async () => {
         try {
             setLoading(true)

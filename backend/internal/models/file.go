@@ -2,12 +2,14 @@ package models
 
 import "time"
 
+// File visibility values. They control who can access the file.
 const (
 	FileVisibilityPublic  = "public"
 	FileVisibilityFriends = "friends"
 	FileVisibilityPrivate = "private"
 )
 
+// File holds a file uploaded by a user.
 type File struct {
 	ID         string    `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
 	OwnerID    string    `gorm:"type:uuid;not null;index" json:"owner_id"`
@@ -19,6 +21,7 @@ type File struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+// FileAccess gives a user permission to access a private file.
 type FileAccess struct {
 	FileID string `gorm:"primaryKey;type:uuid" json:"file_id"`
 	UserID string `gorm:"primaryKey;type:uuid" json:"user_id"`

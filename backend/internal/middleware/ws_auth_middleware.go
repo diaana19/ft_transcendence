@@ -8,6 +8,8 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
+// WSAuthMiddleware checks the JWT for WebSocket routes. It reads the token from the
+// auth_token cookie or the token query param, and blocks the request when it is not valid.
 func WSAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, _ := c.Cookie("auth_token")

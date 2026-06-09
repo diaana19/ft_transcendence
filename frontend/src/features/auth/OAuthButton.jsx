@@ -1,3 +1,4 @@
+// OAuthButton sends the user to the GitHub OAuth login flow.
 function OAuthButton() {
     const handleGithubLogin = () => {
         window.location.href = '/api/auth/oauth/github/login'

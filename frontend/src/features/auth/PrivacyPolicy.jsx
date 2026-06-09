@@ -1,3 +1,4 @@
+// PrivacyPolicy is a static page that renders the privacy policy sections.
 export default function PrivacyPolicy() {
     return (
         <div className="w-full mx-auto px-6 py-8 bg-transparent">

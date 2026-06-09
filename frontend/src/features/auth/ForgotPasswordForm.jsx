@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import Button from '../../components/common/Button'
 import Input from '../../components/common/Input'
 
+// ForgotPasswordForm asks for an email and requests a new password to be sent.
 function ForgotPasswordForm() {
     const navigate = useNavigate()
     const [email, setEmail] = useState('')

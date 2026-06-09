@@ -17,8 +17,10 @@ import (
 	"ft_transcendence/backend/internal/routes"
 )
 
+// maxBodySize is the max allowed request body size, 30 MB.
 const maxBodySize = 30 << 20
 
+// BodySizeLimit limits the request body size to maxBodySize to avoid large uploads.
 func BodySizeLimit() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodySize)
@@ -26,6 +28,7 @@ func BodySizeLimit() gin.HandlerFunc {
 	}
 }
 
+// SecurityHeaders sets common security headers on every response, like CSP and X-Frame-Options.
 func SecurityHeaders() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		csp := "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
@@ -52,6 +55,9 @@ func SecurityHeaders() gin.HandlerFunc {
 // @securityDefinitions.apikey  BearerAuth
 // @in                          header
 // @name                        Authorization
+//
+// main loads the config, connects to Postgres and Redis, sets up the router with its
+// middlewares and routes, and starts the HTTP server on port 8080.
 func main() {
 	conf, err := config.Load()
 	if err != nil {

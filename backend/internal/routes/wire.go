@@ -11,6 +11,7 @@ import (
 	"ft_transcendence/backend/internal/socket"
 )
 
+// Controllers holds all the controllers and the WebSocket manager used by the routes.
 type Controllers struct {
 	Auth         *controllers.AuthController
 	TwoFA        *controllers.TwoFAController
@@ -26,6 +27,8 @@ type Controllers struct {
 	WSManager    *socket.WSManager
 }
 
+// Wire builds the repositories, services and controllers and returns them in a Controllers
+// struct. It is the dependency injection entry point for the app.
 func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 	userRepo := repositories.NewUserRepository(pdb)
 	msgRepo := repositories.NewMessageRepository(pdb)

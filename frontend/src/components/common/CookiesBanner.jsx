@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 
+// CookiesBanner shows a cookie consent banner until the user answers it.
 export default function CookiesBanner() {
     const [visible, setVisible] = useState(false)
 
+    // Show the banner only if there is no saved consent yet.
     useEffect(() => {
         const consent = localStorage.getItem('cookie_consent')
         if (!consent) setVisible(true)

@@ -21,10 +21,12 @@ const (
 		"OR (friends.friend_id = users.id AND friends.user_id = ?)"
 )
 
+// FriendService handles friend requests, follows and friend queries.
 type FriendService struct {
 	DB *gorm.DB
 }
 
+// SendRequest creates a pending friend request from the user to the target.
 func (s *FriendService) SendRequest(userID, targetID string) error {
 	if userID == targetID {
 		return errors.New("cannot add yourself")
@@ -48,6 +50,7 @@ func (s *FriendService) SendRequest(userID, targetID string) error {
 	return s.DB.Create(&friend).Error
 }
 
+// AcceptRequest accepts a pending request sent by the requester to the user.
 func (s *FriendService) AcceptRequest(userID, requesterID string) error {
 	if userID == requesterID {
 		return errors.New("cannot accept yourself")
@@ -69,6 +72,7 @@ func (s *FriendService) AcceptRequest(userID, requesterID string) error {
 	return s.DB.Save(&friend).Error
 }
 
+// Follow makes the user follow the target.
 func (s *FriendService) Follow(userID, targetID string) error {
 	if userID == targetID {
 		return errors.New("cannot add yourself")
@@ -93,18 +97,21 @@ func (s *FriendService) Follow(userID, targetID string) error {
 	return s.DB.Create(&follow).Error
 }
 
+// CountFollowers returns how many users follow the given user.
 func (s *FriendService) CountFollowers(userID string) (int64, error) {
 	var count int64
 	err := s.DB.Model(&models.Friend{}).Where("friend_id = ? AND status = ?", userID, statusFollow).Count(&count).Error
 	return count, err
 }
 
+// CountFollowing returns how many users the given user follows.
 func (s *FriendService) CountFollowing(userID string) (int64, error) {
 	var count int64
 	err := s.DB.Model(&models.Friend{}).Where("user_id = ? AND status = ?", userID, statusFollow).Count(&count).Error
 	return count, err
 }
 
+// Unfollow removes the follow and also removes any friend relationship between the two users.
 func (s *FriendService) Unfollow(userID, targetID string) error {
 	result := s.DB.
 		Where("user_id = ? AND friend_id = ? AND status = ?", userID, targetID, statusFollow).
@@ -120,6 +127,7 @@ func (s *FriendService) Unfollow(userID, targetID string) error {
 		Delete(&models.Friend{}).Error
 }
 
+// RemoveFriend deletes the friend relationship between the two users.
 func (s *FriendService) RemoveFriend(userID, targetID string) error {
 	result := s.DB.
 		Where(sqlFriendBidirectionalStatuses, userID, targetID, targetID, userID, []string{statusPending, statusAccepted}).
@@ -133,6 +141,7 @@ func (s *FriendService) RemoveFriend(userID, targetID string) error {
 	return nil
 }
 
+// RejectRequest removes a pending request sent by the requester to the user.
 func (s *FriendService) RejectRequest(userID, requesterID string) error {
 	result := s.DB.Where(
 		"user_id = ? AND friend_id = ? AND status = ?",
@@ -147,6 +156,7 @@ func (s *FriendService) RejectRequest(userID, requesterID string) error {
 	return nil
 }
 
+// GetFollowers returns the users that follow the given user.
 func (s *FriendService) GetFollowers(userID string) ([]models.User, error) {
 	var followers []models.User
 	err := s.DB.
@@ -156,6 +166,7 @@ func (s *FriendService) GetFollowers(userID string) ([]models.User, error) {
 	return followers, err
 }
 
+// GetFollowing returns the users that the given user follows.
 func (s *FriendService) GetFollowing(userID string) ([]models.User, error) {
 	var following []models.User
 	err := s.DB.
@@ -165,6 +176,7 @@ func (s *FriendService) GetFollowing(userID string) ([]models.User, error) {
 	return following, err
 }
 
+// GetFriends returns the accepted friends of the user.
 func (s *FriendService) GetFriends(userID string) ([]models.User, error) {
 	var friends []models.User
 	err := s.DB.
@@ -174,6 +186,7 @@ func (s *FriendService) GetFriends(userID string) ([]models.User, error) {
 	return friends, err
 }
 
+// AreFriends returns true if the two users have an accepted friend relationship.
 func (s *FriendService) AreFriends(userID1, userID2 string) (bool, error) {
 	var count int64
 	err := s.DB.Model(&models.Friend{}).

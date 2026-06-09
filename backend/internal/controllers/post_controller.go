@@ -16,12 +16,14 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
+// PostController handles the post and comment endpoints.
 type PostController struct {
 	postService         *services.PostService
 	notificationService *services.NotificationService
 	uploadService       *services.UploadService
 }
 
+// NewPostController creates a new PostController with its services.
 func NewPostController(
 	postService *services.PostService,
 	notifService *services.NotificationService,
@@ -34,6 +36,7 @@ func NewPostController(
 	}
 }
 
+// respondOwnedResourceError sends the right HTTP status for an owned resource error.
 func respondOwnedResourceError(c *gin.Context, err error, notFoundMsg string) {
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
@@ -45,6 +48,7 @@ func respondOwnedResourceError(c *gin.Context, err error, notFoundMsg string) {
 	}
 }
 
+// GetTrends returns the most used hashtags in the posts of the last week.
 // @Summary   Trending hashtags (most-used in posts over the last week)
 // @Tags      posts
 // @Produce   json
@@ -73,6 +77,7 @@ func (pc *PostController) GetTrends(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": trends})
 }
 
+// parseLimitOffset reads the limit and offset query params with safe defaults.
 func parseLimitOffset(c *gin.Context) (limit, offset int) {
 	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	if err != nil || limit < 1 {
@@ -88,6 +93,7 @@ func parseLimitOffset(c *gin.Context) (limit, offset int) {
 	return limit, offset
 }
 
+// GetPosts lists posts with pagination, optionally filtered by hashtag or replied-to.
 // @Summary   List posts (limit/offset pagination), optionally filtered by hashtag or replied-to
 // @Tags      posts
 // @Produce   json
@@ -139,6 +145,7 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 	})
 }
 
+// GetPost returns one post by its id.
 // @Summary   Get a single post by id
 // @Tags      posts
 // @Produce   json
@@ -169,6 +176,7 @@ func (pc *PostController) GetPost(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// GetPostsByUser lists the posts written by the given user.
 // @Summary   List posts authored by a user
 // @Tags      posts
 // @Produce   json
@@ -200,6 +208,7 @@ func (pc *PostController) GetPostsByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses})
 }
 
+// CreatePost creates a new post for the logged in user.
 // @Summary   Create a new post
 // @Tags      posts
 // @Security  BearerAuth
@@ -244,6 +253,7 @@ func (pc *PostController) CreatePost(c *gin.Context) {
 	c.JSON(http.StatusCreated, post.ToResponse())
 }
 
+// UpdatePost updates a post. Only the author can update it.
 // @Summary   Update a post
 // @Tags      posts
 // @Security  BearerAuth
@@ -281,6 +291,7 @@ func (pc *PostController) UpdatePost(c *gin.Context) {
 	c.JSON(http.StatusOK, post.ToResponse())
 }
 
+// DeletePost deletes a post. Only the author can delete it.
 // @Summary   Delete a post
 // @Tags      posts
 // @Security  BearerAuth
@@ -310,10 +321,12 @@ func (pc *PostController) DeletePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Post deleted"})
 }
 
+// reactionInput holds the reaction value sent to like or dislike.
 type reactionInput struct {
 	Value int `json:"value" binding:"required"`
 }
 
+// bindReactionValue reads and validates the reaction value (1 or -1) from the body.
 func bindReactionValue(c *gin.Context) (int, bool) {
 	var input reactionInput
 	if err := c.ShouldBindJSON(&input); err != nil || (input.Value != 1 && input.Value != -1) {
@@ -323,6 +336,7 @@ func bindReactionValue(c *gin.Context) (int, bool) {
 	return input.Value, true
 }
 
+// React likes or dislikes a post and notifies the author on a like.
 // @Summary   Like or dislike a post
 // @Tags      posts
 // @Security  BearerAuth
@@ -381,6 +395,7 @@ func (pc *PostController) React(c *gin.Context) {
 	})
 }
 
+// ReactComment likes or dislikes a comment.
 // @Summary   Like or dislike a comment
 // @Tags      posts
 // @Security  BearerAuth
@@ -427,6 +442,7 @@ func (pc *PostController) ReactComment(c *gin.Context) {
 	})
 }
 
+// GetComments lists the comments of a post.
 // @Summary   List comments for a post
 // @Tags      posts
 // @Produce   json
@@ -463,6 +479,7 @@ func (pc *PostController) GetComments(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": responses, "total": len(responses)})
 }
 
+// CreateComment adds a comment to a post, with an optional file, and notifies the author.
 // @Summary   Add a comment to a post
 // @Tags      posts
 // @Security  BearerAuth
@@ -546,6 +563,7 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 	c.JSON(http.StatusCreated, comment.ToResponse())
 }
 
+// UpdateComment updates a comment text and optionally its media. Only the author can update it.
 // @Summary   Update a comment (text, and optionally its media attachment)
 // @Tags      posts
 // @Security  BearerAuth
@@ -625,6 +643,7 @@ func (pc *PostController) UpdateComment(c *gin.Context) {
 	c.JSON(http.StatusOK, comment.ToResponse())
 }
 
+// DeleteComment deletes a comment. Only the author can delete it.
 // @Summary   Delete a comment
 // @Tags      posts
 // @Security  BearerAuth

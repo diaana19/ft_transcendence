@@ -12,30 +12,50 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
+// generateUUID returns a new unique id.
 func generateUUID() string { return utils.NewID() }
 
+// PostRepository handles the posts, comments and reactions in the database.
 type PostRepository interface {
+	// GetAll returns a page of posts and the total count.
 	GetAll(limit, offset int) ([]models.Post, int64, error)
+	// GetByID returns the post with this id.
 	GetByID(id string) (*models.Post, error)
+	// GetByAuthorID returns all the posts of an author.
 	GetByAuthorID(authorID string) ([]models.Post, error)
+	// GetByTag returns a page of posts with this tag and the total count.
 	GetByTag(tag string, limit, offset int) ([]models.Post, int64, error)
+	// GetRepliedByUser returns a page of posts the user replied to and the total count.
 	GetRepliedByUser(userID string, limit, offset int) ([]models.Post, int64, error)
+	// Create saves a new post.
 	Create(post *models.Post) error
+	// Update changes the post fields from the input and returns the updated post.
 	Update(id string, input models.UpdatePostInput) (*models.Post, error)
+	// Delete removes the post with this id.
 	Delete(id string) error
 
+	// TopTags returns the most used tags since the given time.
 	TopTags(since time.Time, limit int) ([]models.TagCount, error)
 
+	// SetPostReaction sets the reaction of the user on a post.
 	SetPostReaction(userID, postID string, value int) error
+	// GetPostReaction returns the reaction of the user on a post.
 	GetPostReaction(userID, postID string) (int, error)
 
+	// CreateComment saves a new comment on a post.
 	CreateComment(comment *models.Reply) error
+	// GetCommentsByPostID returns the comments of a post.
 	GetCommentsByPostID(postID string) ([]models.Reply, error)
+	// GetCommentByID returns the comment with this id.
 	GetCommentByID(id string) (*models.Reply, error)
+	// UpdateComment changes the comment fields from the input and returns the updated comment.
 	UpdateComment(id string, input models.UpdateCommentInput) (*models.Reply, error)
+	// DeleteComment removes the comment with this id.
 	DeleteComment(id string) error
 
+	// SetReplyReaction sets the reaction of the user on a comment.
 	SetReplyReaction(userID, replyID string, value int) error
+	// GetReplyReaction returns the reaction of the user on a comment.
 	GetReplyReaction(userID, replyID string) (int, error)
 }
 
@@ -43,10 +63,12 @@ type postRepository struct {
 	db *gorm.DB
 }
 
+// NewPostRepository creates a new PostRepository using the given database.
 func NewPostRepository(db *gorm.DB) PostRepository {
 	return &postRepository{db: db}
 }
 
+// GetAll returns a page of posts and the total count.
 func (r *postRepository) GetAll(limit, offset int) ([]models.Post, int64, error) {
 	var posts []models.Post
 	var total int64
@@ -57,18 +79,21 @@ func (r *postRepository) GetAll(limit, offset int) ([]models.Post, int64, error)
 	return posts, total, result.Error
 }
 
+// GetByID returns the post with this id.
 func (r *postRepository) GetByID(id string) (*models.Post, error) {
 	var post models.Post
 	result := r.db.Preload("Author").First(&post, "id = ?", id)
 	return &post, result.Error
 }
 
+// GetByAuthorID returns all the posts of an author.
 func (r *postRepository) GetByAuthorID(authorID string) ([]models.Post, error) {
 	var posts []models.Post
 	result := r.db.Preload("Author").Where("author_id = ?", authorID).Order("created_at DESC").Find(&posts)
 	return posts, result.Error
 }
 
+// GetRepliedByUser returns a page of posts the user replied to and the total count.
 func (r *postRepository) GetRepliedByUser(userID string, limit, offset int) ([]models.Post, int64, error) {
 	var posts []models.Post
 	var total int64
@@ -82,6 +107,7 @@ func (r *postRepository) GetRepliedByUser(userID string, limit, offset int) ([]m
 	return posts, total, result.Error
 }
 
+// GetByTag returns a page of posts with this tag and the total count.
 func (r *postRepository) GetByTag(tag string, limit, offset int) ([]models.Post, int64, error) {
 	var posts []models.Post
 	var total int64
@@ -94,10 +120,12 @@ func (r *postRepository) GetByTag(tag string, limit, offset int) ([]models.Post,
 	return posts, total, result.Error
 }
 
+// Create saves a new post.
 func (r *postRepository) Create(post *models.Post) error {
 	return r.db.Create(post).Error
 }
 
+// Update changes the post fields from the input and returns the updated post.
 func (r *postRepository) Update(id string, input models.UpdatePostInput) (*models.Post, error) {
 	var post models.Post
 	if err := r.db.First(&post, "id = ?", id).Error; err != nil {
@@ -115,6 +143,7 @@ func (r *postRepository) Update(id string, input models.UpdatePostInput) (*model
 	return &post, nil
 }
 
+// TopTags returns the most used tags since the given time.
 func (r *postRepository) TopTags(since time.Time, limit int) ([]models.TagCount, error) {
 	var out []models.TagCount
 	err := r.db.Raw(`
@@ -127,6 +156,7 @@ func (r *postRepository) TopTags(since time.Time, limit int) ([]models.TagCount,
 	return out, err
 }
 
+// Delete removes the post with this id.
 func (r *postRepository) Delete(id string) error {
 	result := r.db.Delete(&models.Post{}, "id = ?", id)
 	if result.Error != nil {
@@ -138,6 +168,7 @@ func (r *postRepository) Delete(id string) error {
 	return nil
 }
 
+// reactionDelta returns +1 when the bucket starts to be used, -1 when it stops, else 0.
 func reactionDelta(oldValue, newValue, bucket int) int {
 	d := 0
 	if newValue == bucket {
@@ -149,6 +180,8 @@ func reactionDelta(oldValue, newValue, bucket int) int {
 	return d
 }
 
+// SetPostReaction sets the reaction of the user on a post.
+//
 //nolint:dupl // Intentionally parallel to SetReplyReaction; different model types.
 func (r *postRepository) SetPostReaction(userID, postID string, value int) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
@@ -192,6 +225,7 @@ func (r *postRepository) SetPostReaction(userID, postID string, value int) error
 	return nil
 }
 
+// GetPostReaction returns the reaction of the user on a post.
 func (r *postRepository) GetPostReaction(userID, postID string) (int, error) {
 	var reaction models.PostReaction
 	err := r.db.Where("user_id = ? AND post_id = ?", userID, postID).First(&reaction).Error
@@ -201,6 +235,7 @@ func (r *postRepository) GetPostReaction(userID, postID string) (int, error) {
 	return reaction.Value, err
 }
 
+// adjustReactionCounts updates the likes and dislikes counts after a reaction change.
 func adjustReactionCounts(tx *gorm.DB, model any, id string, oldValue, newValue int) error {
 	if d := reactionDelta(oldValue, newValue, 1); d != 0 {
 		if err := tx.Model(model).Where("id = ?", id).
@@ -217,6 +252,7 @@ func adjustReactionCounts(tx *gorm.DB, model any, id string, oldValue, newValue 
 	return nil
 }
 
+// CreateComment saves a new comment on a post.
 func (r *postRepository) CreateComment(comment *models.Reply) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(comment).Error; err != nil {
@@ -231,6 +267,7 @@ func (r *postRepository) CreateComment(comment *models.Reply) error {
 	return nil
 }
 
+// GetCommentsByPostID returns the comments of a post.
 func (r *postRepository) GetCommentsByPostID(postID string) ([]models.Reply, error) {
 	var comments []models.Reply
 	result := r.db.Preload("Author").Preload("File").
@@ -240,12 +277,14 @@ func (r *postRepository) GetCommentsByPostID(postID string) ([]models.Reply, err
 	return comments, result.Error
 }
 
+// GetCommentByID returns the comment with this id.
 func (r *postRepository) GetCommentByID(id string) (*models.Reply, error) {
 	var comment models.Reply
 	result := r.db.Preload("Author").Preload("File").First(&comment, "id = ?", id)
 	return &comment, result.Error
 }
 
+// UpdateComment changes the comment fields from the input and returns the updated comment.
 func (r *postRepository) UpdateComment(id string, input models.UpdateCommentInput) (*models.Reply, error) {
 	var comment models.Reply
 	if err := r.db.First(&comment, "id = ?", id).Error; err != nil {
@@ -267,6 +306,7 @@ func (r *postRepository) UpdateComment(id string, input models.UpdateCommentInpu
 	return &comment, nil
 }
 
+// DeleteComment removes the comment and its reactions, and updates the comment count.
 func (r *postRepository) DeleteComment(id string) error {
 	var comment models.Reply
 	if err := r.db.First(&comment, "id = ?", id).Error; err != nil {
@@ -288,6 +328,8 @@ func (r *postRepository) DeleteComment(id string) error {
 	return nil
 }
 
+// SetReplyReaction sets the reaction of the user on a comment.
+//
 //nolint:dupl // Intentionally parallel to SetPostReaction; different model types.
 func (r *postRepository) SetReplyReaction(userID, replyID string, value int) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
@@ -331,6 +373,7 @@ func (r *postRepository) SetReplyReaction(userID, replyID string, value int) err
 	return nil
 }
 
+// GetReplyReaction returns the reaction of the user on a comment.
 func (r *postRepository) GetReplyReaction(userID, replyID string) (int, error) {
 	var reaction models.ReplyReaction
 	err := r.db.Where("user_id = ? AND reply_id = ?", userID, replyID).First(&reaction).Error

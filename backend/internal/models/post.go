@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// Post is a publication made by a user.
 type Post struct {
 	ID            string         `gorm:"primaryKey;type:uuid"`
 	AuthorID      string         `gorm:"type:uuid;not null"`
@@ -24,17 +25,20 @@ type Post struct {
 	Comments      []Reply        `gorm:"foreignKey:PostID" json:"comments,omitempty"`
 }
 
+// TagCount holds a tag and how many times it is used.
 type TagCount struct {
 	Tag   string `json:"tag"`
 	Count int64  `json:"count"`
 }
 
+// UpdatePostInput holds the fields a user can change in a post.
 type UpdatePostInput struct {
 	Content   string  `json:"content" binding:"required,min=1,max=280"`
 	MediaURL  *string `json:"media_url,omitempty"`
 	MediaMIME *string `json:"media_mime,omitempty"`
 }
 
+// PostResponse is the post data we send to the client.
 type PostResponse struct {
 	ID            string       `json:"id"`
 	Content       string       `json:"content"`
@@ -51,6 +55,7 @@ type PostResponse struct {
 	UpdatedAt     time.Time    `json:"updated_at"`
 }
 
+// ToResponse converts the Post into a PostResponse.
 func (p *Post) ToResponse() PostResponse {
 	return PostResponse{
 		ID:            p.ID,
@@ -67,6 +72,7 @@ func (p *Post) ToResponse() PostResponse {
 	}
 }
 
+// PostReaction is a like or dislike a user made on a post.
 type PostReaction struct {
 	ID        string `gorm:"primaryKey;type:uuid"`
 	UserID    string `gorm:"type:uuid;not null;uniqueIndex:idx_like_user_post"`
@@ -77,8 +83,10 @@ type PostReaction struct {
 	CreatedAt time.Time
 }
 
+// TableName returns the database table name for PostReaction.
 func (PostReaction) TableName() string { return "likes" }
 
+// ReplyReaction is a like or dislike a user made on a reply.
 type ReplyReaction struct {
 	ID        string `gorm:"primaryKey;type:uuid"`
 	UserID    string `gorm:"type:uuid;not null;uniqueIndex:idx_reply_reaction_user_reply"`
@@ -89,6 +97,7 @@ type ReplyReaction struct {
 	CreatedAt time.Time
 }
 
+// ReactionResponse is the reaction data we send to the client.
 type ReactionResponse struct {
 	PostID        string `json:"post_id,omitempty"`
 	CommentID     string `json:"comment_id,omitempty"`
@@ -97,6 +106,7 @@ type ReactionResponse struct {
 	DislikesCount int    `json:"dislikes_count"`
 }
 
+// Reply is a comment made on a post.
 type Reply struct {
 	ID            string  `gorm:"primaryKey;type:uuid"`
 	PostID        string  `gorm:"type:uuid;not null;index"`
@@ -113,10 +123,12 @@ type Reply struct {
 	DeletedAt     gorm.DeletedAt `gorm:"index"`
 }
 
+// CreateCommentInput holds the data to create a comment.
 type CreateCommentInput struct {
 	Content string `form:"content" binding:"required,min=1,max=280"`
 }
 
+// UpdateCommentInput holds the data to update a comment.
 type UpdateCommentInput struct {
 	Content string `json:"content" form:"content" binding:"required,min=1,max=280"`
 	// NewFileID, when set, replaces the comment's attachment. It is populated by
@@ -127,6 +139,7 @@ type UpdateCommentInput struct {
 	RemoveFile bool `json:"remove_file" form:"remove_file"`
 }
 
+// CommentResponse is the comment data we send to the client.
 type CommentResponse struct {
 	ID            string       `json:"id"`
 	PostID        string       `json:"post_id"`
@@ -144,6 +157,7 @@ type CommentResponse struct {
 	FileMIME      *string      `json:"file_mime,omitempty"`
 }
 
+// ToResponse converts the Reply into a CommentResponse.
 func (r *Reply) ToResponse() CommentResponse {
 	resp := CommentResponse{
 		ID:            r.ID,
@@ -169,6 +183,7 @@ func (r *Reply) ToResponse() CommentResponse {
 	return resp
 }
 
+// Repost is a post shared again by another user.
 type Repost struct {
 	ID        string `gorm:"primaryKey;type:uuid"`
 	PostID    string `gorm:"type:uuid;not null;index"`
@@ -179,6 +194,7 @@ type Repost struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
+// RepostResponse is the repost data we send to the client.
 type RepostResponse struct {
 	ID        string       `json:"id"`
 	PostID    string       `json:"post_id"`
@@ -187,6 +203,7 @@ type RepostResponse struct {
 	CreatedAt time.Time    `json:"created_at"`
 }
 
+// ToResponse converts the Repost into a RepostResponse.
 func (r *Repost) ToResponse() RepostResponse {
 	return RepostResponse{
 		ID:        r.ID,

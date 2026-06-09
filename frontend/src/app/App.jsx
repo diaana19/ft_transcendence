@@ -19,6 +19,7 @@ import Gamification from '../features/gamification/Gamification.jsx'
 import TermsOfService from '../features/auth/TermsofService.jsx'
 import PrivacyPolicy from '../features/auth/PrivacyPolicy.jsx'
 
+// App defines all routes. Some routes are public, others need auth via RequireAuth.
 function App() {
     return (
         <>

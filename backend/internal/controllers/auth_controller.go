@@ -15,12 +15,14 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
+// LoginInput holds the credentials sent on login.
 type LoginInput struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Password string `json:"password" binding:"required"`
 }
 
+// AuthController handles the auth endpoints like login, register and logout.
 type AuthController struct {
 	authService  *services.AuthService
 	twoFAService *services.TwoFAService
@@ -28,6 +30,7 @@ type AuthController struct {
 	rdb          *redis.Client
 }
 
+// NewAuthController creates a new AuthController with its services.
 func NewAuthController(
 	authService *services.AuthService,
 	twoFAService *services.TwoFAService,
@@ -42,6 +45,7 @@ func NewAuthController(
 	}
 }
 
+// RegisterInput holds the data sent to create a new local account.
 type RegisterInput struct {
 	Username    string `json:"username" binding:"required"`
 	Email       string `json:"email" binding:"required,email"`
@@ -49,6 +53,7 @@ type RegisterInput struct {
 	DateOfBirth string `json:"dateOfBirth" binding:"required"`
 }
 
+// RegisterUser creates a new local account after checking age and password rules.
 // @Summary   Register a new user
 // @Description Create a local account after validating age and password strength
 // @Tags      auth
@@ -130,6 +135,7 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 	c.JSON(200, response)
 }
 
+// LoginUser logs the user in and returns a JWT, or asks for a 2FA step.
 // @Summary   Authenticate a user
 // @Description Log in with email or username and password; may require a 2FA step
 // @Tags      auth
@@ -201,6 +207,7 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token, "user": user.ToResponse()})
 }
 
+// RefreshToken issues a new JWT from a valid bearer token.
 // @Summary   Refresh a JWT
 // @Description Issue a new JWT from a valid bearer token
 // @Tags      auth
@@ -225,10 +232,12 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": newToken})
 }
 
+// ForgotPasswordInput holds the email used to request a password reset.
 type ForgotPasswordInput struct {
 	Email string `json:"email" binding:"required,email"`
 }
 
+// ForgotPassword resets the password and emails it. It always returns 200.
 // @Summary   Request a password reset
 // @Description Generate a new password for the account with the given email and send it to that address.
 // @Description Always returns 200 so it can't be used to discover which emails are registered.
@@ -277,6 +286,7 @@ func (ac *AuthController) ForgotPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": genericMsg})
 }
 
+// Me returns the profile of the logged in user.
 // @Summary   Get current user
 // @Description Return the authenticated user's profile resolved from the session
 // @Tags      auth
@@ -301,6 +311,7 @@ func (ac *AuthController) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": user.ToResponse()})
 }
 
+// LogoutUser blacklists the active token and clears the auth cookie.
 // @Summary   Log out the current user
 // @Description Blacklist the active token and clear the auth cookie
 // @Tags      auth
@@ -341,11 +352,13 @@ func (ac *AuthController) LogoutUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }
 
+// Verify2FAInput holds the pending token and the 2FA code to verify.
 type Verify2FAInput struct {
 	PendingToken string `json:"pending_token" binding:"required"`
 	Code         string `json:"code" binding:"required,len=6,numeric"`
 }
 
+// Verify2FA finishes a pending login by checking the TOTP code and returns a JWT.
 // @Summary   Verify a 2FA code
 // @Description Complete a pending login by validating the user's TOTP code
 // @Tags      auth

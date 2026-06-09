@@ -9,15 +9,18 @@ import (
 	"ft_transcendence/backend/internal/services"
 )
 
+// GDPRController handles the GDPR export and delete endpoints.
 type GDPRController struct {
 	gdprService *services.GDPRService
 	mailService *services.MailService
 }
 
+// NewGDPRController creates a new GDPRController.
 func NewGDPRController(gdprService *services.GDPRService, mailService *services.MailService) *GDPRController {
 	return &GDPRController{gdprService: gdprService, mailService: mailService}
 }
 
+// ExportUserData exports all the data of the logged in user and emails a confirmation.
 // @Summary  Export the authenticated user's data
 // @Tags     gdpr
 // @Security BearerAuth
@@ -54,6 +57,7 @@ func (gc *GDPRController) ExportUserData(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
+// DeleteUserData deletes all the data of the logged in user and emails a confirmation.
 // @Summary  Permanently delete the authenticated user's data
 // @Tags     gdpr
 // @Security BearerAuth

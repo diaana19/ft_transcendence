@@ -21,6 +21,7 @@ import (
 	"ft_transcendence/backend/internal/repositories"
 )
 
+// GitHubUser holds the user data returned by the GitHub API.
 type GitHubUser struct {
 	ID        int64  `json:"id"`
 	Login     string `json:"login"`
@@ -29,6 +30,7 @@ type GitHubUser struct {
 	AvatarURL string `json:"avatar_url"`
 }
 
+// ghEmail holds one email entry returned by the GitHub emails API.
 type ghEmail struct {
 	Email    string `json:"email"`
 	Primary  bool   `json:"primary"`
@@ -37,12 +39,14 @@ type ghEmail struct {
 
 const providerGitHub = "github"
 
+// OAuthService handles the GitHub OAuth login flow.
 type OAuthService struct {
 	userRepo    repositories.UserRepository
 	redisClient *redis.Client
 	oauthConfig *oauth2.Config
 }
 
+// NewOAuthService creates a new OAuthService with the GitHub OAuth config.
 func NewOAuthService(repo repositories.UserRepository, rdb *redis.Client, cfg *config.Config) *OAuthService {
 	oauthConfig := &oauth2.Config{
 		ClientID:     cfg.GithubClientID,
@@ -59,6 +63,7 @@ func NewOAuthService(repo repositories.UserRepository, rdb *redis.Client, cfg *c
 	}
 }
 
+// GenerateState creates a random state, stores it in redis and returns it. It expires in 10 minutes.
 func (s *OAuthService) GenerateState(ctx context.Context) (string, error) {
 	randomBytes := make([]byte, 32)
 	if _, err := rand.Read(randomBytes); err != nil {
@@ -74,6 +79,7 @@ func (s *OAuthService) GenerateState(ctx context.Context) (string, error) {
 	return state, nil
 }
 
+// VerifyAndConsumeState checks if the state exists in redis and removes it. It returns true if valid.
 func (s *OAuthService) VerifyAndConsumeState(ctx context.Context, state string) (bool, error) {
 	if state == "" {
 		return false, nil
@@ -96,14 +102,17 @@ func (s *OAuthService) VerifyAndConsumeState(ctx context.Context, state string) 
 	return true, nil
 }
 
+// BuildAuthURL returns the GitHub authorization URL for the state.
 func (s *OAuthService) BuildAuthURL(state string) string {
 	return s.oauthConfig.AuthCodeURL(state)
 }
 
+// IsConfigured returns true if the GitHub client ID and secret are set.
 func (s *OAuthService) IsConfigured() bool {
 	return s.oauthConfig.ClientID != "" && s.oauthConfig.ClientSecret != ""
 }
 
+// ExchangeCodeForToken exchanges the authorization code for an OAuth token.
 func (s *OAuthService) ExchangeCodeForToken(ctx context.Context, code string) (*oauth2.Token, error) {
 	if code == "" {
 		return nil, errors.New("authorization code is empty")
@@ -117,6 +126,7 @@ func (s *OAuthService) ExchangeCodeForToken(ctx context.Context, code string) (*
 	return token, nil
 }
 
+// FetchGitHubUser fetches the GitHub user with the token. If the email is empty it fetches the primary one.
 func (s *OAuthService) FetchGitHubUser(ctx context.Context, token *oauth2.Token) (*GitHubUser, error) {
 	client := s.oauthConfig.Client(ctx, token)
 
@@ -145,6 +155,7 @@ func (s *OAuthService) FetchGitHubUser(ctx context.Context, token *oauth2.Token)
 	return &ghUser, nil
 }
 
+// fetchPrimaryVerifiedEmail returns the primary verified email of the GitHub user.
 func (s *OAuthService) fetchPrimaryVerifiedEmail(_ context.Context, client *http.Client) (string, error) {
 	resp, err := client.Get("https://api.github.com/user/emails")
 	if err != nil {
@@ -170,6 +181,7 @@ func (s *OAuthService) fetchPrimaryVerifiedEmail(_ context.Context, client *http
 	return "", errors.New("no verified primary email found on github account")
 }
 
+// FindOrCreateUser finds the user by GitHub ID or email, links the account, or creates a new user.
 func (s *OAuthService) FindOrCreateUser(_ context.Context, ghUser *GitHubUser) (*models.User, error) {
 	githubIDStr := strconv.FormatInt(ghUser.ID, 10)
 	user, err := s.userRepo.GetByGithubID(githubIDStr)
@@ -223,6 +235,7 @@ func (s *OAuthService) FindOrCreateUser(_ context.Context, ghUser *GitHubUser) (
 	return &newUser, nil
 }
 
+// findAvailableUsername returns the base username, or base with a number suffix if it is taken.
 func (s *OAuthService) findAvailableUsername(base string) (string, error) {
 	candidate := base
 	for suffix := 1; suffix < 1000; suffix++ {

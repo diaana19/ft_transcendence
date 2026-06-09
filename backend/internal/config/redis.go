@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// Connect opens the Redis client and pings it. It fails if Redis is not reachable.
 func (r *Redis) Connect() (*redis.Client, error) {
 	addr := fmt.Sprintf("%s:%s", r.Host, r.Port)
 

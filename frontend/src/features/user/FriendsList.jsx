@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { getFollowers, getFollowing } from '../../features/user/userService'
 
+// FriendsList shows the follower and following counts of a user.
 function FriendsList({ userId }) {
     const [followers, setFollowers] = useState([])
     const [following, setFollowing] = useState([])

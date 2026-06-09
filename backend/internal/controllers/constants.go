@@ -1,5 +1,6 @@
 package controllers
 
+// Shared error messages used by the controllers.
 const (
 	msgPostNotFound   = "Post not found"
 	msgUserNotFound   = "User not found"

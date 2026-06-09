@@ -4,6 +4,7 @@ import Badges from './Badges'
 import Info from './Info'
 import { useAuth } from '../../hooks/useAuth'
 
+// Gamification is the badges page with tabs for leaderboard, badges and info.
 export default function Gamification() {
     const { user } = useAuth()
     const isLoggedIn = !!user

@@ -6,6 +6,7 @@ import Modal from './Modal'
 import Input from './Input'
 import Button from './Button'
 
+// LoginModal shows a popup login form and redirects to 2FA when needed.
 export default function LoginModal({ isOpen, onClose }) {
     const navigate = useNavigate()
     const { loginUser } = useAuth()
@@ -23,6 +24,7 @@ export default function LoginModal({ isOpen, onClose }) {
         setError(null)
         try {
             const data = await login(formData.email, formData.password)
+            // If the account uses 2FA, go to the verify page with the pending token.
             if (data.needs_2fa) {
                 onClose()
                 navigate('/login/2fa', { state: { pendingToken: data.pending_token } })

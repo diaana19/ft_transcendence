@@ -8,14 +8,17 @@ import (
 	"ft_transcendence/backend/internal/services"
 )
 
+// GamificationController handles gamification stats and leaderboard endpoints.
 type GamificationController struct {
 	service *services.GamificationService
 }
 
+// NewGamificationController creates a new GamificationController.
 func NewGamificationController(svc *services.GamificationService) *GamificationController {
 	return &GamificationController{service: svc}
 }
 
+// Get returns the gamification stats of the given user.
 // @Summary   Get gamification stats for a user
 // @Tags      gamification
 // @Security  BearerAuth
@@ -39,6 +42,7 @@ func (gc *GamificationController) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, stats)
 }
 
+// GetLeaderboard returns the global gamification leaderboard.
 // @Summary   Global gamification leaderboard
 // @Tags      gamification
 // @Security  BearerAuth

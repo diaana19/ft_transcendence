@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { followUser, unfollowUser } from '../../features/user/userService'
 
+// FollowButton toggles follow/unfollow for a user and shows the current state.
 function FollowButton({ targetId, isFollowing: initialIsFollowing, onFollow }) {
     const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
     const [loading, setLoading] = useState(false)

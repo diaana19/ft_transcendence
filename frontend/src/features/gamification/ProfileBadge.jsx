@@ -60,6 +60,7 @@ const BADGES = [
     },
 ]
 
+// ProfileBadges shows only the badges that a given user already earned.
 export default function ProfileBadges({ userId }) {
     const [stats, setStats] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -85,6 +86,7 @@ export default function ProfileBadges({ userId }) {
         followers: stats?.followers?.count ?? 0,
     }
 
+    // Keep only the badges whose condition the user already meets.
     const earned = BADGES.filter((b) => b.check(userStats))
 
     if (earned.length === 0)

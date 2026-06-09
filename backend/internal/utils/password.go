@@ -13,6 +13,8 @@ const (
 	pwSpecial = "!@#$%^&*-_+=?"
 )
 
+// GenerateRandomPassword returns a random password with 16 chars.
+// It always has lower, upper, digit and special chars.
 func GenerateRandomPassword() (string, error) {
 	const length = 16
 	all := pwLower + pwUpper + pwDigit + pwSpecial
@@ -46,6 +48,7 @@ func GenerateRandomPassword() (string, error) {
 	return string(out), nil
 }
 
+// randomChar returns one random char from the set.
 func randomChar(set string) (byte, error) {
 	idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(set))))
 	if err != nil {

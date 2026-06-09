@@ -4,6 +4,7 @@ import { Image } from 'lucide-react'
 import axiosInstance from '../../services/axiosInstance'
 import { useAuth } from '../../hooks/useAuth'
 
+// CreatePost is the box to write a new post with optional image or video.
 function CreatePost({ onPostCreated }) {
     const { user } = useAuth()
     const [file, setFile] = useState(null)
@@ -11,6 +12,7 @@ function CreatePost({ onPostCreated }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
 
+    // handleFileChange validates the picked file and rejects files over 25MB.
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0]
         if (!selectedFile) return
@@ -30,6 +32,7 @@ function CreatePost({ onPostCreated }) {
         try {
             let mediaUrl = null
             let mediaMime = null
+            // Upload the file first, then create the post with the returned url.
             if (file) {
                 const formData = new FormData()
                 formData.append('file', file)

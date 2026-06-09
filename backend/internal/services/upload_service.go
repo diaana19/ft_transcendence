@@ -13,6 +13,7 @@ import (
 	"ft_transcendence/backend/internal/utils"
 )
 
+// MaxFileSize is the max allowed upload size in bytes (25MB).
 const (
 	MaxFileSize = 25 * 1024 * 1024
 )
@@ -36,14 +37,17 @@ var allowedExtensions = map[string]bool{
 	".webm": true,
 }
 
+// UploadService validates and saves uploaded files.
 type UploadService struct {
 	FileRepo repositories.FileRepository
 }
 
+// NewUploadService creates a new UploadService.
 func NewUploadService(fileRepo repositories.FileRepository) *UploadService {
 	return &UploadService{FileRepo: fileRepo}
 }
 
+// ValidateFile checks the size, extension and mime type of the file. It returns the mime type.
 func (s *UploadService) ValidateFile(file *multipart.FileHeader) (string, error) {
 	if file.Size > MaxFileSize {
 		return "", errors.New("file too large (max 25MB)")
@@ -72,6 +76,7 @@ func (s *UploadService) ValidateFile(file *multipart.FileHeader) (string, error)
 	return mime, nil
 }
 
+// SaveFile validates the file, writes it to disk with saveFn and tracks it in the database.
 func (s *UploadService) SaveFile(
 	fileHeader *multipart.FileHeader,
 	ownerID string,

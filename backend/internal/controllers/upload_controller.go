@@ -14,11 +14,13 @@ import (
 	"ft_transcendence/backend/internal/services"
 )
 
+// UploadController handles file upload and file serving endpoints.
 type UploadController struct {
 	Service       *services.UploadService
 	FriendService *services.FriendService
 }
 
+// UploadFile saves an uploaded file for the logged in user.
 // @Summary  Upload a file
 // @Tags     uploads
 // @Security BearerAuth
@@ -64,6 +66,7 @@ func (uc *UploadController) UploadFile(c *gin.Context) {
 	})
 }
 
+// ServeFile serves a stored file, checking access for non public files.
 // @Summary  Serve a stored file
 // @Description Public files are accessible to anyone; friends/private files require an authenticated, authorised user.
 // @Tags     uploads
@@ -113,6 +116,7 @@ func (uc *UploadController) ServeFile(c *gin.Context) {
 	uc.streamFile(c, file)
 }
 
+// streamFile writes the file content to the response with a safe filename.
 func (uc *UploadController) streamFile(c *gin.Context, file *models.File) {
 	c.Header("Content-Type", file.MimeType)
 	safeFilename := strings.NewReplacer(
@@ -125,6 +129,7 @@ func (uc *UploadController) streamFile(c *gin.Context, file *models.File) {
 	c.File(file.Path)
 }
 
+// canAccess returns true when the user can access the file by its visibility.
 func (uc *UploadController) canAccess(file *models.File, userID string) bool {
 	if file.OwnerID == userID {
 		return true

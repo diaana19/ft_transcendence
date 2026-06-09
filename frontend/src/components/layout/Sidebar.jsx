@@ -11,6 +11,7 @@ import {
     ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline'
 
+// Sidebar is the main navigation: a left menu on desktop and a bottom bar on mobile.
 export default function Sidebar() {
     const { user, logout } = useAuth()
     const navigate = useNavigate()

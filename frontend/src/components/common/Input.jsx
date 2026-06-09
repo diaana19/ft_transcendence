@@ -1,5 +1,6 @@
 import { colors } from '../../styles/tokens'
 
+// Input is the shared text input with optional label and error message.
 function Input({
     label,
     type = 'text',

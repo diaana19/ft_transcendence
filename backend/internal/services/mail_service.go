@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// MailService sends emails over SMTP.
 type MailService struct {
 	host     string
 	port     string
@@ -16,6 +17,7 @@ type MailService struct {
 	from     string
 }
 
+// NewMailService creates a new MailService using the SMTP env vars.
 func NewMailService() *MailService {
 	from := os.Getenv("SMTP_FROM")
 	if from == "" {
@@ -30,6 +32,7 @@ func NewMailService() *MailService {
 	}
 }
 
+// SendMail sends a plain text email to the recipients.
 func (m *MailService) SendMail(to []string, subject, body string) error {
 	if m.host == "" {
 		return fmt.Errorf("mail: SMTP_HOST is not set")
@@ -52,6 +55,7 @@ func (m *MailService) SendMail(to []string, subject, body string) error {
 	return nil
 }
 
+// buildMessage builds the raw email message with headers and body.
 func (m *MailService) buildMessage(to []string, subject, body string) []byte {
 	var b strings.Builder
 	fmt.Fprintf(&b, "From: %s\r\n", m.from)

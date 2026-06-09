@@ -11,8 +11,10 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// defaultRateLimitMax is the max number of requests per minute when RATE_LIMIT_MAX is not set.
 const defaultRateLimitMax = 20
 
+// rateLimitMax reads the limit from the RATE_LIMIT_MAX env. It returns the default when not set.
 func rateLimitMax() int64 {
 	if v := os.Getenv("RATE_LIMIT_MAX"); v != "" {
 		if n, err := strconv.ParseInt(v, 10, 64); err == nil {
@@ -22,6 +24,8 @@ func rateLimitMax() int64 {
 	return defaultRateLimitMax
 }
 
+// RateLimitMiddleware limits requests per client IP using Redis. It blocks the request
+// with 429 when the IP makes more requests than the max in one minute.
 func RateLimitMiddleware(rdb *redis.Client) gin.HandlerFunc {
 	maxRequests := rateLimitMax()
 	return func(c *gin.Context) {
