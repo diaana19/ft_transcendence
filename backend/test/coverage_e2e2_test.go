@@ -152,12 +152,12 @@ func TestServices_NotFoundBranches(t *testing.T) {
 	repo := repositories.NewUserRepository(sharedDB)
 
 	twofa := services.NewTwoFAService(repo)
-	if _, err := twofa.GenerateSecret(utils.NewID()); err == nil {
+	if _, gerr := twofa.GenerateSecret(utils.NewID()); gerr == nil {
 		t.Fatal("GenerateSecret for unknown user should error")
 	}
 
 	usvc := services.NewUserService(repo)
-	if err := usvc.VerifyPassword(utils.NewID(), "whatever"); err == nil {
+	if verr := usvc.VerifyPassword(utils.NewID(), "whatever"); verr == nil {
 		t.Fatal("VerifyPassword for unknown user should error")
 	}
 
