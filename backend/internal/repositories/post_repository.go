@@ -251,7 +251,16 @@ func (r *postRepository) UpdateComment(id string, input models.UpdateCommentInpu
 	if err := r.db.First(&comment, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
-	if err := r.db.Model(&comment).Update("content", input.Content).Error; err != nil {
+
+	updates := map[string]any{"content": input.Content}
+	switch {
+	case input.NewFileID != nil:
+		updates["file_id"] = *input.NewFileID
+	case input.RemoveFile:
+		updates["file_id"] = nil
+	}
+
+	if err := r.db.Model(&comment).Updates(updates).Error; err != nil {
 		return nil, err
 	}
 	r.db.Preload("Author").Preload("File").First(&comment, "id = ?", id)

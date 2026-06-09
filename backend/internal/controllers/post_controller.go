@@ -558,14 +558,18 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 }
 
 // UpdateComment godoc
-// @Summary   Update a comment
+// @Summary   Update a comment (text, and optionally its media attachment)
 // @Tags      posts
 // @Security  BearerAuth
 // @Accept    json
+// @Accept    multipart/form-data
 // @Produce   json
-// @Param     id        path string                     true "post id"
-// @Param     commentId path string                     true "comment id"
-// @Param     body      body models.UpdateCommentInput true "comment fields to update"
+// @Param     id          path     string true  "post id"
+// @Param     commentId   path     string true  "comment id"
+// @Param     content     formData string false "new content (multipart)"
+// @Param     file        formData file   false "new attachment, replaces the current one (multipart)"
+// @Param     remove_file formData bool   false "detach the current attachment (multipart or JSON)"
+// @Param     body        body     models.UpdateCommentInput false "JSON body for a text-only edit"
 // @Success   200 {object} models.CommentResponse
 // @Failure   400 {object} map[string]string
 // @Failure   401 {object} map[string]string
@@ -576,19 +580,60 @@ func (pc *PostController) CreateComment(c *gin.Context) {
 func (pc *PostController) UpdateComment(c *gin.Context) {
 	commentID := c.Param("commentId")
 
-	var input models.UpdateCommentInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
 	authorID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
+	userIDStr := authorID.(string)
 
-	comment, err := pc.postService.UpdateComment(commentID, input, authorID.(string))
+	var input models.UpdateCommentInput
+
+	// Two accepted formats:
+	//   - application/json: text-only edit (backward compatible). Optionally
+	//     {"remove_file": true} to detach the current attachment.
+	//   - multipart/form-data: text + an optional new "file" (replaces the
+	//     attachment) or remove_file=true (detaches it).
+	if strings.HasPrefix(c.ContentType(), "application/json") {
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	} else {
+		content := c.PostForm("content")
+		if content == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "content is required"})
+			return
+		}
+		if len(content) > 280 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "content must not exceed 280 characters"})
+			return
+		}
+		input.Content = content
+		input.RemoveFile = c.PostForm("remove_file") == "true"
+
+		fileHeader, ferr := c.FormFile("file")
+		if ferr == nil && fileHeader != nil {
+			visibility := c.DefaultPostForm("visibility", models.FileVisibilityPublic)
+
+			saveFn := func(fh *multipart.FileHeader, dst string) error {
+				return c.SaveUploadedFile(fh, dst)
+			}
+
+			file, uploadErr := pc.uploadService.SaveFile(fileHeader, userIDStr, visibility, saveFn)
+			if uploadErr != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "file upload failed: " + uploadErr.Error()})
+				return
+			}
+			input.NewFileID = &file.ID
+			input.RemoveFile = false
+		} else if ferr != http.ErrMissingFile {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "file error: " + ferr.Error()})
+			return
+		}
+	}
+
+	comment, err := pc.postService.UpdateComment(commentID, input, userIDStr)
 	if err != nil {
 		respondOwnedResourceError(c, err, "Comment not found")
 		return
