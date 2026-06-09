@@ -99,6 +99,6 @@ export async function deleteComment(postId, commentId) {
 
 // getRepliesByUser returns the posts where a user has replied.
 export const getRepliesByUser = async (userId) => {
-    const { data } = await api.get(`/api/posts?repliedBy=${userId}`)
+    const { data } = await axiosInstance.get(`/api/posts?repliedBy=${userId}`)
     return data.data
 }
