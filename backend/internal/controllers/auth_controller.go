@@ -303,7 +303,8 @@ func (ac *AuthController) Me(c *gin.Context) {
 	}
 	user, err := ac.authService.GetUserByID(userIDRaw.(string))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		c.SetCookie("auth_token", "", -1, "/", "", true, true)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"user": user.ToResponse()})
@@ -340,11 +341,12 @@ func (ac *AuthController) LogoutUser(c *gin.Context) {
 	}
 
 	expiry := time.Until(claims.ExpiresAt.Time)
+	c.SetCookie("auth_token", "", -1, "/", "", true, true)
+
 	if err := ac.authService.LogoutAuthUserService(tokenStr, expiry, ac.rdb); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.SetCookie("auth_token", "", -1, "/", "", true, true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }

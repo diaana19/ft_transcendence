@@ -21,7 +21,7 @@ export function AuthProvider({ children }) {
 
     const decodeToken = (token) => {
         const payload = JSON.parse(atob(token.split('.')[1]))
-        return { userId: payload.sub ?? payload.user_id, exp: payload.exp }
+        return { userId: payload.sub ?? payload.user_id, username: payload.username, exp: payload.exp }
     }
 
     const isExpired = (exp) => exp * 1000 < Date.now()
@@ -68,7 +68,8 @@ export function AuthProvider({ children }) {
             })
             .catch((err) => {
                 if (cancelled) return
-                if (err.response?.status === 401) clearLocalSession()
+                const status = err.response?.status
+                if (status === 401 || status === 404) clearLocalSession()
             })
             .finally(() => {
                 if (!cancelled) setLoading(false)
