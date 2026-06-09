@@ -1,147 +1,159 @@
 function Feed() {
-  const { user } = useAuth()
-  const [posts, setPosts] = useState([])
-  const [fetching, setFetching] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const [newBadge, setNewBadge] = useState(null)
+    const { user } = useAuth()
+    const [posts, setPosts] = useState([])
+    const [fetching, setFetching] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [hasMore, setHasMore] = useState(true)
+    const [newBadge, setNewBadge] = useState(null)
 
-  const offsetRef = useRef(0)
-  const hasMoreRef = useRef(true)
-  const loadingRef = useRef(false)
-  const sentinelRef = useRef(null)
+    const offsetRef = useRef(0)
+    const hasMoreRef = useRef(true)
+    const loadingRef = useRef(false)
+    const sentinelRef = useRef(null)
 
-  useEffect(() => {
-    if (!user?.userId) return
-    const checkBadges = async () => {
-      try {
-        const { data } = await api.get(`/api/users/${user.userId}/gamification`)
-        const userStats = {
-          posts: data?.posts?.count ?? 0,
-          likes: data?.likes?.count ?? 0,
-          followers: data?.followers?.count ?? 0,
+    useEffect(() => {
+        if (!user?.userId) return
+        const checkBadges = async () => {
+            try {
+                const { data } = await api.get(`/api/users/${user.userId}/gamification`)
+                const userStats = {
+                    posts: data?.posts?.count ?? 0,
+                    likes: data?.likes?.count ?? 0,
+                    followers: data?.followers?.count ?? 0,
+                }
+                const earned = BADGES_CHECK.filter((b) => b.check(userStats))
+                const prev = JSON.parse(localStorage.getItem('earned_badges') || 'null')
+                if (prev === null) {
+                    localStorage.setItem('earned_badges', JSON.stringify(earned.map((b) => b.key)))
+                    return
+                }
+                const newOnes = earned.filter((b) => !prev.includes(b.key))
+                if (newOnes.length > 0) {
+                    setNewBadge(newOnes[0])
+                    setTimeout(() => setNewBadge(null), 4000)
+                    localStorage.setItem('earned_badges', JSON.stringify(earned.map((b) => b.key)))
+                }
+            } catch (err) {
+                console.error(err)
+            }
         }
-        const earned = BADGES_CHECK.filter(b => b.check(userStats))
-        const prev = JSON.parse(localStorage.getItem('earned_badges') || 'null')
-        if (prev === null) {
-          localStorage.setItem('earned_badges', JSON.stringify(earned.map(b => b.key)))
-          return
+        checkBadges()
+        const interval = setInterval(checkBadges, 10000)
+        return () => clearInterval(interval)
+    }, [user?.userId])
+
+    const loadMore = useCallback(async () => {
+        if (loadingRef.current || !hasMoreRef.current) return
+        loadingRef.current = true
+        setLoadingMore(true)
+        try {
+            const data = await getPosts(PAGE_SIZE, offsetRef.current)
+            offsetRef.current += data.length
+            hasMoreRef.current = data.length === PAGE_SIZE
+            setHasMore(hasMoreRef.current)
+            setPosts((prev) => {
+                const seen = new Set(prev.map((p) => p.id))
+                return [...prev, ...data.filter((p) => !seen.has(p.id))]
+            })
+        } catch (err) {
+            console.error('Error fetching posts:', err)
+        } finally {
+            loadingRef.current = false
+            setLoadingMore(false)
+            setFetching(false)
         }
-        const newOnes = earned.filter(b => !prev.includes(b.key))
-        if (newOnes.length > 0) {
-          setNewBadge(newOnes[0])
-          setTimeout(() => setNewBadge(null), 4000)
-          localStorage.setItem('earned_badges', JSON.stringify(earned.map(b => b.key)))
+    }, [])
+
+    useEffect(() => {
+        loadMore()
+    }, [loadMore])
+
+    useEffect(() => {
+        const el = sentinelRef.current
+        if (!el || !hasMore) return
+        const obs = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) loadMore()
+            },
+            { rootMargin: '300px' }
+        )
+        obs.observe(el)
+        return () => obs.disconnect()
+    }, [loadMore, hasMore, fetching])
+
+    const reload = useCallback(async () => {
+        if (loadingRef.current) return
+        loadingRef.current = true
+        try {
+            const data = await getPosts(PAGE_SIZE, 0)
+            offsetRef.current = data.length
+            hasMoreRef.current = data.length === PAGE_SIZE
+            setHasMore(hasMoreRef.current)
+            setPosts(data)
+        } catch (err) {
+            console.error('Error fetching posts:', err)
+        } finally {
+            loadingRef.current = false
         }
-      } catch (err) {
-        console.error(err)
-      }
+    }, [])
+
+    const handleCreated = async () => {
+        await reload()
+        window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-    checkBadges()
-    const interval = setInterval(checkBadges, 10000)
-    return () => clearInterval(interval)
-  }, [user?.userId])
 
-  const loadMore = useCallback(async () => {
-    if (loadingRef.current || !hasMoreRef.current) return
-    loadingRef.current = true
-    setLoadingMore(true)
-    try {
-      const data = await getPosts(PAGE_SIZE, offsetRef.current)
-      offsetRef.current += data.length
-      hasMoreRef.current = data.length === PAGE_SIZE
-      setHasMore(hasMoreRef.current)
-      setPosts((prev) => {
-        const seen = new Set(prev.map((p) => p.id))
-        return [...prev, ...data.filter((p) => !seen.has(p.id))]
-      })
-    } catch (err) {
-      console.error('Error fetching posts:', err)
-    } finally {
-      loadingRef.current = false
-      setLoadingMore(false)
-      setFetching(false)
+    const handleUpdate = (updatedPost) => {
+        setPosts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)))
     }
-  }, [])
 
-  useEffect(() => { loadMore() }, [loadMore])
+    return (
+        <div className="w-full mx-auto space-y-4 mt-6">
+            {user?.userId && <CreatePost onPostCreated={handleCreated} user={user} />}
 
-  useEffect(() => {
-    const el = sentinelRef.current
-    if (!el || !hasMore) return
-    const obs = new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting) loadMore() },
-      { rootMargin: '300px' },
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [loadMore, hasMore, fetching])
+            {fetching ? (
+                <p className="text-center text-gray-400 py-8">Loading...</p>
+            ) : posts.length === 0 ? (
+                <p className="text-center text-gray-400 py-8">No posts yet</p>
+            ) : (
+                posts.map((post) => (
+                    <PostCard
+                        key={post.id}
+                        post={post}
+                        currentUserId={user?.userId}
+                        onDelete={reload}
+                        onUpdate={handleUpdate}
+                    />
+                ))
+            )}
 
-  const reload = useCallback(async () => {
-    if (loadingRef.current) return
-    loadingRef.current = true
-    try {
-      const data = await getPosts(PAGE_SIZE, 0)
-      offsetRef.current = data.length
-      hasMoreRef.current = data.length === PAGE_SIZE
-      setHasMore(hasMoreRef.current)
-      setPosts(data)
-    } catch (err) {
-      console.error('Error fetching posts:', err)
-    } finally {
-      loadingRef.current = false
-    }
-  }, [])
+            {!fetching && hasMore && <div ref={sentinelRef} className="h-1" />}
+            {loadingMore && <p className="text-center text-gray-400 py-4">Loading more...</p>}
+            {!fetching && !hasMore && posts.length > 0 && (
+                <p className="text-center text-gray-300 py-6 text-sm">You're all caught up</p>
+            )}
 
-  const handleCreated = async () => {
-    await reload()
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  const handleUpdate = (updatedPost) => {
-    setPosts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)))
-  }
-
-  return (
-    <div className="w-full mx-auto space-y-4 mt-6">
-      {user?.userId && (
-        <CreatePost onPostCreated={handleCreated} user={user} />
-      )}
-
-      {fetching ? (
-        <p className="text-center text-gray-400 py-8">Loading...</p>
-      ) : posts.length === 0 ? (
-        <p className="text-center text-gray-400 py-8">No posts yet</p>
-      ) : (
-        posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            currentUserId={user?.userId}
-            onDelete={reload}
-            onUpdate={handleUpdate}
-          />
-        ))
-      )}
-
-      {!fetching && hasMore && <div ref={sentinelRef} className="h-1" />}
-      {loadingMore && <p className="text-center text-gray-400 py-4">Loading more...</p>}
-      {!fetching && !hasMore && posts.length > 0 && (
-        <p className="text-center text-gray-300 py-6 text-sm">You're all caught up</p>
-      )}
-
-      {newBadge && (
-        <div className="fixed bottom-20 left-1/2 z-50 px-4 py-3 rounded-2xl shadow-lg flex items-center gap-3"
-          style={{ background: 'white', border: '1.5px solid #ede8fd', transform: 'translateX(-50%)' }}>
-          <span className="text-xl">🏆</span>
-          <div>
-            <p className="text-xs font-bold" style={{ color: '#534ab7' }}>New badge unlocked!</p>
-            <p className="text-xs" style={{ color: '#b4b2a9' }}>{newBadge.name}</p>
-          </div>
+            {newBadge && (
+                <div
+                    className="fixed bottom-20 left-1/2 z-50 px-4 py-3 rounded-2xl shadow-lg flex items-center gap-3"
+                    style={{
+                        background: 'white',
+                        border: '1.5px solid #ede8fd',
+                        transform: 'translateX(-50%)',
+                    }}
+                >
+                    <span className="text-xl">🏆</span>
+                    <div>
+                        <p className="text-xs font-bold" style={{ color: '#534ab7' }}>
+                            New badge unlocked!
+                        </p>
+                        <p className="text-xs" style={{ color: '#b4b2a9' }}>
+                            {newBadge.name}
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  )
+    )
 }
 
 export default Feed
