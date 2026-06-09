@@ -16,53 +16,6 @@ import { acceptFriendRequest } from '../../features/user/userService'
 import { useState } from 'react'
 
 function getNotifIcon(type) {
-<<<<<<< HEAD
-  if (type === 'like') return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#fde8f0' }}>
-      <Heart size={14} style={{ color: '#d4537e' }} />
-    </div>
-  )
-  if (type === 'comment') return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#e8f0fd' }}>
-      <MessageCircle size={14} style={{ color: '#534ab7' }} />
-    </div>
-  )
-  if (type === 'friend_request') return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#f0fde8' }}>
-      <UserPlus size={14} style={{ color: '#4a7b34' }} />
-    </div>
-  )
-  if (type === 'message') return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#e8f0fd' }}>
-      <Mail size={14} style={{ color: '#534ab7' }} />
-    </div>
-  )
-  if (type === 'friend_accept') return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#f0fde8' }}>
-      <Check size={14} style={{ color: '#4a7b34' }} />
-    </div>
-  )
-  if (type === 'follow') return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#ede8fd' }}>
-      <UserPlus size={14} style={{ color: '#534ab7' }} />
-    </div>
-  )
-  if (type === 'unfollow') return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#fde8f0' }}>
-      <UserPlus size={14} style={{ color: '#d4537e' }} />
-    </div>
-  )
-  if (type === 'unfriend') return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#fde8f0' }}>
-      <UserPlus size={14} style={{ color: '#d4537e' }} />
-    </div>
-  )
-  return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#ede8fd' }}>
-      <Bell size={14} style={{ color: '#534ab7' }} />
-    </div>
-  )
-=======
     if (type === 'like')
         return (
             <div
@@ -143,7 +96,6 @@ function getNotifIcon(type) {
             <Bell size={14} style={{ color: '#534ab7' }} />
         </div>
     )
->>>>>>> origin/main
 }
 
 function NotificationsPage() {
@@ -151,26 +103,6 @@ function NotificationsPage() {
     const navigate = useNavigate()
     const [accepted, setAccepted] = useState({})
 
-<<<<<<< HEAD
-  const handleClick = (notif) => {
-    if (!notif.read) 
-      markRead(notif.id)
-    if (notif.type === 'message')
-      navigate(`/messages/${notif.actor_id}`)
-    else if (notif.type === 'like' || notif.type === 'comment') 
-    {
-      if (notif.post_id) {
-        navigate(`/post/${notif.post_id}`)
-      } else {
-        navigate(`/profile/${notif.actor_id}`)
-      }
-    } 
-    else if (notif.type === 'friend_request')
-      navigate(`/profile/${notif.actor_id}`)
-    else if (notif.type === 'follow' || notif.type === 'unfollow' ||
-      notif.type === 'friend_accept' || notif.type === 'unfriend') {
-      navigate(`/profile/${notif.actor_id}`)
-=======
     const handleClick = (notif) => {
         if (!notif.read) markRead(notif.id)
         if (notif.type === 'message') navigate(`/messages/${notif.actor_id}`)
@@ -200,7 +132,6 @@ function NotificationsPage() {
         } catch (err) {
             console.error('Error accepting friend request:', err)
         }
->>>>>>> origin/main
     }
 
     return (
