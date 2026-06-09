@@ -44,7 +44,7 @@ function CommentForm({ postId, onCommentAdded }) {
             return
         }
         setFile(selectedFile)
-        console.log('Selected file:', selectedFile.name, 'size:', selectedFile.size)
+        console.info('Selected file:', selectedFile.name, 'size:', selectedFile.size)
         setError(null)
     }
 

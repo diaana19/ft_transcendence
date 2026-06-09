@@ -20,7 +20,7 @@ export function NotificationProvider({ children }) {
         // First load the current unread notifications from the API.
         getUnreadNotifications()
             .then((data) => setNotifications(data ?? []))
-            .catch((err) => console.error('[Notif] failed to load unread:', err))
+            .catch((err) => console.info('[Notif] failed to load unread:', err))
 
         // Then subscribe to the socket to receive new notifications in real time.
         const unsubscribe = subscribe((msg) => {
@@ -42,7 +42,7 @@ export function NotificationProvider({ children }) {
             await markAllNotificationsRead()
             setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
         } catch (err) {
-            console.error('[Notif] failed to mark all read:', err)
+            console.info('[Notif] failed to mark all read:', err)
         }
     }
 
@@ -52,7 +52,7 @@ export function NotificationProvider({ children }) {
         try {
             await markNotificationRead(id)
         } catch (err) {
-            console.error('[Notif] failed to mark read:', err)
+            console.info('[Notif] failed to mark read:', err)
             // Revert the local change if the request fails.
             setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)))
         }

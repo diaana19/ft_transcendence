@@ -48,7 +48,7 @@ export default function MessagesPage() {
                 setUserOrder(filtered.map((u) => u.id))
                 fetchOnlineStatus(filtered)
             } catch (err) {
-                console.error(err)
+                console.info(err)
             }
         }
         fetchUsers()

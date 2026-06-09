@@ -41,7 +41,7 @@ export default function Profile() {
                 .then(({ data }) => {
                     if (active) setResolvedId(data.id)
                 })
-                .catch((err) => console.error(err))
+                .catch((err) => console.info(err))
         } else {
             setResolvedId(id || authUser?.userId || null)
         }
@@ -80,7 +80,7 @@ export default function Profile() {
                 setIsFriend(isAlreadyFriend)
             }
         } catch (err) {
-            console.error(err)
+            console.info(err)
         } finally {
             setLoading(false)
         }
@@ -88,13 +88,13 @@ export default function Profile() {
             const onlineRes = await api.get(`/api/users/${userId}/online`)
             setIsOnline(onlineRes.data?.online ?? false)
         } catch (err) {
-            console.error(err)
+            console.info(err)
         }
         try {
             const gamif = await api.get(`/api/users/${userId}/gamification`)
             setUserLevel(gamif.data?.level ?? 0)
         } catch (err) {
-            console.error(err)
+            console.info(err)
         }
     }
 
@@ -104,7 +104,7 @@ export default function Profile() {
             const data = await getPostsByAuthor(userId)
             setPosts(data)
         } catch (err) {
-            console.error(err)
+            console.info(err)
         } finally {
             setLoadingPosts(false)
         }
@@ -120,7 +120,7 @@ export default function Profile() {
             }
             setShowEdit(false)
         } catch (err) {
-            console.error(err)
+            console.info(err)
         }
     }
 
@@ -130,7 +130,7 @@ export default function Profile() {
             await sendFriendRequest(userId)
             setFriendRequested(true)
         } catch (err) {
-            console.error('Error sending friend request:', err)
+            console.info('Error sending friend request:', err)
         }
     }
 
@@ -143,7 +143,7 @@ export default function Profile() {
             setIsFriend(false)
             setFriendRequested(false)
         } catch (err) {
-            console.error('Error removing friend:', err)
+            console.info('Error removing friend:', err)
         }
     }
 
@@ -437,7 +437,7 @@ export default function Profile() {
                                             const { data } = await api.post('/api/upload', formData)
                                             setForm((prev) => ({ ...prev, wallpaper: data.url }))
                                         } catch (err) {
-                                            console.error(err)
+                                            console.info(err)
                                         } finally {
                                             setUploadingBanner(false)
                                         }
@@ -484,7 +484,7 @@ export default function Profile() {
                                                 )
                                                 setForm((prev) => ({ ...prev, avatar: data.url }))
                                             } catch (err) {
-                                                console.error(err)
+                                                console.info(err)
                                             } finally {
                                                 setUploadingAvatar(false)
                                             }

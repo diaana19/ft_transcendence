@@ -19,7 +19,7 @@ function FollowButton({ targetId, isFollowing: initialIsFollowing, onFollow }) {
             }
             onFollow?.()
         } catch (err) {
-            console.error('Error toggling follow:', err)
+            console.info('Error toggling follow:', err)
         } finally {
             setLoading(false)
         }

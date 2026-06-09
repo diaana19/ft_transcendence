@@ -30,7 +30,7 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
             setLikesCount(res.likes_count)
             setDislikesCount(res.dislikes_count)
         } catch (err) {
-            console.error('Error reacting to comment:', err)
+            console.info('Error reacting to comment:', err)
         }
     }
 
@@ -39,7 +39,7 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
             await deleteComment(postId, comment.id)
             onDelete(comment.id)
         } catch (err) {
-            console.error(err)
+            console.info(err)
         }
     }
 
@@ -51,7 +51,7 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
             onUpdate(updated)
             setIsEditing(false)
         } catch (err) {
-            console.error(err)
+            console.info(err)
         } finally {
             setEditLoading(false)
         }

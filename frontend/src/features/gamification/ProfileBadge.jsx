@@ -69,7 +69,7 @@ export default function ProfileBadges({ userId }) {
         if (!userId) return
         api.get(`/api/users/${userId}/gamification`)
             .then(({ data }) => setStats(data))
-            .catch(console.error)
+            .catch(console.info)
             .finally(() => setLoading(false))
     }, [userId])
 

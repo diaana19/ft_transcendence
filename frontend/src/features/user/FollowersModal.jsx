@@ -13,7 +13,7 @@ export default function FollowersModal({ userId, type, onClose }) {
         const fetch = type === 'followers' ? getFollowers : getFollowing
         fetch(userId)
             .then(setUsers)
-            .catch(console.error)
+            .catch(console.info)
             .finally(() => setLoading(false))
     }, [userId, type])
 

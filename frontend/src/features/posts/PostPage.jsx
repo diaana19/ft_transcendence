@@ -28,7 +28,7 @@ export default function PostPage() {
             setPost(postRes.data)
             setComments(commentsRes.data.data || [])
         } catch (err) {
-            console.error(err)
+            console.info(err)
         } finally {
             setLoading(false)
         }

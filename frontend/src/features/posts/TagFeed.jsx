@@ -36,7 +36,7 @@ function TagFeed() {
                 return [...prev, ...data.filter((p) => !seen.has(p.id))]
             })
         } catch (err) {
-            console.error('Error fetching tagged posts:', err)
+            console.info('Error fetching tagged posts:', err)
         } finally {
             loadingRef.current = false
             setLoadingMore(false)
@@ -79,7 +79,7 @@ function TagFeed() {
             setHasMore(hasMoreRef.current)
             setPosts(data)
         } catch (err) {
-            console.error('Error fetching tagged posts:', err)
+            console.info('Error fetching tagged posts:', err)
         } finally {
             loadingRef.current = false
         }

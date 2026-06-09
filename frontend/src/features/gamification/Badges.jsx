@@ -135,7 +135,7 @@ export default function Badges() {
             const { data } = await api.get(`/api/users/${authUser?.userId}/gamification`)
             setStats(data)
         } catch (err) {
-            console.error(err)
+            console.info(err)
         }
     }
 

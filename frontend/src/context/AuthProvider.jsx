@@ -107,9 +107,9 @@ export function AuthProvider({ children }) {
 
             setToken(data.token)
             setUser(fullUser)
-            console.log('FULL USER:', fullUser)
+            console.info('FULL USER:', fullUser)
         } catch (err) {
-            console.error('Login failed:', err.message)
+            console.info('Login failed:', err.message)
             clearLocalSession()
         }
     }

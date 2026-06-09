@@ -49,7 +49,7 @@ export default function LeaderBoard() {
             const { data } = await api.get('/api/leaderboard')
             setLeaderboard(data)
         } catch (err) {
-            console.error(err)
+            console.info(err)
         } finally {
             setLoadingBoard(false)
         }

@@ -14,7 +14,7 @@ function Trends() {
                 const { data } = await axiosInstance.get('/api/trends?limit=8')
                 if (active) setTrends(data.data || [])
             } catch (err) {
-                console.error('Error loading trends:', err)
+                console.info('Error loading trends:', err)
             } finally {
                 if (active) setLoading(false)
             }
@@ -73,7 +73,7 @@ function Suggestions() {
                     .slice(0, 3)
                 setSuggestions(filtered)
             } catch (err) {
-                console.error(err)
+                console.info(err)
             } finally {
                 setLoading(false)
             }

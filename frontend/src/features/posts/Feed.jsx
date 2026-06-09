@@ -58,7 +58,7 @@ function Feed() {
                     localStorage.setItem('earned_badges', JSON.stringify(earned.map((b) => b.key)))
                 }
             } catch (err) {
-                console.error(err)
+                console.info(err)
             }
         }
         checkBadges()
@@ -82,7 +82,7 @@ function Feed() {
                 return [...prev, ...data.filter((p) => !seen.has(p.id))]
             })
         } catch (err) {
-            console.error('Error fetching posts:', err)
+            console.info('Error fetching posts:', err)
         } finally {
             loadingRef.current = false
             setLoadingMore(false)
@@ -119,7 +119,7 @@ function Feed() {
             setHasMore(hasMoreRef.current)
             setPosts(data)
         } catch (err) {
-            console.error('Error fetching posts:', err)
+            console.info('Error fetching posts:', err)
         } finally {
             loadingRef.current = false
         }

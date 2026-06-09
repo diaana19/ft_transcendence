@@ -38,12 +38,12 @@ export function SocketProvider({ children }) {
                 try {
                     handler(msg)
                 } catch (err) {
-                    console.error('[Socket] handler error:', err)
+                    console.info('[Socket] handler error:', err)
                 }
             })
         }
 
-        ws.onerror = (e) => console.error('[Socket] WebSocket error:', e)
+        ws.onerror = (e) => console.info('[Socket] WebSocket error:', e)
         ws.onclose = () => {
             wsRef.current = null
         }

@@ -123,7 +123,7 @@ function NotificationsPage() {
             setAccepted((prev) => ({ ...prev, [notif.id]: true }))
             await markAllRead()
         } catch (err) {
-            console.error('Error accepting friend request:', err)
+            console.info('Error accepting friend request:', err)
         }
     }
 

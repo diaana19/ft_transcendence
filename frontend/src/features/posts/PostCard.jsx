@@ -28,7 +28,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
             await deletePost(post.id)
             onDelete(post.id)
         } catch (err) {
-            console.error('Error deleting post:', err)
+            console.info('Error deleting post:', err)
         } finally {
             setLoading(false)
         }
@@ -52,7 +52,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
             setIsEditing(false)
             setEditFile(null)
         } catch (err) {
-            console.error('Error updating post:', err)
+            console.info('Error updating post:', err)
         } finally {
             setLoading(false)
         }
@@ -70,7 +70,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
             setLikesCount(res.likes_count)
             setDislikesCount(res.dislikes_count)
         } catch (err) {
-            console.error('Error reacting to post:', err)
+            console.info('Error reacting to post:', err)
         }
     }
 
