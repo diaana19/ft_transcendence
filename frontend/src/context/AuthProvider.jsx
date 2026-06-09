@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
     const logout = async () => {
         try {
             await api.post('/api/auth/logout')
-        } catch {}
+        } catch { }
         clearLocalSession()
     }
 
@@ -50,10 +50,7 @@ export function AuthProvider({ children }) {
                 clearLocalSession()
             }
         }
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/main
         let cancelled = false
         api.get('/api/auth/me')
             .then((res) => {
@@ -106,6 +103,7 @@ export function AuthProvider({ children }) {
             clearLocalSession()
         }
     }
+
     const updateUser = (patch) => {
         setUser((prev) => (prev ? { ...prev, ...patch } : prev))
     }
