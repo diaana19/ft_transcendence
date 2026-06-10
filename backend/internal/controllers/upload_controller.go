@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid" 
 	"gorm.io/gorm"
 
 	"ft_transcendence/backend/internal/models"
@@ -80,6 +81,11 @@ func (uc *UploadController) UploadFile(c *gin.Context) {
 // @Router   /files/{id} [get]
 func (uc *UploadController) ServeFile(c *gin.Context) {
 	fileID := c.Param("id")
+
+	if _, err := uuid.Parse(fileID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file id"})
+		return
+	}
 
 	file, err := uc.Service.FileRepo.GetByID(fileID)
 	if err != nil {
