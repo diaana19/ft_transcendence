@@ -12,6 +12,12 @@ export const getFollowing = async (userId) => {
     return res.data?.data || res.data
 }
 
+// getFriends returns the accepted friends of a user.
+export const getFriends = async (userId) => {
+    const res = await axiosInstance.get(`/api/users/${userId}/friends`)
+    return res.data?.data || res.data
+}
+
 // followUser starts following another user.
 export const followUser = async (targetId) => {
     const res = await axiosInstance.post(`/api/friends/follow/${targetId}`)

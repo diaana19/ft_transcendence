@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useSocket } from '../../context/SocketProvider'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
+import { getFriends, getFollowing } from '../user/userService'
 
 // MessagesPage is the chat page: a user list on the left and the conversation on the right.
 export default function MessagesPage() {
@@ -38,21 +39,31 @@ export default function MessagesPage() {
         setOnlineUsers(statuses)
     }
 
-    // Load the user list once (without me) and their online status.
+    // Load the chat list once: only friends and followed users (without me).
     useEffect(() => {
+        const me = currentUser?.userId
+        if (!me) return
         const fetchUsers = async () => {
             try {
-                const res = await axiosInstance.get('/api/users')
-                const filtered = res.data.filter((u) => u.id !== currentUser?.userId)
-                setUsers(filtered)
-                setUserOrder(filtered.map((u) => u.id))
-                fetchOnlineStatus(filtered)
+                const [friends, following] = await Promise.all([
+                    getFriends(me),
+                    getFollowing(me),
+                ])
+                // Merge friends and following, removing duplicates and myself.
+                const byId = {}
+                for (const u of [...(friends || []), ...(following || [])]) {
+                    if (u.id !== me) byId[u.id] = u
+                }
+                const list = Object.values(byId)
+                setUsers(list)
+                setUserOrder(list.map((u) => u.id))
+                fetchOnlineStatus(list)
             } catch (err) {
                 console.info(err)
             }
         }
         fetchUsers()
-    }, [])
+    }, [currentUser?.userId])
 
     // Keep the selected user in sync with the peerId in the URL.
     useEffect(() => {
