@@ -17,6 +17,7 @@ export default function MessagesPage() {
 
     const [users, setUsers] = useState([])
     const [search, setSearch] = useState('')
+    const [msgSearch, setMsgSearch] = useState('')
     const [messages, setMessages] = useState([])
     const [fetching, setFetching] = useState(false)
     const [selectedUser, setSelectedUser] = useState(null)
@@ -24,6 +25,7 @@ export default function MessagesPage() {
     const [userOrder, setUserOrder] = useState([])
     const lastMessageRef = useRef(null)
     const usersRef = useRef([])
+    const msgSearchRef = useRef(null)
 
     useEffect(() => {
         usersRef.current = users
@@ -172,6 +174,24 @@ export default function MessagesPage() {
         return unsubscribe
     }, [peerId, subscribe, send, currentUser?.userId])
 
+    // Clear the message search when the open conversation changes.
+    useEffect(() => {
+        setMsgSearch('')
+    }, [peerId])
+
+    // Focus the conversation search with Ctrl/Cmd+F while a chat is open.
+    useEffect(() => {
+        if (!peerId) return
+        const onKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+                e.preventDefault()
+                msgSearchRef.current?.focus()
+            }
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [peerId])
+
     // Scroll to the last message whenever the list changes.
     useEffect(() => {
         lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -182,6 +202,10 @@ export default function MessagesPage() {
         send({ action: 'message', recipient_id: peerId, content })
         setUserOrder((prev) => [peerId, ...prev.filter((id) => id !== peerId)])
     }
+
+    const displayedMessages = msgSearch.trim()
+        ? messages.filter((m) => m.content?.toLowerCase().includes(msgSearch.toLowerCase()))
+        : messages
 
     const filteredUsers = users
         .filter(
@@ -343,6 +367,25 @@ export default function MessagesPage() {
                             </div>
                         </div>
 
+                        <div
+                            className="px-4 py-2 bg-white"
+                            style={{ borderBottom: '1px solid #ede8fd' }}
+                        >
+                            <input
+                                ref={msgSearchRef}
+                                type="text"
+                                placeholder="Filter in conversation..."
+                                value={msgSearch}
+                                onChange={(e) => setMsgSearch(e.target.value)}
+                                className="w-full px-3 py-1.5 text-sm rounded-full focus:outline-none"
+                                style={{
+                                    background: '#f5f3ff',
+                                    border: '1px solid #ede8fd',
+                                    color: '#2c2c2a',
+                                }}
+                            />
+                        </div>
+
                         <div className="flex-1 overflow-y-auto">
                             {fetching ? (
                                 <p
@@ -351,8 +394,15 @@ export default function MessagesPage() {
                                 >
                                     Loading...
                                 </p>
+                            ) : msgSearch.trim() && displayedMessages.length === 0 ? (
+                                <p
+                                    className="text-center py-8 text-sm"
+                                    style={{ color: '#afa9ec' }}
+                                >
+                                    No messages match "{msgSearch}"
+                                </p>
                             ) : (
-                                <MessageList messages={messages} />
+                                <MessageList messages={displayedMessages} />
                             )}
                             <div ref={lastMessageRef} />
                         </div>
