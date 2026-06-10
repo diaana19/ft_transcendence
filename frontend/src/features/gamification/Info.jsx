@@ -25,22 +25,32 @@ export default function Info() {
                     {
                         icon: 'ti-calculator',
                         title: 'Your score',
-                        text: 'Score = posts + likes received + followers + following. Every action counts toward your level.',
+                        text: 'Your score is the sum of everything you do on Synk — every post you publish, every like your posts receive, every person who follows you, and every person you follow. The more active you are, the higher your score climbs. There is no cap.',
                     },
                     {
                         icon: 'ti-chart-line',
                         title: 'Levels',
-                        text: 'Levels follow a power-of-two scale — each level requires double the score of the previous one. Level 0 starts at 0 points.',
+                        text: 'Levels are based on a power-of-two scale: level 1 requires 2 points, level 2 requires 4, level 3 requires 8, and so on. This means early levels are easy to reach but higher levels require sustained activity. Your level is always displayed on the leaderboard next to your score.',
                     },
                     {
                         icon: 'ti-award',
                         title: 'Badges',
-                        text: 'Badges unlock automatically when you hit a milestone. No need to claim them — just keep being active.',
+                        text: 'Badges are permanent achievements that unlock automatically when you hit a milestone — no button to press, no claim needed. There are two categories: 🤝 Social (friends & followers) and  ✍️ Posts (writing & getting likes). Locked badges show you exactly what you need to do next.',
                     },
+					{
+						icon: 'ti-users',
+						title: 'Social badges',
+						text: '👋 Welcome — create your account. 🤝 First bond — add your first friend. 🕸️ Network builder — reach 10 friends. 🦋 Social butterfly — connect with 50+ friends. Follow people and send friend requests to unlock these.',
+					},
+					{
+						icon: 'ti-pencil',
+						title: 'Post badges',
+						text: '✍️ First words — publish your first post. ✨ First spark — receive your first like. 📝 Content creator — publish 25 posts. ⭐ Rising star — collect 20 likes across all your posts. Quality and consistency both count.',
+					},
                     {
                         icon: 'ti-calendar-week',
                         title: 'Weekly reset',
-                        text: 'The leaderboard resets every Monday. Your badges and level are permanent and never reset.',
+                        text: 'The leaderboard resets every Monday at midnight UTC so everyone gets a fresh start each week. Your badges and overall level are permanent — they never reset and accumulate over your entire time on Synk.',
                     },
                 ].map((item) => (
                     <div

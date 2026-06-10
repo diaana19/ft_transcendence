@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useState} from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import api from '../../services/axiosInstance'
 import FriendsList from './FriendsList'
@@ -9,6 +9,7 @@ import { getPostsByAuthor } from '../posts/postService'
 import { sendFriendRequest, removeFriend } from '../../features/user/userService'
 import FollowersModal from './FollowersModal'
 import ProfileBadges from '../gamification/ProfileBadge'
+import { getRepliesByUser } from '../posts/postService'
 
 // Profile shows a user page with posts, replies and badges tabs, and edit options.
 export default function Profile() {
@@ -32,6 +33,7 @@ export default function Profile() {
     const [followModal, setFollowModal] = useState(null)
     const [isOnline, setIsOnline] = useState(false)
     const [userLevel, setUserLevel] = useState(null)
+	const [replies, setReplies] = useState([])
 
     // Resolve which user id to show: from a username, a route id, or the logged user.
     useEffect(() => {
@@ -55,9 +57,18 @@ export default function Profile() {
         if (userId) {
             fetchUser()
             fetchUserPosts()
+			fetchUserReplies()
         }
     }, [userId])
 
+	const fetchUserReplies = async () => {
+		try {
+			const data = await getRepliesByUser(userId)
+			setReplies(data)
+		} catch (err) {
+			console.info(err)
+		}
+	}
     // fetchUser loads the profile and, for other users, the follow/friend state.
     const fetchUser = async () => {
         try {
@@ -259,7 +270,7 @@ export default function Profile() {
                                 {user.displayname}
                             </h2>
                             {userLevel !== null && (
-                                <span
+                                <Link to="/badge"
                                     className="text-xs px-2 py-0.5 rounded-full font-bold"
                                     style={{
                                         background:
@@ -268,7 +279,7 @@ export default function Profile() {
                                     }}
                                 >
                                     ⭐ Level {userLevel}
-                                </span>
+                                </Link>
                             )}
                         </div>
                         <p className="text-sm" style={{ color: '#afa9ec' }}>
@@ -360,9 +371,14 @@ export default function Profile() {
                         ))
                     ))}
                 {activeTab === 'replies' && (
-                    <p className="text-center py-8" style={{ color: '#b4b2a9' }}>
-                        No replies yet
-                    </p>
+                 <>
+				 {replies.length > 0 ? ( replies.map((post) => (
+					<PostCard key={post._id} post={post} /> ))
+					) : (
+				<p className="text-center py-8" style={{ color: '#b4b2a9' }} >
+					No replies yet
+				</p> )}
+				</>
                 )}
                 {activeTab === 'badges' && <ProfileBadges userId={userId} />}
             </div>
