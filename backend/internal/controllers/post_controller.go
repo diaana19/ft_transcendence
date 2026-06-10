@@ -77,6 +77,32 @@ func (pc *PostController) GetTrends(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": trends})
 }
 
+// SearchTags returns a page of hashtags matching the query, with their post counts.
+// @Summary   Search hashtags by name (limit/offset pagination)
+// @Tags      posts
+// @Produce   json
+// @Param     q      query string false "tag text to search for (with or without #)"
+// @Param     limit  query int    false "max tags to return (default 10, max 50)"
+// @Param     offset query int    false "tags to skip (default 0)"
+// @Success   200 {object} map[string]interface{}
+// @Failure   500 {object} map[string]string
+// @Router    /tags [get]
+func (pc *PostController) SearchTags(c *gin.Context) {
+	query := strings.TrimPrefix(c.Query("q"), "#")
+	limit, offset := parseLimitOffset(c)
+
+	tags, total, err := pc.postService.SearchTags(query, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if tags == nil {
+		tags = []models.TagCount{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": tags, "limit": limit, "offset": offset, "total": total})
+}
+
 // parseLimitOffset reads the limit and offset query params with safe defaults.
 func parseLimitOffset(c *gin.Context) (limit, offset int) {
 	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))

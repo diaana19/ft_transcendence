@@ -84,6 +84,11 @@ func (s *PostService) GetTrends(limit int) ([]models.TagCount, error) {
 	return s.repo.TopTags(time.Now().Add(-trendWindow), limit)
 }
 
+// SearchTags returns a page of tags matching the query and the total count.
+func (s *PostService) SearchTags(query string, limit, offset int) ([]models.TagCount, int64, error) {
+	return s.repo.SearchTags(query, limit, offset)
+}
+
 // UpdatePost updates a post. Only the author can update its own post.
 func (s *PostService) UpdatePost(id string, input models.UpdatePostInput, authorID string) (*models.Post, error) {
 	post, err := s.repo.GetByID(id)

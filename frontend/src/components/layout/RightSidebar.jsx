@@ -128,6 +128,13 @@ export default function RightSidebar() {
             <div className="bg-white/60 border border-gray-200 rounded-xl p-4 mb-4">
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">Trends</h3>
                 <Trends />
+                <Link
+                    to="/tags"
+                    className="block text-xs font-semibold mt-3 hover:underline"
+                    style={{ color: '#534ab7' }}
+                >
+                    Search tags →
+                </Link>
             </div>
             <div className="bg-white/60 border border-gray-200 rounded-xl p-4">
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">Who to follow</h3>

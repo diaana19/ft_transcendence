@@ -38,6 +38,13 @@ export async function getPostsByTag(tag, limit = 10, offset = 0) {
     return response.data.data
 }
 
+// searchTags returns a page of hashtags matching the query plus the total count.
+export async function searchTags(query = '', limit = 20, offset = 0) {
+    const q = encodeURIComponent(String(query).replace(/^#/, ''))
+    const response = await axiosInstance.get(`/api/tags?q=${q}&limit=${limit}&offset=${offset}`)
+    return { tags: response.data.data || [], total: response.data.total ?? 0 }
+}
+
 // getPostsByTagPage returns a page of tagged posts plus the total count.
 export async function getPostsByTagPage(tag, limit = 20, offset = 0) {
     const name = encodeURIComponent(String(tag).replace(/^#/, ''))

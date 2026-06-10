@@ -36,6 +36,8 @@ type PostRepository interface {
 
 	// TopTags returns the most used tags since the given time.
 	TopTags(since time.Time, limit int) ([]models.TagCount, error)
+	// SearchTags returns a page of tags matching the query and the total count.
+	SearchTags(query string, limit, offset int) ([]models.TagCount, int64, error)
 
 	// SetPostReaction sets the reaction of the user on a post.
 	SetPostReaction(userID, postID string, value int) error
@@ -154,6 +156,33 @@ func (r *postRepository) TopTags(since time.Time, limit int) ([]models.TagCount,
 		ORDER BY count DESC, tag ASC
 		LIMIT ?`, since, limit).Scan(&out).Error
 	return out, err
+}
+
+// SearchTags returns a page of tags matching the query, ordered by post count,
+// together with the total number of matching tags.
+func (r *postRepository) SearchTags(query string, limit, offset int) ([]models.TagCount, int64, error) {
+	like := "%" + query + "%"
+
+	var total int64
+	if err := r.db.Raw(`
+		SELECT COUNT(*) FROM (
+			SELECT tag
+			FROM posts, unnest(tags) AS tag
+			WHERE deleted_at IS NULL AND tag ILIKE ?
+			GROUP BY tag
+		) AS matches`, like).Scan(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var out []models.TagCount
+	err := r.db.Raw(`
+		SELECT tag, COUNT(*) AS count
+		FROM posts, unnest(tags) AS tag
+		WHERE deleted_at IS NULL AND tag ILIKE ?
+		GROUP BY tag
+		ORDER BY count DESC, tag ASC
+		LIMIT ? OFFSET ?`, like, limit, offset).Scan(&out).Error
+	return out, total, err
 }
 
 // Delete removes the post with this id.

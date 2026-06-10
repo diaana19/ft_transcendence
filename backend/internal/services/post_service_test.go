@@ -159,6 +159,10 @@ func (m *mockPostRepo) TopTags(_ time.Time, _ int) ([]models.TagCount, error) {
 	return nil, nil
 }
 
+func (m *mockPostRepo) SearchTags(_ string, _, _ int) ([]models.TagCount, int64, error) {
+	return nil, 0, nil
+}
+
 func TestPostService_ContentValidationBranches(t *testing.T) {
 	s := NewPostService(newMockPostRepo())
 

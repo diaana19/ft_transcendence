@@ -22,6 +22,7 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	registerPostRoutes(api, rdb, c.Post)
 
 	api.GET("/trends", c.Post.GetTrends)
+	api.GET("/tags", c.Post.SearchTags)
 
 	api.GET("/users/:id/online", onlineStatusHandler(c.WSManager))
 
