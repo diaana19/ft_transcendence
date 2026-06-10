@@ -23,6 +23,7 @@ type Controllers struct {
 	GDPR         *controllers.GDPRController
 	OAuth        *controllers.OAuthController
 	Gamification *controllers.GamificationController
+	Message      *controllers.MessageController
 	ChatWS       *socket.ChatHandler
 	WSManager    *socket.WSManager
 }
@@ -63,6 +64,7 @@ func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 		GDPR:         controllers.NewGDPRController(gdprService, mailService),
 		OAuth:        controllers.NewOAuthController(oauthService, cfg),
 		Gamification: controllers.NewGamificationController(gamificationService),
+		Message:      controllers.NewMessageController(msgRepo, userService),
 		ChatWS:       chatWS,
 		WSManager:    wsManager,
 	}

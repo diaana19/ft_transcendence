@@ -6,6 +6,7 @@ import { useSocket } from '../../context/SocketProvider'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
 import { getFriends, getFollowing } from '../user/userService'
+import { getConversations } from './chatService'
 
 // MessagesPage is the chat page: a user list on the left and the conversation on the right.
 export default function MessagesPage() {
@@ -22,6 +23,11 @@ export default function MessagesPage() {
     const [onlineUsers, setOnlineUsers] = useState({})
     const [userOrder, setUserOrder] = useState([])
     const lastMessageRef = useRef(null)
+    const usersRef = useRef([])
+
+    useEffect(() => {
+        usersRef.current = users
+    }, [users])
 
     // fetchOnlineStatus asks the online state of every user in the list.
     const fetchOnlineStatus = async (usersList) => {
@@ -36,19 +42,26 @@ export default function MessagesPage() {
                 }
             })
         )
-        setOnlineUsers(statuses)
+        setOnlineUsers((prev) => ({ ...prev, ...statuses }))
     }
 
-    // Load the chat list once: only friends and followed users (without me).
+    // Load the chat list once: friends, followed users and active chats (without me).
     useEffect(() => {
         const me = currentUser?.userId
         if (!me) return
         const fetchUsers = async () => {
             try {
-                const [friends, following] = await Promise.all([getFriends(me), getFollowing(me)])
-                // Merge friends and following, removing duplicates and myself.
+                const [friends, following, conversations] = await Promise.all([
+                    getFriends(me),
+                    getFollowing(me),
+                    getConversations(),
+                ])
                 const byId = {}
-                for (const u of [...(friends || []), ...(following || [])]) {
+                for (const u of [
+                    ...(friends || []),
+                    ...(following || []),
+                    ...(conversations || []),
+                ]) {
                     if (u.id !== me) byId[u.id] = u
                 }
                 const list = Object.values(byId)
@@ -62,13 +75,67 @@ export default function MessagesPage() {
         fetchUsers()
     }, [currentUser?.userId])
 
-    // Keep the selected user in sync with the peerId in the URL.
+    // Keep the selected user in sync with the peerId in the URL. The peer may not be
+    // in my list (not a friend or followed), so fetch it directly to open the chat.
     useEffect(() => {
-        if (peerId && users.length > 0) {
-            const found = users.find((u) => u.id === peerId)
-            setSelectedUser(found || null)
+        if (!peerId) {
+            setSelectedUser(null)
+            return
+        }
+        const found = users.find((u) => u.id === peerId)
+        if (found) {
+            setSelectedUser(found)
+            return
+        }
+        let cancelled = false
+        axiosInstance
+            .get(`/api/users/${peerId}`)
+            .then((res) => {
+                if (cancelled) return
+                const u = res.data?.data || res.data
+                if (u?.id) {
+                    setSelectedUser(u)
+                    fetchOnlineStatus([u])
+                }
+            })
+            .catch((err) => console.info(err))
+        return () => {
+            cancelled = true
         }
     }, [peerId, users])
+
+    // Keep the list live: add the peer when a message or notification arrives.
+    useEffect(() => {
+        const me = currentUser?.userId
+        if (!me) return
+        const ensurePeer = (id) => {
+            if (!id || id === me) return
+            if (usersRef.current.some((u) => u.id === id)) {
+                setUserOrder((prev) => [id, ...prev.filter((x) => x !== id)])
+                return
+            }
+            axiosInstance
+                .get(`/api/users/${id}`)
+                .then((res) => {
+                    const u = res.data?.data || res.data
+                    if (!u?.id) return
+                    setUsers((prev) => (prev.some((x) => x.id === u.id) ? prev : [u, ...prev]))
+                    setUserOrder((prev) => [u.id, ...prev.filter((x) => x !== u.id)])
+                    fetchOnlineStatus([u])
+                })
+                .catch((err) => console.info(err))
+        }
+        const unsubscribe = subscribe((msg) => {
+            if (msg.type === 'message' && msg.message) {
+                const m = msg.message
+                if (m.sender_id !== me && m.recipient_id !== me) return
+                ensurePeer(m.sender_id === me ? m.recipient_id : m.sender_id)
+            } else if (msg.type === 'notification' && msg.notification?.type === 'message') {
+                ensurePeer(msg.notification.actor_id)
+            }
+        })
+        return unsubscribe
+    }, [currentUser?.userId, subscribe])
 
     // Open the conversation: ask for history and listen new messages on the socket.
     useEffect(() => {

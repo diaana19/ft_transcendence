@@ -18,6 +18,8 @@ type MessageRepository interface {
 	PollSince(userID, since string, limit int) ([]models.Message, error)
 	// ListConversation returns the messages between two users after the since cursor.
 	ListConversation(userID, peerID, since string, limit int) ([]models.Message, error)
+	// ListConversationPartnerIDs returns the distinct user ids the user has direct messages with.
+	ListConversationPartnerIDs(userID string) ([]string, error)
 }
 
 type messageRepository struct {
@@ -62,6 +64,18 @@ func (r *messageRepository) ListConversation(userID, peerID, since string, limit
 		userID, peerID, peerID, userID,
 	)
 	return runCursorQuery(q, since, limit)
+}
+
+// ListConversationPartnerIDs returns the distinct user ids the user has direct messages with.
+func (r *messageRepository) ListConversationPartnerIDs(userID string) ([]string, error) {
+	var ids []string
+	err := r.db.Raw(`
+		SELECT DISTINCT CASE WHEN sender_id = ? THEN recipient_id ELSE sender_id END AS peer_id
+		FROM messages
+		WHERE (sender_id = ? OR recipient_id = ?)
+		  AND recipient_id IS NOT NULL AND recipient_id <> ''`,
+		userID, userID, userID).Scan(&ids).Error
+	return ids, err
 }
 
 // runCursorQuery runs the query with cursor pagination. When since is empty it

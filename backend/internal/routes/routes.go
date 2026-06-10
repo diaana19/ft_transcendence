@@ -35,6 +35,7 @@ func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
 	registerGDPRRoutes(protected, c.GDPR)
 	registerTwoFARoutes(protected, c.TwoFA)
 	registerGamificationRoutes(protected, c.Gamification)
+	protected.GET("/conversations", c.Message.GetConversations)
 }
 
 // @Summary   Check whether a user is currently online (has an active WebSocket connection)
