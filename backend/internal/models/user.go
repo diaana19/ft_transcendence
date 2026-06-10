@@ -6,6 +6,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// DefaultAvatar is the avatar given to every new user until they upload their own.
+const DefaultAvatar = "/default-avatar.jpg"
+
 // User is the account of a person.
 type User struct {
 	ID        string         `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`

@@ -218,6 +218,9 @@ func (s *OAuthService) FindOrCreateUser(_ context.Context, ghUser *GitHubUser) (
 	}
 
 	avatar := ghUser.AvatarURL
+	if avatar == "" {
+		avatar = models.DefaultAvatar
+	}
 
 	newUser := models.User{
 		DisplayName: name,

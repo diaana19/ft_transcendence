@@ -57,6 +57,11 @@ func (s *AuthService) CreateAuthUserService(user *models.User) (*models.UserResp
 		user.DisplayName = user.Username
 	}
 
+	if user.Avatar == nil {
+		avatar := models.DefaultAvatar
+		user.Avatar = &avatar
+	}
+
 	err = s.repo.CreateUser(user)
 	if err != nil {
 		return nil, err
@@ -67,6 +72,7 @@ func (s *AuthService) CreateAuthUserService(user *models.User) (*models.UserResp
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
 		Email:       user.Email,
+		Avatar:      user.Avatar,
 		CreatedAt:   user.CreatedAt,
 	}
 
