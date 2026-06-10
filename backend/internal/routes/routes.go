@@ -59,6 +59,7 @@ func registerPublicAuthRoutes(api *gin.RouterGroup, c *controllers.AuthControlle
 	auth.POST("/refresh", c.RefreshToken)
 	auth.POST("/2fa/verify", c.Verify2FA)
 	auth.POST("/forgot-password", c.ForgotPassword)
+	auth.GET("/session", middleware.OptionalAuthMiddleware(rdb), c.Session)
 }
 
 // registerOAuthRoutes registers the GitHub OAuth login and callback routes.

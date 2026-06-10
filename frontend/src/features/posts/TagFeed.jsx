@@ -15,7 +15,6 @@ function TagFeed() {
     const [page, setPage] = useState(0)
     const [total, setTotal] = useState(0)
 
-    // loadPage replaces the list with one page of tagged posts.
     const loadPage = useCallback(
         async (p) => {
             setFetching(true)
@@ -37,15 +36,12 @@ function TagFeed() {
         [tag]
     )
 
-    // Reload the first page when the tag in the URL changes.
     useEffect(() => {
         loadPage(0)
     }, [loadPage])
 
-    // totalPages is the number of pages (at least one).
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-    // goToPage switches page and scrolls to the top.
     const goToPage = (p) => {
         if (p < 0 || p >= totalPages || p === page) return
         loadPage(p)

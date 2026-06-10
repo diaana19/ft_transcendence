@@ -12,12 +12,10 @@ function TagSearch() {
     const [page, setPage] = useState(0)
     const [loading, setLoading] = useState(true)
 
-    // Go back to the first page whenever the query changes.
     useEffect(() => {
         setPage(0)
     }, [query])
 
-    // Reload the matching tags whenever the query or page changes (debounced).
     useEffect(() => {
         let active = true
         setLoading(true)
@@ -40,10 +38,8 @@ function TagSearch() {
         }
     }, [query, page])
 
-    // totalPages is the number of pages (at least one).
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-    // goToPage switches page and scrolls to the top.
     const goToPage = (p) => {
         if (p < 0 || p >= totalPages || p === page) return
         setPage(p)

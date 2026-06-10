@@ -39,10 +39,8 @@ export function AuthProvider({ children }) {
         return () => window.removeEventListener('auth:expired', onExpired)
     }, [])
 
-    // On mount, restore the session from the stored token and confirm it with /me.
     useEffect(() => {
         const storedToken = localStorage.getItem('token')
-        let validToken = false
 
         if (storedToken) {
             try {
@@ -53,20 +51,14 @@ export function AuthProvider({ children }) {
                 } else {
                     setToken(storedToken)
                     setUser({ userId: payload.userId, username: payload.username })
-                    validToken = true
                 }
             } catch {
                 clearLocalSession()
             }
         }
 
-        if (!validToken) {
-            setLoading(false)
-            return
-        }
-
         let cancelled = false
-        api.get('/api/auth/me')
+        api.get('/api/auth/session')
             .then((res) => {
                 if (cancelled) return
                 const u = res.data?.user
@@ -78,13 +70,11 @@ export function AuthProvider({ children }) {
                         avatar: u.avatar,
                         two_fa_enabled: u.two_fa_enabled,
                     })
+                } else {
+                    clearLocalSession()
                 }
             })
-            .catch((err) => {
-                if (cancelled) return
-                const status = err.response?.status
-                if (status === 401 || status === 404) clearLocalSession()
-            })
+            .catch(() => {})
             .finally(() => {
                 if (!cancelled) setLoading(false)
             })

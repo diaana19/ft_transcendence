@@ -45,10 +45,7 @@ export default function MessagesPage() {
         if (!me) return
         const fetchUsers = async () => {
             try {
-                const [friends, following] = await Promise.all([
-                    getFriends(me),
-                    getFollowing(me),
-                ])
+                const [friends, following] = await Promise.all([getFriends(me), getFollowing(me)])
                 // Merge friends and following, removing duplicates and myself.
                 const byId = {}
                 for (const u of [...(friends || []), ...(following || [])]) {

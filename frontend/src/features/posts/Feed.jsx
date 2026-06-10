@@ -61,7 +61,6 @@ function Feed() {
         return () => clearInterval(interval)
     }, [user?.userId])
 
-    // loadPage replaces the list with one page of posts.
     const loadPage = useCallback(async (p) => {
         setFetching(true)
         try {
@@ -76,15 +75,12 @@ function Feed() {
         }
     }, [])
 
-    // Load the first page on mount.
     useEffect(() => {
         loadPage(0)
     }, [loadPage])
 
-    // totalPages is the number of pages (at least one).
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-    // goToPage switches page and scrolls to the top.
     const goToPage = (p) => {
         if (p < 0 || p >= totalPages || p === page) return
         loadPage(p)

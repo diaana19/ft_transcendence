@@ -311,6 +311,30 @@ func (ac *AuthController) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": user.ToResponse()})
 }
 
+// Session returns the current user when a valid session exists, or null otherwise.
+// Unlike Me it never returns 401, so the frontend can probe the session on load
+// (including a cookie-only session from OAuth) without logging an error.
+// @Summary   Probe the current session
+// @Description Return the authenticated user, or null when there is no valid session
+// @Tags      auth
+// @Produce   json
+// @Success   200 {object} map[string]interface{}
+// @Router    /auth/session [get]
+func (ac *AuthController) Session(c *gin.Context) {
+	userIDRaw, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusOK, gin.H{"user": nil})
+		return
+	}
+	user, err := ac.authService.GetUserByID(userIDRaw.(string))
+	if err != nil {
+		c.SetCookie("auth_token", "", -1, "/", "", true, true)
+		c.JSON(http.StatusOK, gin.H{"user": nil})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"user": user.ToResponse()})
+}
+
 // LogoutUser blacklists the active token and clears the auth cookie.
 // @Summary   Log out the current user
 // @Description Blacklist the active token and clear the auth cookie
