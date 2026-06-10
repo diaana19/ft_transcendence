@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,12 +12,37 @@ import (
 
 // TwoFAController handles the 2FA setup, enable and disable endpoints.
 type TwoFAController struct {
-	service *services.TwoFAService
+	service     *services.TwoFAService
+	userService *services.UserService
+	mailService *services.MailService
 }
 
 // NewTwoFAController creates a new TwoFAController.
-func NewTwoFAController(service *services.TwoFAService) *TwoFAController {
-	return &TwoFAController{service: service}
+func NewTwoFAController(
+	service *services.TwoFAService,
+	userService *services.UserService,
+	mailService *services.MailService,
+) *TwoFAController {
+	return &TwoFAController{service: service, userService: userService, mailService: mailService}
+}
+
+// notify2FAChange emails the user that 2FA was enabled or disabled.
+func (tc *TwoFAController) notify2FAChange(userID, action string) {
+	user, err := tc.userService.GetUser(userID)
+	if err != nil || user.Email == "" {
+		return
+	}
+	go func(email, username string) {
+		subject := "Two-factor authentication " + action
+		body := fmt.Sprintf(
+			"Hi %s,\n\nTwo-factor authentication was %s on your Synk account.\n\n"+
+				"If you didn't do this, secure your account immediately and contact us.\n",
+			username, action,
+		)
+		if err := tc.mailService.SendMail([]string{email}, subject, body); err != nil {
+			log.Printf("2fa %s email failed for %s: %v", action, email, err)
+		}
+	}(user.Email, user.Username)
 }
 
 // Setup starts the 2FA setup and returns the provisioning data.
@@ -81,6 +108,7 @@ func (tc *TwoFAController) Enable(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	tc.notify2FAChange(userID, "enabled")
 	c.JSON(http.StatusOK, gin.H{"message": "2FA enabled successfully"})
 }
 
@@ -130,5 +158,6 @@ func (tc *TwoFAController) Disable(c *gin.Context) {
 		return
 	}
 
+	tc.notify2FAChange(userID, "disabled")
 	c.JSON(http.StatusOK, gin.H{"message": "2FA disabled"})
 }

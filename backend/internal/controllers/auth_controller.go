@@ -22,6 +22,22 @@ type LoginInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// passwordRuleMessage maps a CheckPasswordFormat error code to a readable message.
+func passwordRuleMessage(code int) string {
+	messages := []string{
+		"Password must not contain the username",
+		"Password too short (minimum 8 characters)",
+		"Password must contain a lowercase letter",
+		"Password must contain an uppercase letter",
+		"Password must contain a digit",
+		"Password must contain a special character",
+	}
+	if code < 0 || code >= len(messages) {
+		return "invalid password"
+	}
+	return messages[code]
+}
+
 // AuthController handles the auth endpoints like login, register and logout.
 type AuthController struct {
 	authService  *services.AuthService
@@ -91,15 +107,7 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 	}
 
 	if ok, errCode := utils.CheckPasswordFormat(input.Password, input.Username); !ok {
-		passwordMessages := []string{
-			"Password must not contain the username",
-			"Password too short (minimum 8 characters)",
-			"Password must contain a lowercase letter",
-			"Password must contain an uppercase letter",
-			"Password must contain a digit",
-			"Password must contain a special character",
-		}
-		c.JSON(400, gin.H{"error": passwordMessages[errCode]})
+		c.JSON(400, gin.H{"error": passwordRuleMessage(errCode)})
 		return
 	}
 
@@ -133,6 +141,71 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 	}
 
 	c.JSON(200, response)
+}
+
+// ChangePasswordInput holds the current and new password sent on a password change.
+type ChangePasswordInput struct {
+	CurrentPassword string `json:"current_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required"`
+}
+
+// ChangePassword updates the password of the logged user and notifies by email.
+// @Summary   Change the password of the logged user
+// @Description Verify the current password, store the new one, and email a confirmation
+// @Tags      auth
+// @Security  BearerAuth
+// @Accept    json
+// @Produce   json
+// @Param     body body ChangePasswordInput true "Current and new password"
+// @Success   200 {object} map[string]string
+// @Failure   400 {object} map[string]string
+// @Failure   401 {object} map[string]string
+// @Router    /auth/change-password [post]
+func (ac *AuthController) ChangePassword(c *gin.Context) {
+	userIDRaw, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID := userIDRaw.(string)
+
+	var input ChangePasswordInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input: " + err.Error()})
+		return
+	}
+
+	user, err := ac.authService.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	if ok, errCode := utils.CheckPasswordFormat(input.NewPassword, user.Username); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": passwordRuleMessage(errCode)})
+		return
+	}
+
+	if err := ac.authService.ChangePassword(userID, input.CurrentPassword, input.NewPassword); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if user.Email != "" {
+		go func(email, username string) {
+			subject := "Your Synk password was changed"
+			body := fmt.Sprintf(
+				"Hi %s,\n\nYour Synk password was just changed.\n\n"+
+					"If you didn't do this, reset your password immediately and contact us.\n",
+				username,
+			)
+			if err := ac.mailService.SendMail([]string{email}, subject, body); err != nil {
+				log.Printf("password change email failed for %s: %v", email, err)
+			}
+		}(user.Email, user.Username)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "password changed"})
 }
 
 // LoginUser logs the user in and returns a JWT, or asks for a 2FA step.

@@ -137,6 +137,25 @@ func (s *AuthService) ResetPassword(userID string, deliver func(newPassword stri
 	return nil
 }
 
+// ChangePassword checks the current password and replaces it with the new one.
+func (s *AuthService) ChangePassword(userID, currentPassword, newPassword string) error {
+	user, err := s.repo.GetByID(userID)
+	if err != nil {
+		return errors.New("user not found")
+	}
+	if user.Password == nil || *user.Password == "" {
+		return errors.New("password change is not available for this account")
+	}
+	if !utils.CheckHashString(currentPassword, *user.Password) {
+		return errors.New("current password is wrong")
+	}
+	hashed, err := utils.HashString(newPassword)
+	if err != nil {
+		return err
+	}
+	return s.repo.UpdatePassword(userID, hashed)
+}
+
 // CreatePendingLogin stores a pending login in redis and returns its token. It expires in 5 minutes.
 func (s *AuthService) CreatePendingLogin(userID string, rdb *redis.Client) (string, error) {
 	randomBytes := make([]byte, 32)

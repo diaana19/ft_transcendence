@@ -20,6 +20,15 @@ export async function login(identifier, password) {
     return response.data
 }
 
+// changePassword updates the password of the logged user.
+export async function changePassword(currentPassword, newPassword) {
+    const response = await api.post('/api/auth/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+    })
+    return response.data
+}
+
 // forgotPassword asks the server to send a password reset email.
 export async function forgotPassword(email) {
     const response = await api.post('/api/auth/forgot-password', {

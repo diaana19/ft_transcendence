@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import api from '../../services/axiosInstance'
 import Modal from '../../components/common/Modal'
+import { changePassword } from '../auth/authService'
 
 // SettingsPage shows account, security, data export and account delete options.
 export default function SettingsPage() {
@@ -12,6 +13,41 @@ export default function SettingsPage() {
     const [password, setPassword] = useState('')
     const [error, setError] = useState(null)
     const [loading, setLoading] = useState(false)
+
+    const [showPasswordModal, setShowPasswordModal] = useState(false)
+    const [currentPassword, setCurrentPassword] = useState('')
+    const [newPassword, setNewPassword] = useState('')
+    const [passwordError, setPasswordError] = useState(null)
+    const [passwordDone, setPasswordDone] = useState(false)
+    const [passwordLoading, setPasswordLoading] = useState(false)
+
+    const closePasswordModal = () => {
+        setShowPasswordModal(false)
+        setCurrentPassword('')
+        setNewPassword('')
+        setPasswordError(null)
+        setPasswordDone(false)
+    }
+
+    // handleChangePassword changes the password and shows a success message.
+    const handleChangePassword = async () => {
+        if (!currentPassword || !newPassword) {
+            setPasswordError('Please fill both fields')
+            return
+        }
+        setPasswordLoading(true)
+        setPasswordError(null)
+        try {
+            await changePassword(currentPassword, newPassword)
+            setPasswordDone(true)
+            setCurrentPassword('')
+            setNewPassword('')
+        } catch (err) {
+            setPasswordError(err.response?.data?.error || 'Something went wrong')
+        } finally {
+            setPasswordLoading(false)
+        }
+    }
 
     // handleDelete deletes the account after confirming the password, then logs out.
     const handleDelete = async () => {
@@ -60,8 +96,14 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between py-3 border-b border-gray-100">
                         <div>
                             <p className="text-sm font-medium text-gray-900">Change password</p>
-                            <p className="text-sm text-gray-400">Coming soon</p>
+                            <p className="text-sm text-gray-500">Update your account password</p>
                         </div>
+                        <button
+                            onClick={() => setShowPasswordModal(true)}
+                            className="text-sm text-blue-400 hover:underline font-medium"
+                        >
+                            Change
+                        </button>
                     </div>
                 </div>
             </div>
@@ -140,6 +182,44 @@ export default function SettingsPage() {
                     </button>
                 </div>
             </div>
+
+            <Modal
+                isOpen={showPasswordModal}
+                onClose={closePasswordModal}
+                title="Change password"
+                confirmText={
+                    passwordDone ? 'Done' : passwordLoading ? 'Saving...' : 'Change password'
+                }
+                cancelText={passwordDone ? 'Close' : 'Cancel'}
+                onConfirm={passwordDone ? closePasswordModal : handleChangePassword}
+                size="sm"
+            >
+                {passwordDone ? (
+                    <p className="text-gray-600 text-sm">
+                        Your password was changed. We sent a confirmation to your email.
+                    </p>
+                ) : (
+                    <>
+                        <input
+                            type="password"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder="Current password"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:border-blue-400"
+                        />
+                        <input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="New password"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                        />
+                        {passwordError && (
+                            <p className="text-red-500 text-xs mt-2">{passwordError}</p>
+                        )}
+                    </>
+                )}
+            </Modal>
 
             <Modal
                 isOpen={showDeleteModal}

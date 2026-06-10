@@ -54,7 +54,7 @@ func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 
 	return &Controllers{
 		Auth:         controllers.NewAuthController(authService, twoFAService, mailService, rdb),
-		TwoFA:        controllers.NewTwoFAController(twoFAService),
+		TwoFA:        controllers.NewTwoFAController(twoFAService, userService, mailService),
 		User:         controllers.NewUserController(userService, friendService, mailService),
 		Friend:       &controllers.FriendController{Service: friendService, NotificationService: notifService},
 		Post:         controllers.NewPostController(postService, notifService, uploadService),
