@@ -26,6 +26,8 @@ type UserRepository interface {
 	GetByEmail(email string) (*models.User, error)
 	// GetByUsername returns the user with this username.
 	GetByUsername(username string) (*models.User, error)
+	// SearchUsers returns a page of users matching the query and the total count.
+	SearchUsers(query string, limit, offset int) ([]models.User, int64, error)
 	// GetByIdentifier returns the user matching the email or the username.
 	GetByIdentifier(identifier string) (*models.User, error)
 	// GetByGithubID returns the user with this GitHub id.
@@ -132,6 +134,22 @@ func (r *userRepository) GetByUsername(username string) (*models.User, error) {
 	var user models.User
 	result := r.db.First(&user, "username = ?", username)
 	return &user, result.Error
+}
+
+// SearchUsers returns a page of users whose username or display name matches the
+// query, ordered by username, together with the total number of matches.
+func (r *userRepository) SearchUsers(query string, limit, offset int) ([]models.User, int64, error) {
+	like := "%" + query + "%"
+	cond := r.db.Model(&models.User{}).Where("username ILIKE ? OR display_name ILIKE ?", like, like)
+
+	var total int64
+	if err := cond.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var users []models.User
+	err := cond.Order("username ASC").Limit(limit).Offset(offset).Find(&users).Error
+	return users, total, err
 }
 
 // UpdatePassword changes the password of the user.

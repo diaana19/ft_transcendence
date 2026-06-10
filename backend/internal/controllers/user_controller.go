@@ -33,17 +33,25 @@ func NewUserController(
 	return &UserController{userService: userService, friendService: friendService, mailService: mailService}
 }
 
-// GetUsers lists all users, or returns one user when a username query is given.
-// @Summary   List all users, or look one up by exact username
+// GetUsers lists all users, looks one up by exact username, or searches them by text.
+// @Summary   List users, look one up by exact username, or search by text (q)
 // @Tags      users
 // @Security  BearerAuth
 // @Produce   json
 // @Param     username query string false "exact username; returns the single matching user instead of the list"
+// @Param     q        query string false "search text matched against username and display name (paginated)"
+// @Param     limit    query int    false "max users to return when searching (default 10, max 50)"
+// @Param     offset   query int    false "users to skip when searching (default 0)"
 // @Success   200 {array}  models.UserResponse
 // @Failure   404 {object} map[string]string
 // @Failure   500 {object} map[string]string
 // @Router    /users [get]
 func (uc *UserController) GetUsers(c *gin.Context) {
+	if q, ok := c.GetQuery("q"); ok {
+		uc.searchUsers(c, q)
+		return
+	}
+
 	if username := c.Query("username"); username != "" {
 		user, err := uc.userService.GetUserByUsername(username)
 		if err != nil {
@@ -72,6 +80,23 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 		responses[i] = u.ToResponse()
 	}
 	c.JSON(http.StatusOK, responses)
+}
+
+// searchUsers returns a page of users matching the text query, with the total count.
+func (uc *UserController) searchUsers(c *gin.Context, query string) {
+	limit, offset := parseLimitOffset(c)
+
+	users, total, err := uc.userService.SearchUsers(query, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	responses := make([]models.UserResponse, len(users))
+	for i, u := range users {
+		responses[i] = u.ToResponse()
+	}
+	c.JSON(http.StatusOK, gin.H{"data": responses, "limit": limit, "offset": offset, "total": total})
 }
 
 // GetUser returns one user by its id with the follower counts.

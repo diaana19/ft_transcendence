@@ -28,6 +28,11 @@ func (s *UserService) GetUser(id string) (*models.User, error) {
 	return s.repo.GetByID(id)
 }
 
+// SearchUsers returns a page of users matching the query and the total count.
+func (s *UserService) SearchUsers(query string, limit, offset int) ([]models.User, int64, error) {
+	return s.repo.SearchUsers(query, limit, offset)
+}
+
 // GetUserByUsername returns one user by username.
 func (s *UserService) GetUserByUsername(username string) (*models.User, error) {
 	return s.repo.GetByUsername(username)

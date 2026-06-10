@@ -18,6 +18,13 @@ export const getFriends = async (userId) => {
     return res.data?.data || res.data
 }
 
+// searchUsers returns a page of users matching the query plus the total count.
+export const searchUsers = async (query = '', limit = 20, offset = 0) => {
+    const q = encodeURIComponent(query)
+    const res = await axiosInstance.get(`/api/users?q=${q}&limit=${limit}&offset=${offset}`)
+    return { users: res.data.data || [], total: res.data.total ?? 0 }
+}
+
 // followUser starts following another user.
 export const followUser = async (targetId) => {
     const res = await axiosInstance.post(`/api/friends/follow/${targetId}`)

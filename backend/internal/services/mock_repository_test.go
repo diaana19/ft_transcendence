@@ -108,6 +108,10 @@ func (m *mockUserRepository) GetByUsername(username string) (*models.User, error
 	return nil, errors.New("record not found")
 }
 
+func (m *mockUserRepository) SearchUsers(_ string, _, _ int) ([]models.User, int64, error) {
+	return nil, 0, nil
+}
+
 func (m *mockUserRepository) GetByIdentifier(identifier string) (*models.User, error) {
 	for _, u := range m.users {
 		if u.Email == identifier || u.Username == identifier {

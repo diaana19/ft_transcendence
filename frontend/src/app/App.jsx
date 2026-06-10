@@ -11,6 +11,7 @@ import Profile from '../features/user/Profile.jsx'
 import Feed from '../features/posts/Feed'
 import TagFeed from '../features/posts/TagFeed.jsx'
 import TagSearch from '../features/posts/TagSearch.jsx'
+import UserSearch from '../features/user/UserSearch.jsx'
 import NotificationsPage from '../components/notifications/Notification.jsx'
 import CookiesBanner from '../components/common/CookiesBanner'
 import HelpCenter from '../features/help/HelpCenter.jsx'
@@ -53,6 +54,7 @@ function App() {
                     <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/post/:id" element={<PostPage />} />
                     <Route path="/2fa/setup" element={<TwoFASetup />} />
+                    <Route path="/users" element={<UserSearch />} />
                     <Route path="/messages" element={<MessagesPage />} />
                     <Route path="/messages/:peerId" element={<MessagesPage />} />
                     <Route path="/settings" element={<SettingsPage />} />

@@ -139,6 +139,13 @@ export default function RightSidebar() {
             <div className="bg-white/60 border border-gray-200 rounded-xl p-4">
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">Who to follow</h3>
                 <Suggestions />
+                <Link
+                    to="/users"
+                    className="block text-xs font-semibold mt-3 hover:underline"
+                    style={{ color: '#534ab7' }}
+                >
+                    Search users →
+                </Link>
             </div>
         </aside>
     )
