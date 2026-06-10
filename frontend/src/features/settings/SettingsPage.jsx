@@ -20,6 +20,7 @@ export default function SettingsPage() {
     const [passwordError, setPasswordError] = useState(null)
     const [passwordDone, setPasswordDone] = useState(false)
     const [passwordLoading, setPasswordLoading] = useState(false)
+    const [deleted, setDeleted] = useState(false)
 
     const closePasswordModal = () => {
         setShowPasswordModal(false)
@@ -61,8 +62,12 @@ export default function SettingsPage() {
             await api.delete(`/api/users/${user.userId}`, {
                 data: { password },
             })
-            await logout()
-            navigate('/login')
+            setShowDeleteModal(false)
+            setDeleted(true)
+            setTimeout(async () => {
+                await logout()
+                navigate('/login')
+            }, 5000)
         } catch (err) {
             setError(err.response?.data?.error || 'Something went wrong')
         } finally {
@@ -143,7 +148,6 @@ export default function SettingsPage() {
                     </div>
                     <button
                         onClick={async () => {
-                            // Export the user data and download it as a JSON file.
                             const res = await api.get('/api/gdpr/export')
                             const blob = new Blob([JSON.stringify(res.data, null, 2)], {
                                 type: 'application/json',
@@ -248,6 +252,7 @@ export default function SettingsPage() {
                 />
                 {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
             </Modal>
+
             <div className="px-4 py-6 md:hidden">
                 <button
                     onClick={async () => {
@@ -260,6 +265,26 @@ export default function SettingsPage() {
                     Log out
                 </button>
             </div>
+
+            {deleted && (
+                <div
+                    className="fixed inset-0 z-100 flex items-center justify-center"
+                    style={{ background: 'rgba(237, 232, 253, 0.8)' }}
+                >
+                    <div
+                        className="bg-white rounded-2xl px-8 py-6 text-center"
+                        style={{ border: '1.5px solid #ede8fd' }}
+                    >
+                        <p className="text-2xl mb-2">👋</p>
+                        <p className="text-sm font-bold" style={{ color: '#2c2c2a' }}>
+                            Account deleted
+                        </p>
+                        <p className="text-xs mt-1" style={{ color: '#afa9ec' }}>
+                            Your data has been permanently removed. Redirecting...
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
