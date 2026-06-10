@@ -294,16 +294,16 @@ export default function Profile() {
                                 <span
                                     onClick={() => setFollowModal('following')}
                                     className="ml-1"
-                                    style={{ color: '#b4b2a9' }}
+                                    style={{ color: '#757575' }}
                                 >
                                     Following
                                 </span>
                             </span>
                             <span className="text-sm cursor-pointer hover:underline">
-                                <strong className="text-black">{user.followers_count ?? 0}</strong>
+                                <strong  style={{ color: '#534ab7' }}>{user.followers_count ?? 0}</strong>
                                 <span
                                     onClick={() => setFollowModal('followers')}
-                                    className="text-gray-500 ml-1"
+                                    className="ml-1" style={{ color: '#757575' }}
                                 >
                                     Followers
                                 </span>

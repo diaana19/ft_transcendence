@@ -6,7 +6,9 @@ import RightSidebar from './RightSidebar'
 export default function Layout() {
     const location = useLocation()
     // Show the right sidebar only on the home feed.
-    const showRightSidebar = location.pathname === '/'
+    const showRightSidebar = location.pathname === '/' ||
+  location.pathname.startsWith('/tag/') ||
+  location.pathname === '/tags'
 
     return (
         <div className="flex min-h-screen text-gray-900">
