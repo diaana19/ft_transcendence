@@ -10,6 +10,12 @@ export async function getPosts(limit = 10, offset = 0) {
     return response.data.data
 }
 
+// getPostsPage returns a page of posts plus the total count for pagination.
+export async function getPostsPage(limit = 20, offset = 0) {
+    const response = await axiosInstance.get(`/api/posts?limit=${limit}&offset=${offset}`)
+    return { posts: response.data.data, total: response.data.total ?? 0 }
+}
+
 // getPost returns one post by id.
 export async function getPost(id) {
     const response = await axiosInstance.get(`/api/posts/${id}`)
@@ -30,6 +36,15 @@ export async function getPostsByTag(tag, limit = 10, offset = 0) {
         `/api/posts?tag=${name}&limit=${limit}&offset=${offset}`
     )
     return response.data.data
+}
+
+// getPostsByTagPage returns a page of tagged posts plus the total count.
+export async function getPostsByTagPage(tag, limit = 20, offset = 0) {
+    const name = encodeURIComponent(String(tag).replace(/^#/, ''))
+    const response = await axiosInstance.get(
+        `/api/posts?tag=${name}&limit=${limit}&offset=${offset}`
+    )
+    return { posts: response.data.data, total: response.data.total ?? 0 }
 }
 
 // createPost creates a new post with optional media.

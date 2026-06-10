@@ -1,89 +1,56 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { getPostsByTag } from './postService'
+import { getPostsByTagPage } from './postService'
 import PostCard from './PostCard'
 
 const PAGE_SIZE = 20
 
-// TagFeed shows the posts of one hashtag with infinite scroll.
+// TagFeed shows the posts of one hashtag with page-by-page pagination.
 function TagFeed() {
     const { tag } = useParams()
     const { user } = useAuth()
     const [posts, setPosts] = useState([])
     const [fetching, setFetching] = useState(true)
-    const [loadingMore, setLoadingMore] = useState(false)
-    const [hasMore, setHasMore] = useState(true)
+    const [page, setPage] = useState(0)
+    const [total, setTotal] = useState(0)
 
-    const offsetRef = useRef(0)
-    const hasMoreRef = useRef(true)
-    const loadingRef = useRef(false)
-    const sentinelRef = useRef(null)
+    // loadPage replaces the list with one page of tagged posts.
+    const loadPage = useCallback(
+        async (p) => {
+            setFetching(true)
+            try {
+                const { posts: data, total: count } = await getPostsByTagPage(
+                    tag,
+                    PAGE_SIZE,
+                    p * PAGE_SIZE
+                )
+                setPosts(data)
+                setTotal(count)
+                setPage(p)
+            } catch (err) {
+                console.info('Error fetching tagged posts:', err)
+            } finally {
+                setFetching(false)
+            }
+        },
+        [tag]
+    )
 
-    // loadMore fetches the next page of tagged posts, skipping duplicates.
-    const loadMore = useCallback(async () => {
-        if (loadingRef.current || !hasMoreRef.current) return
-        loadingRef.current = true
-        setLoadingMore(true)
-        try {
-            const data = await getPostsByTag(tag, PAGE_SIZE, offsetRef.current)
-            offsetRef.current += data.length
-            // A full page means there may be more posts to load.
-            hasMoreRef.current = data.length === PAGE_SIZE
-            setHasMore(hasMoreRef.current)
-            setPosts((prev) => {
-                const seen = new Set(prev.map((p) => p.id))
-                return [...prev, ...data.filter((p) => !seen.has(p.id))]
-            })
-        } catch (err) {
-            console.info('Error fetching tagged posts:', err)
-        } finally {
-            loadingRef.current = false
-            setLoadingMore(false)
-            setFetching(false)
-        }
-    }, [tag])
-
-    // Reset everything and reload when the tag in the URL changes.
+    // Reload the first page when the tag in the URL changes.
     useEffect(() => {
-        offsetRef.current = 0
-        hasMoreRef.current = true
-        loadingRef.current = false
-        setPosts([])
-        setHasMore(true)
-        setFetching(true)
-        loadMore()
-    }, [tag, loadMore])
+        loadPage(0)
+    }, [loadPage])
 
-    // Load more posts when the sentinel div gets near the viewport.
-    useEffect(() => {
-        const el = sentinelRef.current
-        if (!el || !hasMore) return
-        const obs = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) loadMore()
-            },
-            { rootMargin: '300px' }
-        )
-        obs.observe(el)
-        return () => obs.disconnect()
-    }, [loadMore, hasMore, fetching])
+    // totalPages is the number of pages (at least one).
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-    const reload = useCallback(async () => {
-        if (loadingRef.current) return
-        loadingRef.current = true
-        try {
-            const data = await getPostsByTag(tag, PAGE_SIZE, 0)
-            offsetRef.current = data.length
-            hasMoreRef.current = data.length === PAGE_SIZE
-            setHasMore(hasMoreRef.current)
-            setPosts(data)
-        } catch (err) {
-            console.info('Error fetching tagged posts:', err)
-        } finally {
-            loadingRef.current = false
-        }
-    }, [tag])
+    // goToPage switches page and scrolls to the top.
+    const goToPage = (p) => {
+        if (p < 0 || p >= totalPages || p === page) return
+        loadPage(p)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
 
     const handleUpdate = (updatedPost) => {
         setPosts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)))
@@ -105,16 +72,34 @@ function TagFeed() {
                         key={post.id}
                         post={post}
                         currentUserId={user?.userId}
-                        onDelete={reload}
+                        onDelete={() => loadPage(page)}
                         onUpdate={handleUpdate}
                     />
                 ))
             )}
 
-            {!fetching && hasMore && <div ref={sentinelRef} className="h-1" />}
-            {loadingMore && <p className="text-center text-gray-400 py-4">Loading more...</p>}
-            {!fetching && !hasMore && posts.length > 0 && (
-                <p className="text-center text-gray-300 py-6 text-sm">You're all caught up</p>
+            {!fetching && total > 0 && (
+                <div className="flex items-center justify-center gap-4 py-6">
+                    <button
+                        onClick={() => goToPage(page - 1)}
+                        disabled={page === 0}
+                        className="px-4 py-2 rounded-full text-sm font-bold disabled:opacity-40"
+                        style={{ background: '#ede8fd', color: '#534ab7' }}
+                    >
+                        Previous
+                    </button>
+                    <span className="text-sm font-medium" style={{ color: '#534ab7' }}>
+                        Page {page + 1} of {totalPages}
+                    </span>
+                    <button
+                        onClick={() => goToPage(page + 1)}
+                        disabled={page + 1 >= totalPages}
+                        className="px-4 py-2 rounded-full text-sm font-bold disabled:opacity-40"
+                        style={{ background: '#ede8fd', color: '#534ab7' }}
+                    >
+                        Next
+                    </button>
+                </div>
             )}
         </div>
     )

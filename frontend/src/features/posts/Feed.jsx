@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../../hooks/useAuth'
-import { getPosts } from './postService'
+import { getPostsPage } from './postService'
 import PostCard from './PostCard'
 import CreatePost from './CreatePost'
 import api from '../../services/axiosInstance'
@@ -19,19 +19,14 @@ const BADGES_CHECK = [
     { key: 'social_butterfly', name: 'Social butterfly', check: (s) => s.followers >= 50 },
 ]
 
-// Feed is the home timeline with infinite scroll and a badge unlock toast.
+// Feed is the home timeline with page-by-page pagination and a badge toast.
 function Feed() {
     const { user } = useAuth()
     const [posts, setPosts] = useState([])
     const [fetching, setFetching] = useState(true)
-    const [loadingMore, setLoadingMore] = useState(false)
-    const [hasMore, setHasMore] = useState(true)
+    const [page, setPage] = useState(0)
+    const [total, setTotal] = useState(0)
     const [newBadge, setNewBadge] = useState(null)
-
-    const offsetRef = useRef(0)
-    const hasMoreRef = useRef(true)
-    const loadingRef = useRef(false)
-    const sentinelRef = useRef(null)
 
     // Poll the gamification stats and show a toast when a new badge is unlocked.
     useEffect(() => {
@@ -66,67 +61,38 @@ function Feed() {
         return () => clearInterval(interval)
     }, [user?.userId])
 
-    // loadMore fetches the next page and appends it, skipping duplicate posts.
-    const loadMore = useCallback(async () => {
-        if (loadingRef.current || !hasMoreRef.current) return
-        loadingRef.current = true
-        setLoadingMore(true)
+    // loadPage replaces the list with one page of posts.
+    const loadPage = useCallback(async (p) => {
+        setFetching(true)
         try {
-            const data = await getPosts(PAGE_SIZE, offsetRef.current)
-            offsetRef.current += data.length
-            // If we got a full page there may be more to load.
-            hasMoreRef.current = data.length === PAGE_SIZE
-            setHasMore(hasMoreRef.current)
-            setPosts((prev) => {
-                const seen = new Set(prev.map((p) => p.id))
-                return [...prev, ...data.filter((p) => !seen.has(p.id))]
-            })
+            const { posts: data, total: count } = await getPostsPage(PAGE_SIZE, p * PAGE_SIZE)
+            setPosts(data)
+            setTotal(count)
+            setPage(p)
         } catch (err) {
             console.info('Error fetching posts:', err)
         } finally {
-            loadingRef.current = false
-            setLoadingMore(false)
             setFetching(false)
         }
     }, [])
 
+    // Load the first page on mount.
     useEffect(() => {
-        loadMore()
-    }, [loadMore])
+        loadPage(0)
+    }, [loadPage])
 
-    // Watch the sentinel div and load more posts when it gets near the viewport.
-    useEffect(() => {
-        const el = sentinelRef.current
-        if (!el || !hasMore) return
-        const obs = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) loadMore()
-            },
-            { rootMargin: '300px' }
-        )
-        obs.observe(el)
-        return () => obs.disconnect()
-    }, [loadMore, hasMore, fetching])
+    // totalPages is the number of pages (at least one).
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-    // reload fetches the first page again from scratch (after creating a post).
-    const reload = useCallback(async () => {
-        if (loadingRef.current) return
-        loadingRef.current = true
-        try {
-            const data = await getPosts(PAGE_SIZE, 0)
-            offsetRef.current = data.length
-            hasMoreRef.current = data.length === PAGE_SIZE
-            setHasMore(hasMoreRef.current)
-            setPosts(data)
-        } catch (err) {
-            console.info('Error fetching posts:', err)
-        } finally {
-            loadingRef.current = false
-        }
-    }, [])
+    // goToPage switches page and scrolls to the top.
+    const goToPage = (p) => {
+        if (p < 0 || p >= totalPages || p === page) return
+        loadPage(p)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
 
     const handleCreated = async () => {
-        await reload()
+        await loadPage(0)
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
@@ -148,16 +114,34 @@ function Feed() {
                         key={post.id}
                         post={post}
                         currentUserId={user?.userId}
-                        onDelete={reload}
+                        onDelete={() => loadPage(page)}
                         onUpdate={handleUpdate}
                     />
                 ))
             )}
 
-            {!fetching && hasMore && <div ref={sentinelRef} className="h-1" />}
-            {loadingMore && <p className="text-center text-gray-400 py-4">Loading more...</p>}
-            {!fetching && !hasMore && posts.length > 0 && (
-                <p className="text-center text-gray-300 py-6 text-sm">You're all caught up</p>
+            {!fetching && total > 0 && (
+                <div className="flex items-center justify-center gap-4 py-6">
+                    <button
+                        onClick={() => goToPage(page - 1)}
+                        disabled={page === 0}
+                        className="px-4 py-2 rounded-full text-sm font-bold disabled:opacity-40"
+                        style={{ background: '#ede8fd', color: '#534ab7' }}
+                    >
+                        Previous
+                    </button>
+                    <span className="text-sm font-medium" style={{ color: '#534ab7' }}>
+                        Page {page + 1} of {totalPages}
+                    </span>
+                    <button
+                        onClick={() => goToPage(page + 1)}
+                        disabled={page + 1 >= totalPages}
+                        className="px-4 py-2 rounded-full text-sm font-bold disabled:opacity-40"
+                        style={{ background: '#ede8fd', color: '#534ab7' }}
+                    >
+                        Next
+                    </button>
+                </div>
             )}
 
             {newBadge && (
