@@ -100,7 +100,12 @@ func (pc *PostController) SearchTags(c *gin.Context) {
 		tags = []models.TagCount{}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": tags, "limit": limit, "offset": offset, "total": total})
+	c.JSON(http.StatusOK, paginated(tags, limit, offset, total))
+}
+
+// paginated wraps a page of items with its limit, offset and total metadata.
+func paginated(data any, limit, offset int, total int64) gin.H {
+	return gin.H{"data": data, "limit": limit, "offset": offset, "total": total}
 }
 
 // parseLimitOffset reads the limit and offset query params with safe defaults.
@@ -163,12 +168,7 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 		responses[i] = resp
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":   responses,
-		"limit":  limit,
-		"offset": offset,
-		"total":  total,
-	})
+	c.JSON(http.StatusOK, paginated(responses, limit, offset, total))
 }
 
 // GetPost returns one post by its id.

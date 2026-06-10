@@ -96,7 +96,7 @@ func (uc *UserController) searchUsers(c *gin.Context, query string) {
 	for i, u := range users {
 		responses[i] = u.ToResponse()
 	}
-	c.JSON(http.StatusOK, gin.H{"data": responses, "limit": limit, "offset": offset, "total": total})
+	c.JSON(http.StatusOK, paginated(responses, limit, offset, total))
 }
 
 // GetUser returns one user by its id with the follower counts.
