@@ -52,9 +52,15 @@ func (s *GDPRService) GetUserContact(userID string) (email, username string, err
 	return user.Email, user.Username, nil
 }
 
-// DeleteUserData removes the posts and the user account.
+// DeleteUserData removes the posts, scrubs the personal data and soft deletes the user, so
+// the username and email are freed and the account no longer exists.
 func (s *GDPRService) DeleteUserData(userID string) error {
 	if err := s.db.Where("author_id = ?", userID).Delete(&models.Post{}).Error; err != nil {
+		return err
+	}
+
+	if err := s.db.Model(&models.User{}).Where("id = ?", userID).
+		Updates(models.AnonymizedFields(userID)).Error; err != nil {
 		return err
 	}
 

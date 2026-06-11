@@ -73,6 +73,18 @@ func (u *User) ToResponse() UserResponse {
 	}
 }
 
+// AnonymizedFields returns the column values used to scrub a user's personal data on
+// deletion. It frees the unique username and email so they can be registered again and
+// clears the credentials, so the account no longer exists after the soft delete.
+func AnonymizedFields(userID string) map[string]any {
+	return map[string]any{
+		"username":      "deleted_" + userID,
+		"email":         "deleted_" + userID + "@deleted.invalid",
+		"password":      nil,
+		"two_fa_secret": nil,
+	}
+}
+
 // Friend is the relation between two users.
 type Friend struct {
 	ID       string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`

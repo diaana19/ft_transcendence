@@ -103,18 +103,20 @@ func (r *userRepository) Update(id string, input models.UpdateUserInput) (*model
 	return &user, nil
 }
 
-// Delete removes the user with this id.
+// Delete scrubs the user's personal data and then soft deletes the row, so the username
+// and email are freed and the account no longer exists.
 func (r *userRepository) Delete(id string) error {
-	result := r.db.Delete(&models.User{}, "id = ?", id)
-	if result.Error != nil {
-		return result.Error
-	}
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		scrub := tx.Model(&models.User{}).Where("id = ?", id).Updates(models.AnonymizedFields(id))
+		if scrub.Error != nil {
+			return scrub.Error
+		}
+		if scrub.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
 
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-
-	return nil
+		return tx.Delete(&models.User{}, "id = ?", id).Error
+	})
 }
 
 // CreateUser saves a new user.
