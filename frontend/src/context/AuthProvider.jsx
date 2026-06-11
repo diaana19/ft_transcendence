@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true)
     const clearLocalSession = () => {
         localStorage.removeItem('token')
+        localStorage.removeItem('earned_badges')
         setToken(null)
         setUser(null)
     }

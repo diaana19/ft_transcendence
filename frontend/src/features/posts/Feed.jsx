@@ -41,8 +41,12 @@ function Feed() {
                 }
                 const earned = BADGES_CHECK.filter((b) => b.check(userStats))
                 const prev = JSON.parse(localStorage.getItem('earned_badges') || 'null')
-                // First run only saves the current badges, no toast.
+                // First run shows earned badges and saves them.
                 if (prev === null) {
+                    if (earned.length > 0) {
+                        setNewBadge(earned[0])
+                        setTimeout(() => setNewBadge(null), 4000)
+                    }
                     localStorage.setItem('earned_badges', JSON.stringify(earned.map((b) => b.key)))
                     return
                 }

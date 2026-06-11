@@ -37,16 +37,16 @@ export default function Info() {
                         title: 'Badges',
                         text: 'Badges are permanent achievements that unlock automatically when you hit a milestone — no button to press, no claim needed. There are two categories: 🤝 Social (friends & followers) and  ✍️ Posts (writing & getting likes). Locked badges show you exactly what you need to do next.',
                     },
-					{
-						icon: 'ti-users',
-						title: 'Social badges',
-						text: '👋 Welcome — create your account. 🤝 First bond — add your first friend. 🕸️ Network builder — reach 10 friends. 🦋 Social butterfly — connect with 50+ friends. Follow people and send friend requests to unlock these.',
-					},
-					{
-						icon: 'ti-pencil',
-						title: 'Post badges',
-						text: '✍️ First words — publish your first post. ✨ First spark — receive your first like. 📝 Content creator — publish 25 posts. ⭐ Rising star — collect 20 likes across all your posts. Quality and consistency both count.',
-					},
+                    {
+                        icon: 'ti-users',
+                        title: 'Social badges',
+                        text: '👋 Welcome — create your account. 🤝 First bond — add your first friend. 🕸️ Network builder — reach 10 friends. 🦋 Social butterfly — connect with 50+ friends. Follow people and send friend requests to unlock these.',
+                    },
+                    {
+                        icon: 'ti-pencil',
+                        title: 'Post badges',
+                        text: '✍️ First words — publish your first post. ✨ First spark — receive your first like. 📝 Content creator — publish 25 posts. ⭐ Rising star — collect 20 likes across all your posts. Quality and consistency both count.',
+                    },
                     {
                         icon: 'ti-calendar-week',
                         title: 'Weekly reset',
