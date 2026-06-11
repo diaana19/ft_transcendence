@@ -6,10 +6,10 @@ import FriendsList from './FriendsList'
 import FollowButton from '../../components/common/FollowButton'
 import PostCard from '../posts/PostCard'
 import { getPostsByAuthor } from '../posts/postService'
-import { sendFriendRequest, removeFriend } from '../../features/user/userService'
 import FollowersModal from './FollowersModal'
 import ProfileBadges from '../gamification/ProfileBadge'
 import { getRepliesByUser } from '../posts/postService'
+import { sendFriendRequest, removeFriend, cancelFriendRequest } from '../../features/user/userService'
 
 // Profile shows a user page with posts, replies and badges tabs, and edit options.
 export default function Profile() {
@@ -158,6 +158,16 @@ export default function Profile() {
         }
     }
 
+    //Cancels a pending friend request sent to this user.
+    const handleCancelRequest = async () => {
+        try {
+            await cancelFriendRequest(userId)
+            setFriendRequested(false)
+        } catch (err) {
+            console.error('Error cancelling friend request:', err)
+        }
+    }
+
     return (
         <div className="min-h-screen bg-transparent">
             <div
@@ -173,9 +183,9 @@ export default function Profile() {
 
             <div className="border-b border-gray-200">
                 <div className="relative px-4">
-                    <div className="absolute -top-16">
-                        <div className="relative w-32 h-32">
-                            <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-300 overflow-hidden">
+                    <div className="absolute -top-12 md:-top-16">
+                        <div className="relative w-24 h-24 md:w-32 md:h-32">
+                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white bg-gray-300 overflow-hidden">
                                 {user.avatar ? (
                                     <img
                                         src={user.avatar || '/default-avatar.jpg'}
@@ -191,14 +201,14 @@ export default function Profile() {
                             </div>
                             {isOnline && (
                                 <div
-                                    className="absolute bottom-2 right-2 w-5 h-5 rounded-full border-2 border-white"
+                                    className="absolute bottom-1 right-1 md:bottom-2 md:right-2 w-4 h-4 md:w-5 md:h-5 rounded-full border-2 border-white"
                                     style={{ background: '#4ade80' }}
                                 />
                             )}
                         </div>
                     </div>
 
-                    <div className="flex justify-end pt-3 pb-2 gap-2 flex-wrap">
+                    <div className="flex justify-end pt-8 pb-2 gap-2 flex-wrap">
                         {authUser?.userId === userId ? (
                             <>
                                 <button
@@ -231,35 +241,24 @@ export default function Profile() {
                                     targetId={userId}
                                     isFollowing={isFollowing}
                                 />
-                                <button
-                                    onClick={isFriend ? handleRemoveFriend : handleFriendRequest}
-                                    disabled={!isFriend && friendRequested}
-                                    className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors"
-                                    style={{
-                                        border: isFriend
-                                            ? '1px solid #fde8f0'
-                                            : '1px solid #ede8fd',
-                                        color: isFriend ? '#d4537e' : '#534ab7',
-                                        background: 'white',
-                                    }}
-                                >
-                                    {isFriend
-                                        ? 'Remove friend'
-                                        : friendRequested
-                                          ? 'Requested'
-                                          : 'Add friend'}
-                                </button>
-                                <button
-                                    onClick={() => navigate(`/messages/${id}`)}
-                                    className="text-sm font-semibold px-4 py-1.5 rounded-full transition-colors hover:bg-[#faf8f5]"
-                                    style={{
-                                        border: '1px solid #ede8fd',
-                                        color: '#534ab7',
-                                        background: 'white',
-                                    }}
-                                >
-                                    Message
-                                </button>
+                                    <button
+                                        onClick={isFriend ? handleRemoveFriend : friendRequested ? handleCancelRequest : handleFriendRequest}
+                                        className="text-xs md:text-sm font-semibold px-3 md:px-4 py-1.5 rounded-full transition-colors"
+                                        style={{
+                                            border: isFriend ? '1px solid #fde8f0' : '1px solid #ede8fd',
+                                            color: isFriend ? '#d4537e' : friendRequested ? '#d4537e' : '#534ab7',
+                                            background: 'white',
+                                        }}
+                                    >
+                                        {isFriend ? 'Remove friend' : friendRequested ? 'Cancel request' : 'Add friend'}
+                                    </button>
+                                    <button
+                                        onClick={() => navigate(`/messages/${userId}`)}
+                                        className="text-xs md:text-sm font-semibold px-3 md:px-4 py-1.5 rounded-full transition-colors hover:bg-[#faf8f5]"
+                                        style={{ border: '1px solid #ede8fd', color: '#534ab7', background: 'white' }}
+                                    >
+                                        Message
+                                    </button>
                             </div>
                         )}
                     </div>

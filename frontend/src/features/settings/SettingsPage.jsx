@@ -67,7 +67,7 @@ export default function SettingsPage() {
             setTimeout(async () => {
                 await logout()
                 navigate('/login')
-            }, 5000)
+            }, 6000)
         } catch (err) {
             setError(err.response?.data?.error || 'Something went wrong')
         } finally {
