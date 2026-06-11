@@ -21,7 +21,7 @@ const BADGES = [
                 name: 'First bond',
                 desc: 'Added your very first friend',
                 condition: '1 friend',
-                check: (s) => s.followers >= 1,
+                check: (s) => s.friends >= 1,
             },
             {
                 key: 'network_builder',
@@ -29,7 +29,7 @@ const BADGES = [
                 name: 'Network builder',
                 desc: 'Reached 10 friends on the platform',
                 condition: '10 friends',
-                check: (s) => s.followers >= 10,
+                check: (s) => s.friends >= 10,
             },
             {
                 key: 'social_butterfly',
@@ -37,7 +37,7 @@ const BADGES = [
                 name: 'Social butterfly',
                 desc: 'Connected with more than 50 friends',
                 condition: '50 friends',
-                check: (s) => s.followers >= 50,
+                check: (s) => s.friends >= 50,
             },
         ],
     },
@@ -109,9 +109,9 @@ const CATEGORY_LABEL = { social: 'Social', posts: 'Posts' }
 
 const CATEGORY_PROGRESS = {
     social: (s) => ({
-        value: Math.min(s.followers, 50),
+        value: Math.min(s.friends, 50),
         max: 50,
-        label: `${s.followers}/50 followers`,
+        label: `${s.friends}/50 friends`,
     }),
     posts: (s) => ({ value: Math.min(s.posts, 25), max: 25, label: `${s.posts}/25 posts` }),
 }
@@ -142,6 +142,7 @@ export default function Badges() {
     const userStats = {
         posts: stats?.posts?.count ?? 0,
         likes: stats?.likes?.count ?? 0,
+        friends: stats?.friends?.count ?? 0,
         followers: stats?.followers?.count ?? 0,
     }
 

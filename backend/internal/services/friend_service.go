@@ -97,6 +97,15 @@ func (s *FriendService) Follow(userID, targetID string) error {
 	return s.DB.Create(&follow).Error
 }
 
+// CountFriends returns how many accepted friend relationships the given user has.
+func (s *FriendService) CountFriends(userID string) (int64, error) {
+	var count int64
+	err := s.DB.Model(&models.Friend{}).
+		Where("(user_id = ? OR friend_id = ?) AND status = ?", userID, userID, statusAccepted).
+		Count(&count).Error
+	return count, err
+}
+
 // CountFollowers returns how many users follow the given user.
 func (s *FriendService) CountFollowers(userID string) (int64, error) {
 	var count int64

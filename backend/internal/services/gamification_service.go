@@ -25,6 +25,7 @@ type GamificationStats struct {
 	Total     int64  `json:"total"`
 	Posts     Metric `json:"posts"`
 	Likes     Metric `json:"likes"`
+	Friends   Metric `json:"friends"`
 	Followers Metric `json:"followers"`
 	Following Metric `json:"following"`
 }
@@ -66,6 +67,10 @@ func (s *GamificationService) Compute(userID string) (GamificationStats, error) 
 	}
 	likesReceived := postLikes + replyLikes
 
+	friends, err := s.friend.CountFriends(userID)
+	if err != nil {
+		return GamificationStats{}, err
+	}
 	followers, err := s.friend.CountFollowers(userID)
 	if err != nil {
 		return GamificationStats{}, err
@@ -75,12 +80,13 @@ func (s *GamificationService) Compute(userID string) (GamificationStats, error) 
 		return GamificationStats{}, err
 	}
 
-	total := posts + likesReceived + followers + following
+	total := posts + likesReceived + friends + followers + following
 	return GamificationStats{
 		Level:     Level(total),
 		Total:     total,
 		Posts:     asMetric(posts),
 		Likes:     asMetric(likesReceived),
+		Friends:   asMetric(friends),
 		Followers: asMetric(followers),
 		Following: asMetric(following),
 	}, nil

@@ -14,21 +14,21 @@ const BADGES = [
         icon: 'ti-heart-handshake',
         name: 'First bond',
         condition: '1 friend',
-        check: (s) => s.followers >= 1,
+        check: (s) => s.friends >= 1,
     },
     {
         key: 'network_builder',
         icon: 'ti-topology-star',
         name: 'Network builder',
         condition: '10 friends',
-        check: (s) => s.followers >= 10,
+        check: (s) => s.friends >= 10,
     },
     {
         key: 'social_butterfly',
         icon: 'ti-butterfly',
         name: 'Social butterfly',
         condition: '50 friends',
-        check: (s) => s.followers >= 50,
+        check: (s) => s.friends >= 50,
     },
     {
         key: 'first_words',
@@ -83,6 +83,7 @@ export default function ProfileBadges({ userId }) {
     const userStats = {
         posts: stats?.posts?.count ?? 0,
         likes: stats?.likes?.count ?? 0,
+        friends: stats?.friends?.count ?? 0,
         followers: stats?.followers?.count ?? 0,
     }
 
