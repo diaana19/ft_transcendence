@@ -9,7 +9,11 @@ import { getPostsByAuthor } from '../posts/postService'
 import FollowersModal from './FollowersModal'
 import ProfileBadges from '../gamification/ProfileBadge'
 import { getRepliesByUser } from '../posts/postService'
-import { sendFriendRequest, removeFriend, cancelFriendRequest } from '../../features/user/userService'
+import {
+    sendFriendRequest,
+    removeFriend,
+    cancelFriendRequest,
+} from '../../features/user/userService'
 
 // Profile shows a user page with posts, replies and badges tabs, and edit options.
 export default function Profile() {
@@ -241,24 +245,44 @@ export default function Profile() {
                                     targetId={userId}
                                     isFollowing={isFollowing}
                                 />
-                                    <button
-                                        onClick={isFriend ? handleRemoveFriend : friendRequested ? handleCancelRequest : handleFriendRequest}
-                                        className="text-xs md:text-sm font-semibold px-3 md:px-4 py-1.5 rounded-full transition-colors"
-                                        style={{
-                                            border: isFriend ? '1px solid #fde8f0' : '1px solid #ede8fd',
-                                            color: isFriend ? '#d4537e' : friendRequested ? '#d4537e' : '#534ab7',
-                                            background: 'white',
-                                        }}
-                                    >
-                                        {isFriend ? 'Remove friend' : friendRequested ? 'Cancel request' : 'Add friend'}
-                                    </button>
-                                    <button
-                                        onClick={() => navigate(`/messages/${userId}`)}
-                                        className="text-xs md:text-sm font-semibold px-3 md:px-4 py-1.5 rounded-full transition-colors hover:bg-[#faf8f5]"
-                                        style={{ border: '1px solid #ede8fd', color: '#534ab7', background: 'white' }}
-                                    >
-                                        Message
-                                    </button>
+                                <button
+                                    onClick={
+                                        isFriend
+                                            ? handleRemoveFriend
+                                            : friendRequested
+                                              ? handleCancelRequest
+                                              : handleFriendRequest
+                                    }
+                                    className="text-xs md:text-sm font-semibold px-3 md:px-4 py-1.5 rounded-full transition-colors"
+                                    style={{
+                                        border: isFriend
+                                            ? '1px solid #fde8f0'
+                                            : '1px solid #ede8fd',
+                                        color: isFriend
+                                            ? '#d4537e'
+                                            : friendRequested
+                                              ? '#d4537e'
+                                              : '#534ab7',
+                                        background: 'white',
+                                    }}
+                                >
+                                    {isFriend
+                                        ? 'Remove friend'
+                                        : friendRequested
+                                          ? 'Cancel request'
+                                          : 'Add friend'}
+                                </button>
+                                <button
+                                    onClick={() => navigate(`/messages/${userId}`)}
+                                    className="text-xs md:text-sm font-semibold px-3 md:px-4 py-1.5 rounded-full transition-colors hover:bg-[#faf8f5]"
+                                    style={{
+                                        border: '1px solid #ede8fd',
+                                        color: '#534ab7',
+                                        background: 'white',
+                                    }}
+                                >
+                                    Message
+                                </button>
                             </div>
                         )}
                     </div>
