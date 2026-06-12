@@ -127,18 +127,18 @@ users ───────────────┐
                       │        │ content, media_url                       │
                       │        │ likes_count, comments_count              │
                       │        │ created/updated_at, deleted_at           │
-                      │        └───┬───────────────┬───────────────┬──────┘
-                      │           <│              <│              <│
-                      │     ┌── likes ──┐   ┌─ replies ──┐   ┌─ reposts ─┐
-                      │     │ user_id   │   │ post_id    │   │ post_id   │
-                      │     │ post_id   │   │ author_id  │   │ author_id │
-                      │     │ UNIQUE    │   │ content    │   │           │
-                      │     │(user,post)│   │ (comments) │   └───────────┘
-                      │     └───────────┘   └────────────┘
+                      │        └──────────┬───────────────┬───────────────┘
+                      │                  <│              <│              
+                      │             ┌── likes ──┐   ┌─ replies ──┐   
+                      │             │ user_id   │   │ post_id    │   
+                      │             │ post_id   │   │ author_id  │   
+                      │             │ UNIQUE    │   │ content    │
+                      │             │(user,post)│   │ (comments) │   
+                      │             └───────────┘   └────────────┘
                       │ 1
                       ├───< messages       (id, sender_id, recipient_id, content,
-                      │                      file_id, room_id, parent_id → threaded
-                      │                      replies, created_at)
+                      │                      file_id, room_id, created_at)
+                      │                      
                       │ 1
                       ├───< notifications  (id, user_id → recipient, actor_id, type
                       │                      [friend_request|like|message|reply],
