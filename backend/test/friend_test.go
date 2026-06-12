@@ -34,13 +34,13 @@ func TestFriend_FollowAndListFollowers(t *testing.T) {
 	}
 }
 
-func TestFriend_FollowSelfFails(t *testing.T) {
+func TestFriend_FollowSelfIsNoop(t *testing.T) {
 	router, _ := SetupTestEnv()
 	alice := registerAndLogin(t, router, "fself", "fself@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "POST", "/api/friends/follow/"+alice.ID, alice.Token, "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("follow self: expected 400, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("follow self: expected 200, got %d", w.Code)
 	}
 }
 

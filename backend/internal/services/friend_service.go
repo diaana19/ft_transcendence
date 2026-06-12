@@ -131,46 +131,31 @@ func (s *FriendService) CountFollowing(userID string) (int64, error) {
 }
 
 // Unfollow removes the follow relationship only, leaving any friend relationship intact.
+// Unfollowing someone you do not follow is a no-op, so a repeated click reports
+// success and the frontend just refreshes its state.
 func (s *FriendService) Unfollow(userID, targetID string) error {
-	result := s.DB.
+	return s.DB.
 		Where("user_id = ? AND friend_id = ? AND status = ?", userID, targetID, statusFollow).
-		Delete(&models.Friend{})
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return errors.New("not following this user")
-	}
-	return nil
+		Delete(&models.Friend{}).Error
 }
 
 // RemoveFriend deletes the friend relationship between the two users.
+// Removing someone who is not a friend is a no-op, so a repeated click reports
+// success and the frontend just refreshes its state.
 func (s *FriendService) RemoveFriend(userID, targetID string) error {
-	result := s.DB.
+	return s.DB.
 		Where(sqlFriendBidirectionalStatuses, userID, targetID, targetID, userID, []string{statusPending, statusAccepted}).
-		Delete(&models.Friend{})
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return errors.New("you are not friend with this user")
-	}
-	return nil
+		Delete(&models.Friend{}).Error
 }
 
 // RejectRequest removes a pending request sent by the requester to the user.
+// Rejecting a request that no longer exists is a no-op, so a repeated click
+// reports success and the frontend just refreshes its state.
 func (s *FriendService) RejectRequest(userID, requesterID string) error {
-	result := s.DB.Where(
+	return s.DB.Where(
 		"user_id = ? AND friend_id = ? AND status = ?",
 		requesterID, userID, statusPending,
-	).Delete(&models.Friend{})
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return errors.New("no pending request found")
-	}
-	return nil
+	).Delete(&models.Friend{}).Error
 }
 
 // GetFollowers returns the users that follow the given user.

@@ -138,14 +138,14 @@ func TestFriendService_NegativeCases(t *testing.T) {
 	if err := svc.AcceptRequest("u1", "u1"); err == nil {
 		t.Fatal("expected error accepting own request")
 	}
-	if err := svc.Unfollow(utils.NewID(), utils.NewID()); err == nil {
-		t.Fatal("expected error unfollowing a non-followed user")
+	if err := svc.Unfollow(utils.NewID(), utils.NewID()); err != nil {
+		t.Fatalf("unfollowing a non-followed user is a no-op: %v", err)
 	}
-	if err := svc.RemoveFriend(utils.NewID(), utils.NewID()); err == nil {
-		t.Fatal("expected error removing a non-friend")
+	if err := svc.RemoveFriend(utils.NewID(), utils.NewID()); err != nil {
+		t.Fatalf("removing a non-friend is a no-op: %v", err)
 	}
-	if err := svc.RejectRequest(utils.NewID(), utils.NewID()); err == nil {
-		t.Fatal("expected error rejecting a missing request")
+	if err := svc.RejectRequest(utils.NewID(), utils.NewID()); err != nil {
+		t.Fatalf("rejecting a missing request is a no-op: %v", err)
 	}
 
 	bsvc := &services.FriendService{DB: brokenDB(t)}

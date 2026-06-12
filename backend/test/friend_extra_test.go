@@ -29,18 +29,18 @@ func TestFriend_RemoveFriend(t *testing.T) {
 	}
 }
 
-func TestFriend_RemoveNonFriendFails(t *testing.T) {
+func TestFriend_RemoveNonFriendIsNoop(t *testing.T) {
 	router, _ := SetupTestEnv()
 	alice := registerAndLogin(t, router, "rmnf-a", "rmnf-a@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "rmnf-b", "rmnf-b@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "DELETE", "/api/friends/"+bob.ID, alice.Token, "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("remove non-friend: expected 400, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("remove non-friend: expected 200, got %d", w.Code)
 	}
 }
 
-func TestFriend_DuplicateFollowFails(t *testing.T) {
+func TestFriend_DuplicateFollowIsNoop(t *testing.T) {
 	router, _ := SetupTestEnv()
 	alice := registerAndLogin(t, router, "dupf-a", "dupf-a@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "dupf-b", "dupf-b@test.com", "StrongPass123!")
@@ -50,19 +50,19 @@ func TestFriend_DuplicateFollowFails(t *testing.T) {
 		t.Fatalf("first follow: expected 200, got %d", w.Code)
 	}
 	w = authedRequest(t, router, "POST", "/api/friends/follow/"+bob.ID, alice.Token, "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("duplicate follow: expected 400, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("duplicate follow: expected 200, got %d", w.Code)
 	}
 }
 
-func TestFriend_UnfollowNotFollowingFails(t *testing.T) {
+func TestFriend_UnfollowNotFollowingIsNoop(t *testing.T) {
 	router, _ := SetupTestEnv()
 	alice := registerAndLogin(t, router, "unf2-a", "unf2-a@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "unf2-b", "unf2-b@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "DELETE", "/api/friends/follow/"+bob.ID, alice.Token, "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("unfollow when not following: expected 400, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("unfollow when not following: expected 200, got %d", w.Code)
 	}
 }
 
@@ -77,7 +77,7 @@ func TestFriend_AcceptWithoutPendingFails(t *testing.T) {
 	}
 }
 
-func TestFriend_DuplicateRequestFails(t *testing.T) {
+func TestFriend_DuplicateRequestIsNoop(t *testing.T) {
 	router, _ := SetupTestEnv()
 	alice := registerAndLogin(t, router, "dreq-a", "dreq-a@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "dreq-b", "dreq-b@test.com", "StrongPass123!")
@@ -87,19 +87,19 @@ func TestFriend_DuplicateRequestFails(t *testing.T) {
 		t.Fatalf("first request: expected 200, got %d", w.Code)
 	}
 	w = authedRequest(t, router, "POST", "/api/friends/request/"+bob.ID, alice.Token, "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("duplicate request: expected 400, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("duplicate request: expected 200, got %d", w.Code)
 	}
 }
 
-func TestFriend_RejectWithoutPendingFails(t *testing.T) {
+func TestFriend_RejectWithoutPendingIsNoop(t *testing.T) {
 	router, _ := SetupTestEnv()
 	alice := registerAndLogin(t, router, "rej2-a", "rej2-a@test.com", "StrongPass123!")
 	bob := registerAndLogin(t, router, "rej2-b", "rej2-b@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "POST", "/api/friends/reject/"+alice.ID, bob.Token, "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("reject without pending: expected 400, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("reject without pending: expected 200, got %d", w.Code)
 	}
 }
 

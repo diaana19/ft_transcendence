@@ -194,13 +194,13 @@ func TestFriend_FollowNonExistent(t *testing.T) {
 	}
 }
 
-func TestFriend_RemoveNonExistent(t *testing.T) {
+func TestFriend_RemoveNonExistentIsNoop(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "rmne", "rmne@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "DELETE", "/api/friends/"+utils.NewID(), user.Token, "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("remove non-existent: expected 400, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("remove non-existent: expected 200, got %d", w.Code)
 	}
 }
 

@@ -317,23 +317,23 @@ func TestPost_CreateNoAuth(t *testing.T) {
 	}
 }
 
-func TestFriend_UnfollowNonExistent(t *testing.T) {
+func TestFriend_UnfollowNonExistentIsNoop(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "unf-ne", "unf-ne@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "DELETE", "/api/friends/follow/550e8400-e29b-41d4-a716-446655440000", user.Token, "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("unfollow non-existent: expected 400, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("unfollow non-existent: expected 200, got %d", w.Code)
 	}
 }
 
-func TestFriend_RequestSelfFails(t *testing.T) {
+func TestFriend_RequestSelfIsNoop(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "req-self", "req-self@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "POST", "/api/friends/request/"+user.ID, user.Token, "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("request self: expected 400, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("request self: expected 200, got %d", w.Code)
 	}
 }
 

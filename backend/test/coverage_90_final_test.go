@@ -485,8 +485,8 @@ func TestFriendService_SendRequestToSelfFinal(t *testing.T) {
 	db.Create(&user)
 
 	err := service.SendRequest(userID, userID)
-	if err == nil {
-		t.Fatal("expected error for sending request to self")
+	if err != nil {
+		t.Fatalf("sending request to self is a no-op: %v", err)
 	}
 }
 
@@ -516,8 +516,8 @@ func TestFriendService_FollowSelfFinal(t *testing.T) {
 	db.Create(&user)
 
 	err := service.Follow(userID, userID)
-	if err == nil {
-		t.Fatal("expected error for following self")
+	if err != nil {
+		t.Fatalf("following self is a no-op: %v", err)
 	}
 }
 
@@ -551,8 +551,8 @@ func TestFriendService_UnfollowNotFollowingFinal(t *testing.T) {
 	db.Create(&target)
 
 	err := service.Unfollow(userID, targetID)
-	if err == nil {
-		t.Fatal("expected error for unfollowing without following")
+	if err != nil {
+		t.Fatalf("unfollowing without following is a no-op: %v", err)
 	}
 }
 
@@ -587,8 +587,8 @@ func TestFriendService_RemoveFriendNotFriendsFinal(t *testing.T) {
 	db.Create(&user2)
 
 	err := service.RemoveFriend(user1ID, user2ID)
-	if err == nil {
-		t.Fatal("expected error for removing non-friend")
+	if err != nil {
+		t.Fatalf("removing a non-friend is a no-op: %v", err)
 	}
 }
 

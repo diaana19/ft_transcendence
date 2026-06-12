@@ -486,8 +486,8 @@ func TestFriendService_RejectRequestWithoutPendingFinal(t *testing.T) {
 	db.Create(&user2)
 
 	err := service.RejectRequest(user1ID, user2ID)
-	if err == nil {
-		t.Fatal("expected error for reject without pending")
+	if err != nil {
+		t.Fatalf("reject without pending is a no-op: %v", err)
 	}
 }
 
