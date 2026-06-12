@@ -35,7 +35,7 @@ export default function Sidebar() {
         <>
             <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-transparent px-4 py-6">
                 <Link to="/" className="mb-8 px-2 flex items-center gap-3">
-                    <img src="/logo.png" alt="Synk logo" className="w-10 h-10 object-contain" />
+                    <img src="/logo192.png" alt="Synk logo" className="w-10 h-10 object-contain" />
                     <div className="flex flex-col leading-tight">
                         <h1 className="text-xl font-bold text-gray-900">Synk</h1>
                         <p className="text-xs text-gray-400">Join your people</p>

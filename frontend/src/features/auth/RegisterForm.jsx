@@ -71,7 +71,7 @@ function RegisterForm() {
         <div className="min-h-screen bg-white flex items-center justify-center">
             <div className="flex w-full max-w-4xl">
                 <div className="hidden lg:flex flex-1 items-center justify-center">
-                    <img src="/logo.png" className="w-77 h-77 object-contain mb-1 rounded" />
+                    <img src="/logo512.png" className="w-77 h-77 object-contain mb-1 rounded" />
                 </div>
                 <div className="flex-1 flex flex-col justify-center px-8 py-12">
                     <div className="lg:hidden mb-8">
