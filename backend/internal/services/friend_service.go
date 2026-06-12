@@ -188,6 +188,34 @@ func (s *FriendService) GetFriends(userID string) ([]models.User, error) {
 	return friends, err
 }
 
+func (s *FriendService) GetRelationship(userID, targetID string) (string, error) {
+	friends, err := s.AreFriends(userID, targetID)
+	if err != nil {
+		return "", err
+	}
+	if friends {
+		return "friends", nil
+	}
+	var count int64
+	if err := s.DB.Model(&models.Friend{}).
+		Where("user_id = ? AND friend_id = ? AND status = ?", userID, targetID, statusPending).
+		Count(&count).Error; err != nil {
+		return "", err
+	}
+	if count > 0 {
+		return "pending_sent", nil
+	}
+	if err := s.DB.Model(&models.Friend{}).
+		Where("user_id = ? AND friend_id = ? AND status = ?", targetID, userID, statusPending).
+		Count(&count).Error; err != nil {
+		return "", err
+	}
+	if count > 0 {
+		return "pending_received", nil
+	}
+	return "none", nil
+}
+
 // AreFriends returns true if the two users have an accepted friend relationship.
 func (s *FriendService) AreFriends(userID1, userID2 string) (bool, error) {
 	var count int64

@@ -95,6 +95,7 @@ func registerUserRoutes(protected *gin.RouterGroup, c *controllers.UserControlle
 // registerFriendRoutes registers the friend and follow routes.
 func registerFriendRoutes(protected *gin.RouterGroup, c *controllers.FriendController) {
 	protected.POST("/friends/request/:id", c.SendFriendRequest)
+	protected.GET("/friends/status/:id", c.GetFriendStatus)
 	protected.POST("/friends/accept/:id", c.AcceptFriend)
 	protected.POST("/friends/reject/:id", c.RejectFriendRequest)
 	protected.DELETE("/friends/:id", c.RemoveFriend)

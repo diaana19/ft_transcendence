@@ -88,6 +88,46 @@ func TestFriend_RequestUnknownTarget(t *testing.T) {
 	}
 }
 
+func TestFriend_StatusLifecycle(t *testing.T) {
+	router, _ := SetupTestEnv()
+	alice := registerAndLogin(t, router, "fst-a", "fst-a@test.com", "StrongPass123!")
+	bob := registerAndLogin(t, router, "fst-b", "fst-b@test.com", "StrongPass123!")
+
+	getStatus := func(token, targetID string) string {
+		w := authedRequest(t, router, "GET", "/api/friends/status/"+targetID, token, "")
+		if w.Code != http.StatusOK {
+			t.Fatalf("status: expected 200, got %d - body: %s", w.Code, w.Body.String())
+		}
+		var resp struct {
+			Status string `json:"status"`
+		}
+		json.Unmarshal(w.Body.Bytes(), &resp)
+		return resp.Status
+	}
+
+	if s := getStatus(alice.Token, bob.ID); s != "none" {
+		t.Fatalf("expected none, got %q", s)
+	}
+
+	authedRequest(t, router, "POST", "/api/friends/request/"+bob.ID, alice.Token, "")
+	if s := getStatus(alice.Token, bob.ID); s != "pending_sent" {
+		t.Fatalf("expected pending_sent, got %q", s)
+	}
+	if s := getStatus(bob.Token, alice.ID); s != "pending_received" {
+		t.Fatalf("expected pending_received, got %q", s)
+	}
+
+	authedRequest(t, router, "POST", "/api/friends/accept/"+alice.ID, bob.Token, "")
+	if s := getStatus(alice.Token, bob.ID); s != "friends" {
+		t.Fatalf("expected friends, got %q", s)
+	}
+
+	authedRequest(t, router, "DELETE", "/api/friends/"+bob.ID, alice.Token, "")
+	if s := getStatus(alice.Token, bob.ID); s != "none" {
+		t.Fatalf("expected none after remove, got %q", s)
+	}
+}
+
 func TestFriend_RejectRequest(t *testing.T) {
 	router, _ := SetupTestEnv()
 	alice := registerAndLogin(t, router, "frej-a", "frej-a@test.com", "StrongPass123!")

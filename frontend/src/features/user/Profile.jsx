@@ -86,11 +86,9 @@ export default function Profile() {
                 )
                 setIsFollowing(isAlreadyFollowing)
 
-                const friends = await api.get(`/api/users/${userId}/friends`)
-                const isAlreadyFriend = (friends.data?.data || friends.data || []).some(
-                    (f) => f.id === authUser?.userId
-                )
-                setIsFriend(isAlreadyFriend)
+                const { data: rel } = await api.get(`/api/friends/status/${userId}`)
+                setIsFriend(rel.status === 'friends')
+                setFriendRequested(rel.status === 'pending_sent')
             }
         } catch (err) {
             console.info(err)

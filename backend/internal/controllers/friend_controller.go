@@ -211,6 +211,30 @@ func (fc *FriendController) RejectFriendRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "request rejected"})
 }
 
+// GetFriendStatus returns the relationship between the logged in user and the target.
+// @Summary   Get the friend relationship status with a user
+// @Tags      friends
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id path string true "Target user ID"
+// @Success   200 {object} map[string]string "status: friends | pending_sent | pending_received | none"
+// @Failure   401 {object} map[string]string
+// @Failure   500 {object} map[string]string
+// @Router    /friends/status/{id} [get]
+func (fc *FriendController) GetFriendStatus(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	status, err := fc.Service.GetRelationship(userID.(string), c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": status})
+}
+
 // GetFollowers returns the list of users that follow the given user.
 // @Summary   List the followers of a user
 // @Tags      friends
