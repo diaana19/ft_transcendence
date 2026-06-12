@@ -136,12 +136,8 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between py-3 border-b border-gray-100">
                     <div>
-                        <p className="text-sm font-medium text-gray-900">
-                            Help
-                        </p>
-                        <p className="text-sm text-gray-500">
-                            Help Page and Terms and Conditions
-                        </p>
+                        <p className="text-sm font-medium text-gray-900">Help</p>
+                        <p className="text-sm text-gray-500">Help Page and Terms and Conditions</p>
                     </div>
                     <button
                         onClick={() => navigate('/help')}

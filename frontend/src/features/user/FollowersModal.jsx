@@ -12,7 +12,7 @@ export default function FollowersModal({ userId, type, onClose }) {
     useEffect(() => {
         setLoading(true)
         setUsers([])
-       let fetch
+        let fetch
         if (type === 'followers') fetch = getFollowers
         else if (type === 'following') fetch = getFollowing
         else if (type === 'friends') fetch = getFriends

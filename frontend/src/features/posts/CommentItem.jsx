@@ -187,7 +187,10 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
                         </div>
                     </div>
                 ) : (
-                    <p className="text-sm mt-1 whitespace-pre-wrap break-all" style={{ color: '#5f5e5a' }}>
+                    <p
+                        className="text-sm mt-1 whitespace-pre-wrap break-all"
+                        style={{ color: '#5f5e5a' }}
+                    >
                         <RichText text={comment.content} />
                     </p>
                 )}

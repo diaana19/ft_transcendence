@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate , Link} from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { UserIcon, PencilIcon, ChatBubbleLeftIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import Footer from '../../components/layout/Footer'
 import PrivacyPolicy from '../legal/PrivacyPolicy'
@@ -251,25 +251,18 @@ export default function HelpCenter() {
                     )
                 })}{' '}
             </div>
-                <div className="w-full flex sm:flex-row justify-center items-center">
-
-                    <p className="text-gray-500 text-xs">
-                        You can always reviews our{' '}
-                        <Link
-                            to="/terms"
-                            className="text-blue-400 cursor-pointer hover:underline"
-                        >
-                            Terms of Service
-                        </Link>{' '}
-                        and{' '}
-                        <Link
-                            to="/privacy"
-                            className="text-blue-400 cursor-pointer hover:underline"
-                        >
-                            Privacy Policy
-                        </Link>
-                    </p>
-                </div>
+            <div className="w-full flex sm:flex-row justify-center items-center">
+                <p className="text-gray-500 text-xs">
+                    You can always reviews our{' '}
+                    <Link to="/terms" className="text-blue-400 cursor-pointer hover:underline">
+                        Terms of Service
+                    </Link>{' '}
+                    and{' '}
+                    <Link to="/privacy" className="text-blue-400 cursor-pointer hover:underline">
+                        Privacy Policy
+                    </Link>
+                </p>
+            </div>
         </div>
     )
 }

@@ -6,11 +6,7 @@ vi.mock('../../services/axiosInstance', () => ({
 }))
 
 import axiosInstance from '../../services/axiosInstance'
-import {
-    getNotifications,
-    deleteNotification,
-    deleteAllNotifications,
-} from './notificationService'
+import { getNotifications, deleteNotification, deleteAllNotifications } from './notificationService'
 
 beforeEach(() => {
     vi.clearAllMocks()
