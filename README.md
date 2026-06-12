@@ -105,61 +105,84 @@ The team is composed of 5 members. Roles follow the subject's recommended struct
 
 ## Database Schema
 
-PostgreSQL with UUID primary keys. The canonical `users` table is created by
-`database/init.sql`; all tables are kept in sync by GORM `AutoMigrate` from
-`backend/internal/models/`. Soft deletes (`deleted_at`) are used on user-facing content.
+PostgreSQL with UUID primary keys. The entire schema — all 11 tables — is created and
+kept in sync by GORM `AutoMigrate` from the structs in `backend/internal/models/`
+(registered in `backend/internal/config/database.go`). Unless noted, strings map to
+`text`, integers to `bigint`, and timestamps to `timestamptz`. Soft deletes
+(`deleted_at`) are used on user-facing content.
 
-```
-users ───────────────┐
-  id (uuid, PK)       │ 1
-  github_id, provider │
-  name                │
-  username  (unique)  │        ┌──────────────── friends ────────────────┐
-  email     (unique)  │        │ id (uuid, PK)                            │
-  password  (hashed)  ├───────<│ user_id   (FK → users.id)                │  friendship +
-  date_of_birth       │        │ friend_id (FK → users.id)                │  follow edges
-  two_fa_secret       │        │ status  (pending | accepted | following) │
-  two_fa_enabled      │        └──────────────────────────────────────────┘
-  avatar, wallpaper   │
-  bio                 │ 1      ┌──────────────── posts ───────────────────┐
-  created/updated_at  ├───────<│ id (uuid, PK)                            │
-  deleted_at          │        │ author_id (FK → users.id)                │
-                      │        │ content, media_url                       │
-                      │        │ likes_count, comments_count              │
-                      │        │ created/updated_at, deleted_at           │
-                      │        └──────────┬───────────────┬───────────────┘
-                      │                  <│              <│              
-                      │             ┌── likes ──┐   ┌─ replies ──┐   
-                      │             │ user_id   │   │ post_id    │   
-                      │             │ post_id   │   │ author_id  │   
-                      │             │ UNIQUE    │   │ content    │
-                      │             │(user,post)│   │ (comments) │   
-                      │             └───────────┘   └────────────┘
-                      │ 1
-                      ├───< messages       (id, sender_id, recipient_id, content,
-                      │                      file_id, room_id, created_at)
-                      │                      
-                      │ 1
-                      ├───< notifications  (id, user_id → recipient, actor_id, type
-                      │                      [friend_request|like|message|reply],
-                      │                      read, created_at)
-                      │ 1
-                      └───< files          (id, owner_id, path, filename, mime_type,
-                                            size, visibility [public|private])
-                                                  │ 1
-                                                  └───< file_access (file_id, user_id)  -- per-file ACL
-```
+### Tables
 
-**Relationships (summary)**
+- **`users`** — accounts (local credentials or GitHub OAuth).
+  `id uuid PK` (default `gen_random_uuid()`), `github_id varchar(255) unique nullable`,
+  `provider varchar(50)` (default `'local'`), `display_name text`,
+  `username text unique not null`, `email text unique not null`,
+  `password text nullable` (bcrypt hash; null for OAuth-only accounts),
+  `date_of_birth timestamptz nullable`, `two_fa_secret varchar(255) nullable`,
+  `two_fa_enabled boolean` (default `false`), `avatar text`, `wallpaper text`, `bio text`,
+  `created_at` / `updated_at`, `deleted_at` (soft delete).
+- **`friends`** — directed friendship/follow edges between users.
+  `id uuid PK`, `user_id uuid FK → users.id`, `friend_id uuid FK → users.id`,
+  `status text` (`pending` | `accepted` | `following`);
+  unique on `(user_id, friend_id, status)`.
+- **`posts`** — user publications.
+  `id uuid PK`, `author_id uuid FK → users.id not null`, `content text not null`,
+  `media_url text nullable`, `media_mime varchar(100) nullable`,
+  `tags text[]` (GIN-indexed), denormalized counters `likes_count` /
+  `dislikes_count` / `comments_count bigint` (default `0`),
+  `created_at` / `updated_at`, `deleted_at` (soft delete).
+- **`likes`** — post reactions (likes **and** dislikes).
+  `id uuid PK`, `user_id uuid FK → users.id`, `post_id uuid FK → posts.id`,
+  `value bigint` (`1` like, `-1` dislike), `created_at`;
+  unique on `(user_id, post_id)` — one reaction per user per post.
+- **`replies`** — comments on posts.
+  `id uuid PK`, `post_id uuid FK → posts.id` (indexed), `author_id uuid FK → users.id`,
+  `content text not null`, `file_id uuid FK → files.id nullable` (attachment),
+  `likes_count` / `dislikes_count bigint` (default `0`),
+  `created_at` / `updated_at`, `deleted_at` (soft delete).
+- **`reply_reactions`** — reactions on comments.
+  `id uuid PK`, `user_id uuid FK → users.id`, `reply_id uuid FK → replies.id`,
+  `value bigint` (`1` | `-1`), `created_at`; unique on `(user_id, reply_id)`.
+- **`reposts`** — posts shared again by another user.
+  `id uuid PK`, `post_id uuid FK → posts.id` (indexed), `author_id uuid FK → users.id`,
+  `created_at`, `deleted_at` (soft delete).
+- **`messages`** — chat messages.
+  `id varchar(36) PK`, `sender_id varchar(36) not null` (indexed),
+  `recipient_id varchar(36) nullable` (indexed; set for direct messages),
+  `username text` (denormalized sender name), `type text`, `content text not null`,
+  `file_id uuid nullable` (attachment), `room_id text nullable` (group/room chat),
+  `parent_id varchar nullable` (self-reference → threaded replies), `created_at`.
+- **`notifications`** — alerts delivered to users.
+  `id varchar(36) PK`, `user_id text not null` (recipient),
+  `actor_id text not null` (who triggered it), `user_username` / `actor_username text`
+  (denormalized), `type text` (`friend_request` | `follow` | `like` | `comment` |
+  `message`), `content text`, `post_id text` (related post, when applicable),
+  `read boolean` (default `false`), `created_at`.
+- **`files`** — uploaded files (avatars, post media, attachments).
+  `id uuid PK`, `owner_id uuid not null` (indexed), `path text not null`
+  (server-side storage path, never exposed), `filename varchar(255) not null`,
+  `mime_type varchar(100) not null`, `size bigint not null` (bytes),
+  `visibility varchar(20)` (`public` | `friends` | `private`, default `'public'`),
+  `created_at`.
+- **`file_access`** — per-file ACL join table.
+  Composite PK `(file_id uuid, user_id uuid)`; grants a user access to a
+  non-public file.
 
-- A **user** has many posts, likes, comments (`replies`), reposts, sent/received **messages**,
-  **notifications**, and **files**.
+### Relationships
+
+- A **user** has many posts, reactions (`likes`, `reply_reactions`), comments
+  (`replies`), reposts, sent/received **messages**, **notifications** (as recipient
+  and as actor), and **files**.
 - **friends** stores both friendship and follow edges as directed `(user_id → friend_id)`
   rows distinguished by `status`.
-- **likes** has a unique `(user_id, post_id)` constraint (one like per user per post).
+- A **post** has many `likes`, `replies`, and `reposts`; a **reply** has many
+  `reply_reactions`. Reaction tables store likes and dislikes in `value` (`1`/`-1`),
+  one per user per target.
 - **messages** support both direct messages (`recipient_id`) and rooms (`room_id`), plus
-  threaded replies (`parent_id`) and optional attachments (`file_id`).
-- **file_access** is a join table implementing per-file access control for private files.
+  threaded replies (`parent_id` self-reference) and optional attachments (`file_id`).
+- **replies** and **messages** may reference a **file** as attachment (`file_id`).
+- **file_access** is a join table implementing per-file access control for
+  non-public files.
 
 ---
 
