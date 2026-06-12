@@ -205,7 +205,7 @@ function PostCard({ post, onDelete, onUpdate, currentUserId }) {
                         </div>
                     ) : (
                         <>
-                            <p className="text-black mt-1">
+                            <p className="text-black mt-1 break-all">
                                 <RichText text={post.content} />
                             </p>
                             {post.media_url && (

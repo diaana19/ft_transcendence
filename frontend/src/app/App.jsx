@@ -18,8 +18,8 @@ import HelpCenter from '../features/help/HelpCenter.jsx'
 import SettingsPage from '../features/settings/SettingsPage.jsx'
 import MessagesPage from '../features/chat/MessagesPage'
 import Gamification from '../features/gamification/Gamification.jsx'
-import TermsOfService from '../features/auth/TermsofService.jsx'
-import PrivacyPolicy from '../features/auth/PrivacyPolicy.jsx'
+import TermsOfService from '../features/legal/TermsofService.jsx'
+import PrivacyPolicy from '../features/legal/PrivacyPolicy.jsx'
 
 // App defines all routes. Some routes are public, others need auth via RequireAuth.
 function App() {

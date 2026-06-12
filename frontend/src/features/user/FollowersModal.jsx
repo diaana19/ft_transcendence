@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getFollowers, getFollowing } from './userService'
+import { getFollowers, getFollowing, getFriends } from './userService'
 
 // FollowersModal is a popup listing the followers or following of a user.
 export default function FollowersModal({ userId, type, onClose }) {
@@ -10,7 +10,13 @@ export default function FollowersModal({ userId, type, onClose }) {
 
     // Pick the right service based on the type and load the user list.
     useEffect(() => {
-        const fetch = type === 'followers' ? getFollowers : getFollowing
+        setLoading(true)
+        setUsers([])
+       let fetch
+        if (type === 'followers') fetch = getFollowers
+        else if (type === 'following') fetch = getFollowing
+        else if (type === 'friends') fetch = getFriends
+
         fetch(userId)
             .then(setUsers)
             .catch(console.info)

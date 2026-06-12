@@ -76,7 +76,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto">
+        <div className="w-full mx-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
                 <h1 className="text-xl font-bold">Settings</h1>
             </div>
