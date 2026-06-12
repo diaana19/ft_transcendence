@@ -45,7 +45,7 @@ func Wire(pdb *gorm.DB, rdb *redis.Client, cfg *config.Config) *Controllers {
 	friendService := &services.FriendService{DB: pdb}
 	postService := services.NewPostService(postRepo)
 	notifService := services.NewNotificationService(notifRepo, notifPubSub)
-	uploadService := services.NewUploadService(fileRepo)
+	uploadService := services.NewUploadService(fileRepo, cfg.UploadDir)
 	gdprService := services.NewGDPRService(pdb)
 	oauthService := services.NewOAuthService(userRepo, rdb, cfg)
 	gamificationService := services.NewGamificationService(pdb, friendService)

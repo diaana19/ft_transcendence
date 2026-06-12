@@ -110,7 +110,7 @@ func TestNotificationService_ErrorBranches(t *testing.T) {
 
 func TestUploadService_ErrorBranches(t *testing.T) {
 	_, db := SetupTestEnv()
-	svc := services.NewUploadService(repositories.NewFileRepository(db))
+	svc := services.NewUploadService(repositories.NewFileRepository(db), t.TempDir())
 	noop := func(_ *multipart.FileHeader, _ string) error { return nil }
 
 	empty := makeFileHeader(t, "empty.png", []byte{})
@@ -124,7 +124,7 @@ func TestUploadService_ErrorBranches(t *testing.T) {
 		t.Fatal("expected error when saveFn fails")
 	}
 
-	bsvc := services.NewUploadService(repositories.NewFileRepository(brokenDB(t)))
+	bsvc := services.NewUploadService(repositories.NewFileRepository(brokenDB(t)), t.TempDir())
 	valid2 := makeFileHeader(t, "pic.png", pngBytes(t))
 	if _, err := bsvc.SaveFile(valid2, "owner", models.FileVisibilityPublic, noop); err == nil {
 		t.Fatal("expected error tracking file in broken db")

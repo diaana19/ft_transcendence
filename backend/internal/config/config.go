@@ -28,18 +28,24 @@ type Config struct {
 	GithubClientSecret string
 	GithubRedirectURL  string
 	FrontendURL        string
+	UploadDir          string
 	Postgres           Postgres
 	Redis              Redis
 }
 
 // Load reads the configuration from the env and returns it.
 func Load() (*Config, error) {
+	uploadDir := os.Getenv("UPLOAD_DIR")
+	if uploadDir == "" {
+		uploadDir = "./uploads"
+	}
 	return &Config{
 		JWT:                os.Getenv("JWT_SECRET"),
 		GithubClientID:     os.Getenv("GITHUB_CLIENT_ID"),
 		GithubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
 		GithubRedirectURL:  os.Getenv("GITHUB_REDIRECT_URL"),
 		FrontendURL:        os.Getenv("FT_TRANSCENDENCE_URL"),
+		UploadDir:          uploadDir,
 		Postgres: Postgres{
 			Host:     os.Getenv("DB_HOST"),
 			Port:     os.Getenv("DB_PORT"),

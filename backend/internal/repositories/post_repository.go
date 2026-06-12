@@ -257,11 +257,12 @@ func (r *postRepository) SetPostReaction(userID, postID string, value int) error
 // GetPostReaction returns the reaction of the user on a post.
 func (r *postRepository) GetPostReaction(userID, postID string) (int, error) {
 	var reaction models.PostReaction
-	err := r.db.Where("user_id = ? AND post_id = ?", userID, postID).First(&reaction).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return 0, nil
+	err := r.db.Where("user_id = ? AND post_id = ?", userID, postID).
+		Limit(1).Find(&reaction).Error
+	if err != nil {
+		return 0, err
 	}
-	return reaction.Value, err
+	return reaction.Value, nil // zero-valued struct → Value is 0 when no row
 }
 
 // adjustReactionCounts updates the likes and dislikes counts after a reaction change.

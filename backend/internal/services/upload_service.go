@@ -39,12 +39,13 @@ var allowedExtensions = map[string]bool{
 
 // UploadService validates and saves uploaded files.
 type UploadService struct {
-	FileRepo repositories.FileRepository
+	FileRepo  repositories.FileRepository
+	UploadDir string
 }
 
 // NewUploadService creates a new UploadService.
-func NewUploadService(fileRepo repositories.FileRepository) *UploadService {
-	return &UploadService{FileRepo: fileRepo}
+func NewUploadService(fileRepo repositories.FileRepository, uploadDir string) *UploadService {
+	return &UploadService{FileRepo: fileRepo, UploadDir: uploadDir}
 }
 
 // ValidateFile checks the size, extension and mime type of the file. It returns the mime type.
@@ -97,29 +98,31 @@ func (s *UploadService) SaveFile(
 	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
 	fileID := utils.NewID()
 	safeName := fileID + ext
-	diskPath := filepath.Join("./uploads", safeName)
+	dst := filepath.Join(s.UploadDir, safeName)
 
-	absUploads, _ := filepath.Abs("./uploads")
-	absPath, _ := filepath.Abs(diskPath)
-	if !strings.HasPrefix(absPath, absUploads) {
+	if !strings.HasPrefix(dst, s.UploadDir+string(filepath.Separator)) {
 		return nil, errors.New("invalid path")
 	}
 
-	if err := saveFn(fileHeader, diskPath); err != nil {
+	if err := os.MkdirAll(s.UploadDir, 0o755); err != nil {
+		return nil, errors.New("failed to create upload directory")
+	}
+
+	if err := saveFn(fileHeader, dst); err != nil {
 		return nil, errors.New("failed to save file")
 	}
 
 	file := &models.File{
 		ID:         fileID,
 		OwnerID:    ownerID,
-		Path:       diskPath,
+		Path:       dst,
 		Filename:   fileHeader.Filename,
 		MimeType:   mime,
 		Size:       fileHeader.Size,
 		Visibility: visibility,
 	}
 	if err := s.FileRepo.Create(file); err != nil {
-		_ = os.Remove(diskPath)
+		_ = os.Remove(dst)
 		return nil, errors.New("failed to track file in database")
 	}
 

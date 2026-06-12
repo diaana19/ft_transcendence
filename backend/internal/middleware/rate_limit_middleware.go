@@ -12,7 +12,7 @@ import (
 )
 
 // defaultRateLimitMax is the max number of requests per minute when RATE_LIMIT_MAX is not set.
-const defaultRateLimitMax = 20
+const defaultRateLimitMax = 60
 
 // rateLimitMax reads the limit from the RATE_LIMIT_MAX env. It returns the default when not set.
 func rateLimitMax() int64 {
