@@ -8,7 +8,7 @@ What it creates:
   - N users (default 50) with real names + photos pulled from randomuser.me
     (an open demo-data API), profile bios and avatars set via the REST API
   - POSTS_TARGET posts (default 500) with unique, randomly-composed content
-  - likes and comments (the app's "replies") across them
+  - likes and replies across them
   - a social graph: follows + friend requests that get accepted
 
 Everything goes through HTTP against the public REST API. The content-creation
@@ -37,7 +37,6 @@ import ssl
 import sys
 import time
 import urllib.error
-import urllib.parse
 import urllib.request
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
@@ -150,9 +149,9 @@ def auth_api(method, path, body=None, token=None):
 
 
 # ---------------------------------------------------------------------------
-# Content corpora for generated comments and bios
+# Content corpora for generated replies and bios
 # ---------------------------------------------------------------------------
-COMMENTS = [
+REPLIES = [
     "This is great, thanks for sharing.",
     "Totally agree with this.",
     "Can you say more about how you did it?",
@@ -427,31 +426,38 @@ def seed_likes(uids, toks, post_id):
 
 
 # ---------------------------------------------------------------------------
-# 5. Comments (the app's post replies, parallel)
+# 5. Replies (the app's post comments, parallel)
 # ---------------------------------------------------------------------------
-def seed_comments(uids, toks, post_id):
+def seed_replies(uids, toks, post_id):
     p = len(post_id)
-    step(f"Adding comments  {c_dim}({PAR}-way parallel){c_reset}")
+    step(f"Adding replies  {c_dim}({PAR}-way parallel){c_reset}")
     tasks = []
     for idx in range(len(uids)):
         for _ in range(random.randint(2, 5)):
-            tasks.append((idx, random.randrange(p), pick(COMMENTS)))
+            tasks.append((idx, random.randrange(p), pick(REPLIES)))
 
-    def comment(task):
+    def reply(task):
         idx, pi, content = task
-        # The backend reads the comment from form data, not a JSON body.
-        body = urllib.parse.urlencode({"content": content})
+        # The backend reads the reply from multipart/form-data (it also probes for
+        # a file field), so urlencoded bodies are rejected — match the web form.
+        boundary = "----ftseedboundaryQ8sf3kT9xZ"
+        body = (
+            f"--{boundary}\r\n"
+            f'Content-Disposition: form-data; name="content"\r\n\r\n'
+            f"{content}\r\n"
+            f"--{boundary}--\r\n"
+        ).encode("utf-8")
         status, _ = http(
             "POST",
             f"{API}/posts/{post_id[pi]}/comments",
             body=body,
             token=toks[idx],
-            content_type="application/x-www-form-urlencoded",
+            content_type=f"multipart/form-data; boundary={boundary}",
         )
         return 1 if status == 201 else None
 
-    n = len(fan_out(tasks, comment))
-    ok(f"{n} comments added")
+    n = len(fan_out(tasks, reply))
+    ok(f"{n} replies added")
 
 
 # ---------------------------------------------------------------------------
@@ -501,7 +507,7 @@ def main():
     uids, toks, names, unames = seed_users(people)
     post_id, post_owner = seed_posts(uids, toks)
     seed_likes(uids, toks, post_id)
-    seed_comments(uids, toks, post_id)
+    seed_replies(uids, toks, post_id)
     seed_social(uids, toks)
 
     print(f"\n{c_grn}{c_bld}Seed complete.{c_reset}")

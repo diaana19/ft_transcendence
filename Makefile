@@ -47,7 +47,7 @@ help:
 	@echo ""
 	@echo "Database:"
 	@echo "  make seed          Seed via the REST API with Python (50 users,"
-	@echo "                     500 unique posts, comments, likes, follows;"
+	@echo "                     500 unique posts, replies, likes, follows;"
 	@echo "                     real photos). Override: make seed USERS=200 POSTS_TARGET=800"
 	@echo ""
 	@echo "Shells:"
@@ -132,7 +132,7 @@ test-frontend:
 # ==================== Database ====================
 
 # Seed through the public REST API with Python (stdlib only). Pulls real names
-# and photos from randomuser.me, then creates users/posts/comments/likes/follows.
+# and photos from randomuser.me, then creates users/posts/replies/likes/follows.
 # Runs on the host, so it needs python3 and a running stack (the script waits for
 # the API to come up). The seeder paces its auth calls to RATE_LIMIT_MAX (the
 # backend's per-IP/min ceiling) — by default we read that straight from infra/.env
