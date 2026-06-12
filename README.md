@@ -316,28 +316,6 @@ CI (GitHub Actions) runs the suite on every PR (open/sync) and on demand, and **
 build if backend coverage drops below 80%**; a golangci-lint job enforces formatting,
 `go vet`, and static analysis.
 
-### Seeding via the public API
-
-`scripts/seed.py` populates a running instance through the HTTP API (Python stdlib only) —
-by default 500 users with real names and photos from randomuser.me, plus posts, likes,
-comments, follows and friendships:
-
-```bash
-make seed                                        # 500 users, 2000 posts (via the proxy)
-make seed USERS=200 POSTS_TARGET=800             # smaller dataset
-python3 scripts/seed.py                          # run the script directly
-API=https://host:3000/api python3 scripts/seed.py  # target a remote stack
-```
-
-It waits for the API to come up and fans out requests in parallel (override with `PAR=N`). The
-`/auth` endpoints are rate-limited to `RATE_LIMIT_MAX` req/min per IP (default 20); the seeder
-paces its register/login calls to respect that ceiling, so set `RATE_LIMIT_MAX` to match the
-backend to seed faster:
-
-```bash
-make seed RATE_LIMIT_MAX=1000                    # if the backend runs with a raised limit
-```
-
 ---
 
 ## Resources
