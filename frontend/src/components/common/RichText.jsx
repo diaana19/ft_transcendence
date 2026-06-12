@@ -8,7 +8,7 @@ const IS_MENTION = MENTION_ONE_RE
 
 const accent = { color: '#534ab7', fontWeight: 600 }
 
-// RichText renders text turning hashtags and @mentions into links.
+// RichText renders text turning hashtags into links and coloring @mentions.
 export default function RichText({ text, className }) {
     if (!text) return null
     return (
@@ -28,14 +28,9 @@ export default function RichText({ text, className }) {
                 }
                 if (IS_MENTION.test(part)) {
                     return (
-                        <Link
-                            key={i}
-                            to={`/profile/u/${part.slice(1)}`}
-                            onClick={(e) => e.stopPropagation()}
-                            style={accent}
-                        >
+                        <span key={i} style={accent}>
                             {part}
-                        </Link>
+                        </span>
                     )
                 }
                 return part
