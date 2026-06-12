@@ -27,6 +27,7 @@ type FriendService struct {
 }
 
 // SendRequest creates a pending friend request from the user to the target.
+// If the target already sent a pending request to the user, it auto-accepts instead.
 func (s *FriendService) SendRequest(userID, targetID string) error {
 	if userID == targetID {
 		return errors.New("cannot add yourself")
@@ -41,6 +42,15 @@ func (s *FriendService) SendRequest(userID, targetID string) error {
 		First(&existing).Error
 	if err == nil {
 		return errors.New("relationship already exists")
+	}
+	// If target already sent us a pending request, accept it instead of creating a duplicate.
+	var reverse models.Friend
+	err = s.DB.
+		Where("user_id = ? AND friend_id = ? AND status = ?", targetID, userID, statusPending).
+		First(&reverse).Error
+	if err == nil {
+		reverse.Status = statusAccepted
+		return s.DB.Save(&reverse).Error
 	}
 	friend := models.Friend{
 		UserID:   userID,
@@ -63,6 +73,11 @@ func (s *FriendService) AcceptRequest(userID, requesterID string) error {
 	).First(&friend).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Already accepted (e.g. auto-accepted via SendRequest) — not an error.
+			already, _ := s.AreFriends(userID, requesterID)
+			if already {
+				return nil
+			}
 			return errors.New("no pending request found")
 		}
 		return err
@@ -111,7 +126,7 @@ func (s *FriendService) CountFollowing(userID string) (int64, error) {
 	return count, err
 }
 
-// Unfollow removes the follow and also removes any friend relationship between the two users.
+// Unfollow removes the follow relationship only, leaving any friend relationship intact.
 func (s *FriendService) Unfollow(userID, targetID string) error {
 	result := s.DB.
 		Where("user_id = ? AND friend_id = ? AND status = ?", userID, targetID, statusFollow).
@@ -122,9 +137,7 @@ func (s *FriendService) Unfollow(userID, targetID string) error {
 	if result.RowsAffected == 0 {
 		return errors.New("not following this user")
 	}
-	return s.DB.
-		Where(sqlFriendBidirectionalStatuses, userID, targetID, targetID, userID, []string{statusPending, statusAccepted}).
-		Delete(&models.Friend{}).Error
+	return nil
 }
 
 // RemoveFriend deletes the friend relationship between the two users.
