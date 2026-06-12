@@ -439,8 +439,7 @@ def seed_comments(uids, toks, post_id):
 
     def comment(task):
         idx, pi, content = task
-        # The backend reads the comment via c.PostForm("content") so it can also
-        # accept an optional file upload — it does not parse a JSON body here.
+        # The backend reads the comment from form data, not a JSON body.
         body = urllib.parse.urlencode({"content": content})
         status, _ = http(
             "POST",

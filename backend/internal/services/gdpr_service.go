@@ -4,16 +4,18 @@ import (
 	"gorm.io/gorm"
 
 	"ft_transcendence/backend/internal/models"
+	"ft_transcendence/backend/internal/repositories"
 )
 
 // GDPRService handles user data export and deletion for GDPR.
 type GDPRService struct {
-	db *gorm.DB
+	db       *gorm.DB
+	userRepo repositories.UserRepository
 }
 
 // NewGDPRService creates a new GDPRService.
-func NewGDPRService(db *gorm.DB) *GDPRService {
-	return &GDPRService{db: db}
+func NewGDPRService(db *gorm.DB, userRepo repositories.UserRepository) *GDPRService {
+	return &GDPRService{db: db, userRepo: userRepo}
 }
 
 // GDPRExportData holds the user data returned by an export.
@@ -52,17 +54,7 @@ func (s *GDPRService) GetUserContact(userID string) (email, username string, err
 	return user.Email, user.Username, nil
 }
 
-// DeleteUserData removes the posts, scrubs the personal data and soft deletes the user, so
-// the username and email are freed and the account no longer exists.
+// DeleteUserData removes the user and everything they created via the shared user-repository cascade.
 func (s *GDPRService) DeleteUserData(userID string) error {
-	if err := s.db.Where("author_id = ?", userID).Delete(&models.Post{}).Error; err != nil {
-		return err
-	}
-
-	if err := s.db.Model(&models.User{}).Where("id = ?", userID).
-		Updates(models.AnonymizedFields(userID)).Error; err != nil {
-		return err
-	}
-
-	return s.db.Where("id = ?", userID).Delete(&models.User{}).Error
+	return s.userRepo.Delete(userID)
 }

@@ -103,8 +103,11 @@ func (r *userRepository) Update(id string, input models.UpdateUserInput) (*model
 	return &user, nil
 }
 
-// Delete scrubs the user's personal data and then soft deletes the row, so the username
-// and email are freed and the account no longer exists.
+// Delete removes the user and everything they created — their posts and the replies, likes
+// and reposts attached to those posts, the comments and reactions they left on other people's
+// content, their reposts, friendships, messages, notifications and files — adjusting the
+// counters on the content that survives. The user row is anonymised and soft deleted so the
+// username and email are freed. It all runs in one transaction.
 func (r *userRepository) Delete(id string) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		scrub := tx.Model(&models.User{}).Where("id = ?", id).Updates(models.AnonymizedFields(id))
@@ -113,6 +116,99 @@ func (r *userRepository) Delete(id string) error {
 		}
 		if scrub.RowsAffected == 0 {
 			return gorm.ErrRecordNotFound
+		}
+
+		if err := tx.Exec(`UPDATE posts SET likes_count = likes_count - s.c
+			FROM (SELECT post_id, COUNT(*) c FROM likes WHERE user_id = ? AND value = 1 GROUP BY post_id) s
+			WHERE posts.id = s.post_id`, id).Error; err != nil {
+			return err
+		}
+		if err := tx.Exec(`UPDATE posts SET dislikes_count = dislikes_count - s.c
+			FROM (SELECT post_id, COUNT(*) c FROM likes WHERE user_id = ? AND value = -1 GROUP BY post_id) s
+			WHERE posts.id = s.post_id`, id).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("user_id = ?", id).Delete(&models.PostReaction{}).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Exec(`UPDATE replies SET likes_count = likes_count - s.c
+			FROM (SELECT reply_id, COUNT(*) c FROM reply_reactions WHERE user_id = ? AND value = 1 GROUP BY reply_id) s
+			WHERE replies.id = s.reply_id`, id).Error; err != nil {
+			return err
+		}
+		if err := tx.Exec(`UPDATE replies SET dislikes_count = dislikes_count - s.c
+			FROM (SELECT reply_id, COUNT(*) c FROM reply_reactions WHERE user_id = ? AND value = -1 GROUP BY reply_id) s
+			WHERE replies.id = s.reply_id`, id).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("user_id = ?", id).Delete(&models.ReplyReaction{}).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Exec(`UPDATE posts SET comments_count = comments_count - s.c
+			FROM (SELECT post_id, COUNT(*) c FROM replies WHERE author_id = ? AND deleted_at IS NULL GROUP BY post_id) s
+			WHERE posts.id = s.post_id`, id).Error; err != nil {
+			return err
+		}
+		userReplyIDs := tx.Model(&models.Reply{}).Select("id").Where("author_id = ?", id)
+		if err := tx.Where("reply_id IN (?)", userReplyIDs).Delete(&models.ReplyReaction{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("author_id = ?", id).Delete(&models.Reply{}).Error; err != nil {
+			return err
+		}
+
+		var ownPostIDs []string
+		if err := tx.Unscoped().Model(&models.Post{}).Where("author_id = ?", id).Pluck("id", &ownPostIDs).Error; err != nil {
+			return err
+		}
+		if len(ownPostIDs) > 0 {
+			replyIDs := tx.Unscoped().Model(&models.Reply{}).Select("id").Where("post_id IN ?", ownPostIDs)
+			if err := tx.Where("reply_id IN (?)", replyIDs).Delete(&models.ReplyReaction{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Where("post_id IN ?", ownPostIDs).Delete(&models.Reply{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Where("post_id IN ?", ownPostIDs).Delete(&models.PostReaction{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Where("post_id IN ?", ownPostIDs).Delete(&models.Repost{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Where("author_id = ?", id).Delete(&models.Post{}).Error; err != nil {
+				return err
+			}
+		}
+
+		if err := tx.Where("author_id = ?", id).Delete(&models.Repost{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("user_id = ? OR friend_id = ?", id, id).Delete(&models.Friend{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("sender_id = ? OR recipient_id = ?", id, id).Delete(&models.Message{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("user_id = ? OR actor_id = ?", id, id).Delete(&models.Notification{}).Error; err != nil {
+			return err
+		}
+
+		var ownFileIDs []string
+		if err := tx.Model(&models.File{}).Where("owner_id = ?", id).Pluck("id", &ownFileIDs).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("user_id = ?", id).Delete(&models.FileAccess{}).Error; err != nil {
+			return err
+		}
+		if len(ownFileIDs) > 0 {
+			if err := tx.Where("file_id IN ?", ownFileIDs).Delete(&models.FileAccess{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Where("owner_id = ?", id).Delete(&models.File{}).Error; err != nil {
+				return err
+			}
 		}
 
 		return tx.Delete(&models.User{}, "id = ?", id).Error

@@ -185,16 +185,30 @@ func (r *postRepository) SearchTags(query string, limit, offset int) ([]models.T
 	return out, total, err
 }
 
-// Delete removes the post with this id.
+// Delete removes the post with this id together with its replies, its likes, the likes on
+// those replies, and any reposts of it.
 func (r *postRepository) Delete(id string) error {
-	result := r.db.Delete(&models.Post{}, "id = ?", id)
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-	return nil
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		result := tx.Delete(&models.Post{}, "id = ?", id)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		replyIDs := tx.Model(&models.Reply{}).Select("id").Where("post_id = ?", id)
+		if err := tx.Where("reply_id IN (?)", replyIDs).Delete(&models.ReplyReaction{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("post_id = ?", id).Delete(&models.Reply{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("post_id = ?", id).Delete(&models.PostReaction{}).Error; err != nil {
+			return err
+		}
+		return tx.Where("post_id = ?", id).Delete(&models.Repost{}).Error
+	})
 }
 
 // reactionDelta returns +1 when the bucket starts to be used, -1 when it stops, else 0.
