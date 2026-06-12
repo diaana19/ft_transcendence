@@ -23,7 +23,8 @@ func TestNotification_MarkSingleRead(t *testing.T) {
 	}
 	var list struct {
 		Data []struct {
-			ID string `json:"id"`
+			ID   string `json:"id"`
+			Read bool   `json:"read"`
 		} `json:"data"`
 		Total int `json:"total"`
 	}
@@ -40,8 +41,13 @@ func TestNotification_MarkSingleRead(t *testing.T) {
 
 	w = authedRequest(t, router, "GET", "/api/notification", bob.Token, "")
 	json.Unmarshal(w.Body.Bytes(), &list)
-	if list.Total != 0 {
-		t.Fatalf("expected 0 unread after marking the only notification read, got %d", list.Total)
+	if list.Total < 1 {
+		t.Fatalf("expected the notification to stay listed after mark read, got %d", list.Total)
+	}
+	for _, n := range list.Data {
+		if n.ID == notifID && !n.Read {
+			t.Fatalf("expected notification %s to be read", notifID)
+		}
 	}
 }
 

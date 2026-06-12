@@ -38,12 +38,27 @@ func (fc *FriendController) SendFriendRequest(c *gin.Context) {
 		return
 	}
 	targetID := c.Param("id")
-	if err := fc.Service.SendRequest(userID.(string), targetID); err != nil {
+	autoAccepted, err := fc.Service.SendRequest(userID.(string), targetID)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	log.Printf("[FriendRequest] sender userID=%s username=%q -> target userID=%s", userID, userUsername, targetID)
+	if autoAccepted {
+		fc.NotificationService.RemoveFriendRequestNotification(userID.(string), targetID)
+		_ = fc.NotificationService.SendNotification(
+			targetID,
+			"",
+			userID.(string),
+			userUsername.(string),
+			"friend_accept",
+			userUsername.(string)+" accepted your friend request",
+			"",
+		)
+		c.JSON(http.StatusOK, gin.H{"message": "friend request accepted"})
+		return
+	}
 	_ = fc.NotificationService.SendNotification(
 		targetID,
 		"",
@@ -82,6 +97,7 @@ func (fc *FriendController) AcceptFriend(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	fc.NotificationService.RemoveFriendRequestNotification(userID.(string), requesterID)
 	_ = fc.NotificationService.SendNotification(
 		requesterID,
 		"",
@@ -177,6 +193,8 @@ func (fc *FriendController) RemoveFriend(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	fc.NotificationService.RemoveFriendRequestNotification(targetID, userID.(string))
+	fc.NotificationService.RemoveFriendRequestNotification(userID.(string), targetID)
 	username, _ := c.Get("username")
 	_ = fc.NotificationService.SendNotification(
 		targetID, "",
@@ -208,6 +226,7 @@ func (fc *FriendController) RejectFriendRequest(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	fc.NotificationService.RemoveFriendRequestNotification(userID.(string), requesterID)
 	c.JSON(http.StatusOK, gin.H{"message": "request rejected"})
 }
 

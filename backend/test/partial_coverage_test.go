@@ -40,7 +40,7 @@ func TestFriendService_AcceptRequest(t *testing.T) {
 	db.Create(&sender)
 	db.Create(&receiver)
 
-	err := service.SendRequest(senderID, receiverID)
+	_, err := service.SendRequest(senderID, receiverID)
 	if err != nil {
 		t.Fatalf("SendRequest: %v", err)
 	}

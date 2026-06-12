@@ -38,3 +38,32 @@ func (p *NotificationPubSub) PublishToUser(ctx context.Context, userID string, n
 	}
 	return nil
 }
+
+func (p *NotificationPubSub) PublishRemovalToUser(ctx context.Context, userID, notifID string) error {
+	payload, err := json.Marshal(map[string]any{
+		"type":            "notification_removed",
+		"notification_id": notifID,
+	})
+	if err != nil {
+		return fmt.Errorf("marshal notification removal: %w", err)
+	}
+	channel := "notifications:" + userID
+	if err := p.rdb.Publish(ctx, channel, string(payload)).Err(); err != nil {
+		return fmt.Errorf("publish notification removal: %w", err)
+	}
+	return nil
+}
+
+func (p *NotificationPubSub) PublishClearToUser(ctx context.Context, userID string) error {
+	payload, err := json.Marshal(map[string]any{
+		"type": "notifications_cleared",
+	})
+	if err != nil {
+		return fmt.Errorf("marshal notifications clear: %w", err)
+	}
+	channel := "notifications:" + userID
+	if err := p.rdb.Publish(ctx, channel, string(payload)).Err(); err != nil {
+		return fmt.Errorf("publish notifications clear: %w", err)
+	}
+	return nil
+}

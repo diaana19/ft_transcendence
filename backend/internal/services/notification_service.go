@@ -62,6 +62,10 @@ func (s *NotificationService) SendNotification(
 	return nil
 }
 
+func (s *NotificationService) GetAll(userID string) ([]models.Notification, error) {
+	return s.repo.FindByUserID(userID, 50)
+}
+
 // GetUnread returns the unread notifications of the user.
 func (s *NotificationService) GetUnread(userID string) ([]models.Notification, error) {
 	return s.repo.FindUnreadByUserID(userID)
@@ -75,6 +79,39 @@ func (s *NotificationService) MarkAllRead(userID string) error {
 // MarkRead marks one notification of the user as read.
 func (s *NotificationService) MarkRead(userID, notifID string) error {
 	return s.repo.MarkReadByID(userID, notifID)
+}
+
+func (s *NotificationService) Delete(userID, notifID string) error {
+	if err := s.repo.DeleteByID(userID, notifID); err != nil {
+		return err
+	}
+	if err := s.pubsub.PublishRemovalToUser(context.Background(), userID, notifID); err != nil {
+		log.Printf("[NotifService] Error publishing notification removal to %s: %v", userID, err)
+	}
+	return nil
+}
+
+func (s *NotificationService) DeleteAll(userID string) error {
+	if err := s.repo.DeleteAllByUserID(userID); err != nil {
+		return err
+	}
+	if err := s.pubsub.PublishClearToUser(context.Background(), userID); err != nil {
+		log.Printf("[NotifService] Error publishing notifications clear to %s: %v", userID, err)
+	}
+	return nil
+}
+
+func (s *NotificationService) RemoveFriendRequestNotification(userID, actorID string) {
+	ids, err := s.repo.DeleteByActorAndType(userID, actorID, "friend_request")
+	if err != nil {
+		log.Printf("[NotifService] Error removing friend request notification: %v", err)
+		return
+	}
+	for _, id := range ids {
+		if err := s.pubsub.PublishRemovalToUser(context.Background(), userID, id); err != nil {
+			log.Printf("[NotifService] Error publishing notification removal to %s: %v", userID, err)
+		}
+	}
 }
 
 // SendCommentNotification builds and sends a notification when someone comments on a post.

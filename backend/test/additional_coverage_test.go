@@ -218,11 +218,19 @@ func TestNotification_MarkAllRead(t *testing.T) {
 
 	w = authedRequest(t, router, "GET", "/api/notification", bob.Token, "")
 	var resp struct {
+		Data []struct {
+			Read bool `json:"read"`
+		} `json:"data"`
 		Total int `json:"total"`
 	}
 	json.Unmarshal(w.Body.Bytes(), &resp)
-	if resp.Total != 0 {
-		t.Fatalf("expected 0 unread, got %d", resp.Total)
+	if resp.Total < 1 {
+		t.Fatalf("expected the notification to stay listed, got %d", resp.Total)
+	}
+	for _, n := range resp.Data {
+		if !n.Read {
+			t.Fatalf("expected every notification read after mark all read")
+		}
 	}
 }
 

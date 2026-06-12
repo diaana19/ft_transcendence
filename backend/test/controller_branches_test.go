@@ -63,9 +63,9 @@ func TestNotificationController_Unauthorized(t *testing.T) {
 	ctrl := brokenControllers(t)
 
 	c, w := testCtx(http.MethodGet, "/", "")
-	ctrl.Notification.GetUnread(c)
+	ctrl.Notification.GetNotifications(c)
 	if w.Code != http.StatusUnauthorized {
-		t.Fatalf("GetUnread: expected 401, got %d", w.Code)
+		t.Fatalf("GetNotifications: expected 401, got %d", w.Code)
 	}
 
 	c, w = testCtx(http.MethodPatch, "/", "")
@@ -86,9 +86,9 @@ func TestNotificationController_DBErrors(t *testing.T) {
 
 	c, w := testCtx(http.MethodGet, "/", "")
 	c.Set("user_id", "u1")
-	ctrl.Notification.GetUnread(c)
+	ctrl.Notification.GetNotifications(c)
 	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("GetUnread: expected 500, got %d", w.Code)
+		t.Fatalf("GetNotifications: expected 500, got %d", w.Code)
 	}
 
 	c, w = testCtx(http.MethodPatch, "/", "")

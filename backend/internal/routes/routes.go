@@ -108,9 +108,11 @@ func registerFriendRoutes(protected *gin.RouterGroup, c *controllers.FriendContr
 
 // registerNotificationRoutes registers the notification read routes.
 func registerNotificationRoutes(protected *gin.RouterGroup, c *controllers.NotificationController) {
-	protected.GET("/notification", c.GetUnread)
+	protected.GET("/notification", c.GetNotifications)
 	protected.PATCH("/notification/read", c.MarkAllRead)
 	protected.PATCH("/notification/:id/read", c.MarkRead)
+	protected.DELETE("/notification/:id", c.DeleteNotification)
+	protected.DELETE("/notification", c.DeleteAllNotifications)
 }
 
 // registerUploadRoutes registers file serving (optional auth) and the protected upload route.

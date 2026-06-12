@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom'
 import { useNotifications } from '../../context/NotificationProvider'
 import { Heart, MessageCircle, UserPlus, Bell, Mail, Check } from 'lucide-react'
 import { acceptFriendRequest } from '../../features/user/userService'
-import { useState } from 'react'
 
 // getNotifIcon returns the colored icon for each notification type.
 function getNotifIcon(type) {
@@ -90,13 +89,12 @@ function getNotifIcon(type) {
 
 // NotificationsPage lists all notifications and routes to the right page on click.
 function NotificationsPage() {
-    const { notifications, markAllRead, markRead } = useNotifications()
+    const { notifications, setNotifications, removeNotification, clearAll } = useNotifications()
     const navigate = useNavigate()
-    const [accepted, setAccepted] = useState({})
 
-    // handleClick marks the notification read and navigates by its type.
+    // handleClick dismisses the notification and navigates by its type.
     const handleClick = (notif) => {
-        if (!notif.read) markRead(notif.id)
+        removeNotification(notif.id)
         if (notif.type === 'message') navigate(`/messages/${notif.actor_id}`)
         else if (notif.type === 'like' || notif.type === 'comment') {
             if (notif.post_id) {
@@ -115,13 +113,13 @@ function NotificationsPage() {
         }
     }
 
-    // handleAccept accepts a friend request from the notification item.
+    // handleAccept accepts a friend request from the notification item. The backend
+    // deletes the friend request notification, so the item is dropped locally too.
     const handleAccept = async (e, notif) => {
         e.stopPropagation()
         try {
             await acceptFriendRequest(notif.actor_id)
-            setAccepted((prev) => ({ ...prev, [notif.id]: true }))
-            await markAllRead()
+            setNotifications((prev) => prev.filter((n) => n.id !== notif.id))
         } catch (err) {
             console.info('Error accepting friend request:', err)
         }
@@ -144,11 +142,11 @@ function NotificationsPage() {
                 </h1>
                 {notifications.length > 0 && (
                     <button
-                        onClick={markAllRead}
+                        onClick={clearAll}
                         className="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
                         style={{ background: '#ede8fd', color: '#534ab7' }}
                     >
-                        Mark all read
+                        Clear all
                     </button>
                 )}
             </div>
@@ -190,28 +188,25 @@ function NotificationsPage() {
                             {notif.type === 'friend_request' && (
                                 <button
                                     onClick={(e) => handleAccept(e, notif)}
-                                    disabled={accepted[notif.id]}
-                                    className="mt-2 px-3 py-1 text-xs font-bold rounded-full disabled:opacity-50 transition-colors"
+                                    className="mt-2 px-3 py-1 text-xs font-bold rounded-full transition-colors"
                                     style={{ background: '#534ab7', color: 'white' }}
                                 >
-                                    {accepted[notif.id] ? 'Accepted ✓' : 'Accept'}
+                                    Accept
                                 </button>
                             )}
                         </div>
-                        {!notif.read && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    markRead(notif.id)
-                                }}
-                                title="Mark as read"
-                                aria-label="Mark as read"
-                                className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:opacity-80"
-                                style={{ background: '#ede8fd', color: '#534ab7' }}
-                            >
-                                <Check size={15} />
-                            </button>
-                        )}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                removeNotification(notif.id)
+                            }}
+                            title="Mark as read"
+                            aria-label="Mark as read"
+                            className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:opacity-80"
+                            style={{ background: '#ede8fd', color: '#534ab7' }}
+                        >
+                            <Check size={15} />
+                        </button>
                     </div>
                 ))
             )}

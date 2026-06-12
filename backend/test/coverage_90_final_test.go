@@ -470,7 +470,7 @@ func TestFriendService_SendRequestFinal(t *testing.T) {
 	db.Create(&sender)
 	db.Create(&receiver)
 
-	err := service.SendRequest(senderID, receiverID)
+	_, err := service.SendRequest(senderID, receiverID)
 	if err != nil {
 		t.Fatalf("SendRequest: %v", err)
 	}
@@ -484,7 +484,7 @@ func TestFriendService_SendRequestToSelfFinal(t *testing.T) {
 	user := models.User{ID: userID, Username: "selffinal", Email: "selffinal@test.com"}
 	db.Create(&user)
 
-	err := service.SendRequest(userID, userID)
+	_, err := service.SendRequest(userID, userID)
 	if err != nil {
 		t.Fatalf("sending request to self is a no-op: %v", err)
 	}

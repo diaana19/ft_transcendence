@@ -18,8 +18,8 @@ func NewNotificationController(notifService *services.NotificationService) *Noti
 	return &NotificationController{notifService: notifService}
 }
 
-// GetUnread returns the unread notifications of the logged in user.
-// @Summary   List unread notifications
+// GetNotifications returns the recent notifications of the logged in user.
+// @Summary   List recent notifications, read and unread
 // @Tags      notifications
 // @Security  BearerAuth
 // @Produce   json
@@ -27,7 +27,7 @@ func NewNotificationController(notifService *services.NotificationService) *Noti
 // @Failure   401  {object}  map[string]string
 // @Failure   500  {object}  map[string]string
 // @Router    /notification [get]
-func (nc *NotificationController) GetUnread(c *gin.Context) {
+func (nc *NotificationController) GetNotifications(c *gin.Context) {
 	userIDRaw, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -35,7 +35,7 @@ func (nc *NotificationController) GetUnread(c *gin.Context) {
 	}
 	userID := userIDRaw.(string)
 
-	notifs, err := nc.notifService.GetUnread(userID)
+	notifs, err := nc.notifService.GetAll(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -91,4 +91,54 @@ func (nc *NotificationController) MarkRead(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "notification marked as read"})
+}
+
+// DeleteNotification deletes one notification by its id. Deleting a notification
+// that no longer exists is a no-op that reports success.
+// @Summary   Delete a single notification
+// @Tags      notifications
+// @Security  BearerAuth
+// @Produce   json
+// @Param     id   path      string  true  "Notification ID"
+// @Success   200  {object}  map[string]string
+// @Failure   401  {object}  map[string]string
+// @Failure   500  {object}  map[string]string
+// @Router    /notification/{id} [delete]
+func (nc *NotificationController) DeleteNotification(c *gin.Context) {
+	userIDRaw, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID := userIDRaw.(string)
+
+	if err := nc.notifService.Delete(userID, c.Param("id")); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "notification deleted"})
+}
+
+// DeleteAllNotifications deletes every notification of the logged in user.
+// @Summary   Delete all notifications
+// @Tags      notifications
+// @Security  BearerAuth
+// @Produce   json
+// @Success   200  {object}  map[string]string
+// @Failure   401  {object}  map[string]string
+// @Failure   500  {object}  map[string]string
+// @Router    /notification [delete]
+func (nc *NotificationController) DeleteAllNotifications(c *gin.Context) {
+	userIDRaw, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID := userIDRaw.(string)
+
+	if err := nc.notifService.DeleteAll(userID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "all notifications deleted"})
 }

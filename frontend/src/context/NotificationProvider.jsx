@@ -2,14 +2,14 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useSocket } from './SocketProvider'
 import {
-    getUnreadNotifications,
-    markAllNotificationsRead,
-    markNotificationRead,
+    getNotifications,
+    deleteNotification,
+    deleteAllNotifications,
 } from '../components/notifications/notificationService'
 
 export const NotificationContext = createContext()
 
-const STORAGE_KEY = 'unreadNotifications'
+const STORAGE_KEY = 'notifications'
 
 function readCache() {
     try {
@@ -20,7 +20,7 @@ function readCache() {
     }
 }
 
-// NotificationProvider loads unread notifications and listens new ones over the socket.
+// NotificationProvider loads recent notifications and listens new ones over the socket.
 export function NotificationProvider({ children }) {
     const { user, loading } = useAuth()
     const { subscribe } = useSocket()
@@ -41,9 +41,9 @@ export function NotificationProvider({ children }) {
             return
         }
 
-        getUnreadNotifications()
+        getNotifications()
             .then((data) => setNotifications(data ?? []))
-            .catch((err) => console.info('[Notif] failed to load unread:', err))
+            .catch((err) => console.info('[Notif] failed to load notifications:', err))
 
         // Then subscribe to the socket to receive new notifications in real time.
         const unsubscribe = subscribe((msg) => {
@@ -54,38 +54,55 @@ export function NotificationProvider({ children }) {
                     return [msg.notification, ...prev]
                 })
             }
+            if (msg.type === 'notification_removed' && msg.notification_id) {
+                setNotifications((prev) => prev.filter((n) => n.id !== msg.notification_id))
+            }
+            if (msg.type === 'notifications_cleared') {
+                setNotifications([])
+            }
         })
 
         return unsubscribe
     }, [loading, user?.userId, subscribe])
 
-    // markAllRead marks every notification as read on the server and locally.
-    const markAllRead = async () => {
+    // removeNotification deletes one read notification. It updates the UI first
+    // then the server.
+    const removeNotification = async (id) => {
+        const previous = notifications
+        setNotifications((prev) => prev.filter((n) => n.id !== id))
         try {
-            await markAllNotificationsRead()
-            setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+            await deleteNotification(id)
         } catch (err) {
-            console.info('[Notif] failed to mark all read:', err)
+            console.info('[Notif] failed to delete:', err)
+            // Restore the list if the request fails.
+            setNotifications(previous)
         }
     }
 
-    // markRead marks one notification as read. It updates the UI first then the server.
-    const markRead = async (id) => {
-        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
+    // clearAll deletes every notification. It updates the UI first then the server.
+    const clearAll = async () => {
+        const previous = notifications
+        setNotifications([])
         try {
-            await markNotificationRead(id)
+            await deleteAllNotifications()
         } catch (err) {
-            console.info('[Notif] failed to mark read:', err)
-            // Revert the local change if the request fails.
-            setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)))
+            console.info('[Notif] failed to clear:', err)
+            // Restore the list if the request fails.
+            setNotifications(previous)
         }
     }
 
-    const unreadCount = notifications.filter((n) => !n.read).length
+    const unreadCount = notifications.length
 
     return (
         <NotificationContext.Provider
-            value={{ notifications, setNotifications, markAllRead, markRead, unreadCount }}
+            value={{
+                notifications,
+                setNotifications,
+                removeNotification,
+                clearAll,
+                unreadCount,
+            }}
         >
             {children}
         </NotificationContext.Provider>

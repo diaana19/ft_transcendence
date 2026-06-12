@@ -28,15 +28,16 @@ type FriendService struct {
 }
 
 // SendRequest creates a pending friend request from the user to the target.
-// If the target already sent a pending request to the user, it auto-accepts instead.
-func (s *FriendService) SendRequest(userID, targetID string) error {
+// If the target already sent a pending request to the user, it auto-accepts
+// instead and reports it through the returned boolean.
+func (s *FriendService) SendRequest(userID, targetID string) (bool, error) {
 	// Adding yourself is a no-op rather than an error; the frontend refreshes.
 	if userID == targetID {
-		return nil
+		return false, nil
 	}
 	var target models.User
 	if err := s.DB.First(&target, "id = ?", targetID).Error; err != nil {
-		return errors.New("target user not found")
+		return false, errors.New("target user not found")
 	}
 	// If target already sent us a pending request, accept it instead of creating a duplicate.
 	var reverse models.Friend
@@ -45,7 +46,7 @@ func (s *FriendService) SendRequest(userID, targetID string) error {
 		First(&reverse).Error
 	if err == nil {
 		reverse.Status = statusAccepted
-		return s.DB.Save(&reverse).Error
+		return true, s.DB.Save(&reverse).Error
 	}
 	// Insert the pending request. The unique index on (user_id, friend_id, status)
 	// makes this a no-op if the same relationship already exists, so a repeated
@@ -55,7 +56,7 @@ func (s *FriendService) SendRequest(userID, targetID string) error {
 		FriendID: targetID,
 		Status:   statusPending,
 	}
-	return s.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&friend).Error
+	return false, s.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&friend).Error
 }
 
 // AcceptRequest accepts a pending request sent by the requester to the user.

@@ -1,22 +1,22 @@
 import axiosInstance from '../../services/axiosInstance'
 
-// getUnreadNotifications returns the unread notifications of the user.
-export async function getUnreadNotifications() {
+// getNotifications returns the recent notifications of the user, read and unread.
+export async function getNotifications() {
     const res = await axiosInstance.get('/api/notification')
 
     return res.data.data
 }
 
-// markAllNotificationsRead marks every notification as read.
-export async function markAllNotificationsRead() {
-    const res = await axiosInstance.patch('/api/notification/read')
+// deleteNotification deletes one notification once the user read it.
+export async function deleteNotification(id) {
+    const res = await axiosInstance.delete(`/api/notification/${id}`)
 
     return res.data
 }
 
-// markNotificationRead marks one notification as read.
-export async function markNotificationRead(id) {
-    const res = await axiosInstance.patch(`/api/notification/${id}/read`)
+// deleteAllNotifications deletes every notification of the user.
+export async function deleteAllNotifications() {
+    const res = await axiosInstance.delete('/api/notification')
 
     return res.data
 }
