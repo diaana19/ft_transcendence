@@ -8,16 +8,39 @@ import {
 } from '../components/notifications/notificationService'
 
 export const NotificationContext = createContext()
+
+const STORAGE_KEY = 'unreadNotifications'
+
+function readCache() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY)
+        return raw ? JSON.parse(raw) : []
+    } catch {
+        return []
+    }
+}
+
 // NotificationProvider loads unread notifications and listens new ones over the socket.
 export function NotificationProvider({ children }) {
     const { user, loading } = useAuth()
     const { subscribe } = useSocket()
-    const [notifications, setNotifications] = useState([])
+    const [notifications, setNotifications] = useState(readCache)
 
     useEffect(() => {
-        if (loading || !user) return
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications))
+        } catch {
+            void 0
+        }
+    }, [notifications])
 
-        // First load the current unread notifications from the API.
+    useEffect(() => {
+        if (loading) return
+        if (!user) {
+            setNotifications([])
+            return
+        }
+
         getUnreadNotifications()
             .then((data) => setNotifications(data ?? []))
             .catch((err) => console.info('[Notif] failed to load unread:', err))

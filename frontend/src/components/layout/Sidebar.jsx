@@ -1,5 +1,6 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { useNotifications } from '../../context/NotificationProvider'
 import NotificationBell from '../notifications/NotificationBell'
 import {
     HomeIcon,
@@ -14,6 +15,7 @@ import {
 // Sidebar is the main navigation: a left menu on desktop and a bottom bar on mobile.
 export default function Sidebar() {
     const { user, logout } = useAuth()
+    const { unreadCount } = useNotifications()
     const navigate = useNavigate()
 
     const handleLogout = async () => {
@@ -108,10 +110,15 @@ export default function Sidebar() {
                     <NavLink
                         to="/notifications"
                         className={({ isActive }) =>
-                            `flex flex-col items-center p-2 ${isActive ? 'text-blue-400' : 'text-gray-500'}`
+                            `relative flex flex-col items-center p-2 ${isActive ? 'text-blue-400' : 'text-gray-500'}`
                         }
                     >
                         <BellIcon className="w-6 h-6" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
                     </NavLink>
                 )}
                 {user?.userId && (
