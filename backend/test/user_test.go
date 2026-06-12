@@ -54,11 +54,11 @@ func tokenFor(userID string) string {
 func TestGetUsers_Success(t *testing.T) {
 	router, _ := SetupTestEnv()
 
-	createUserAndGetID(router, t)
+	viewerID := createUserAndGetID(router, t)
 	createUserAndGetID(router, t)
 	createUserAndGetID(router, t)
 
-	w := authedRequest(t, router, "GET", "/api/users", tokenFor("any-authenticated-user"), "")
+	w := authedRequest(t, router, "GET", "/api/users", tokenFor(viewerID), "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -79,18 +79,20 @@ func TestGetUsers_Success(t *testing.T) {
 	}
 }
 
-func TestGetUsers_Empty(t *testing.T) {
+func TestGetUsers_OnlySelf(t *testing.T) {
 	router, _ := SetupTestEnv()
 
-	w := authedRequest(t, router, "GET", "/api/users", tokenFor("any-authenticated-user"), "")
+	viewerID := createUserAndGetID(router, t)
+
+	w := authedRequest(t, router, "GET", "/api/users", tokenFor(viewerID), "")
 	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200 even if empty, got %d", w.Code)
+		t.Fatalf("expected 200, got %d", w.Code)
 	}
 
 	var users []any
 	json.Unmarshal(w.Body.Bytes(), &users)
-	if len(users) != 0 {
-		t.Fatal("expected empty array")
+	if len(users) != 1 {
+		t.Fatalf("expected only the viewer in the list, got %d users", len(users))
 	}
 }
 
@@ -98,7 +100,7 @@ func TestGetUser_Success(t *testing.T) {
 	router, _ := SetupTestEnv()
 	id := createUserAndGetID(router, t)
 
-	w := authedRequest(t, router, "GET", "/api/users/"+id, tokenFor("any-authenticated-user"), "")
+	w := authedRequest(t, router, "GET", "/api/users/"+id, tokenFor(id), "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -117,9 +119,10 @@ func TestGetUser_Success(t *testing.T) {
 func TestGetUser_NotFound(t *testing.T) {
 	router, _ := SetupTestEnv()
 
+	viewerID := createUserAndGetID(router, t)
 	fakeID := "550e8400-e29b-41d4-a716-446655440000"
 
-	w := authedRequest(t, router, "GET", "/api/users/"+fakeID, tokenFor("any-authenticated-user"), "")
+	w := authedRequest(t, router, "GET", "/api/users/"+fakeID, tokenFor(viewerID), "")
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("expected 404, got %d", w.Code)
 	}
@@ -181,8 +184,8 @@ func TestUpdateUser_NotFound(t *testing.T) {
 	body := `{"name": "Should not work"}`
 
 	w := authedRequest(t, router, "PUT", "/api/users/"+fakeID, tokenFor(fakeID), body)
-	if w.Code != http.StatusNotFound {
-		t.Fatalf("expected 404 on update not found, got %d", w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 for a vanished user, got %d", w.Code)
 	}
 }
 
@@ -196,7 +199,8 @@ func TestDeleteUser_Success(t *testing.T) {
 		t.Fatalf("expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 
-	getW := authedRequest(t, router, "GET", "/api/users/"+id, tokenFor("any-authenticated-user"), "")
+	viewerID := createUserAndGetID(router, t)
+	getW := authedRequest(t, router, "GET", "/api/users/"+id, tokenFor(viewerID), "")
 	if getW.Code != http.StatusNotFound {
 		t.Fatal("deleted user should return 404 on GET")
 	}
@@ -209,8 +213,8 @@ func TestDeleteUser_NotFound(t *testing.T) {
 
 	delBody := fmt.Sprintf(`{"password":"%s"}`, testUserPassword)
 	w := authedRequest(t, router, "DELETE", "/api/users/"+fakeID, tokenFor(fakeID), delBody)
-	if w.Code != http.StatusNotFound {
-		t.Fatalf("expected 404 on delete not found, got %d", w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 for a vanished user, got %d", w.Code)
 	}
 }
 

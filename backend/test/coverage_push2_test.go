@@ -175,15 +175,15 @@ func TestAuthController_MeAndLogout(t *testing.T) {
 
 	c, w = testCtx(http.MethodPost, "/", "")
 	ctrl.Auth.LogoutUser(c)
-	if w.Code != http.StatusUnauthorized {
-		t.Fatalf("Logout missing token: expected 401, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("Logout missing token: expected 200, got %d", w.Code)
 	}
 
 	c, w = testCtx(http.MethodPost, "/", "")
 	c.Request.Header.Set("Authorization", "Bearer not-a-valid-jwt")
 	ctrl.Auth.LogoutUser(c)
-	if w.Code != http.StatusUnauthorized {
-		t.Fatalf("Logout invalid token: expected 401, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("Logout invalid token: expected 200, got %d", w.Code)
 	}
 }
 
@@ -223,6 +223,13 @@ func TestUploadController_Branches(t *testing.T) {
 	broken := routes.Wire(brokenDB(t), sharedRDB, bcfg)
 	c, w = testCtx(http.MethodGet, "/", "")
 	setParam(c, "id", "anything")
+	broken.Upload.ServeFile(c)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("ServeFile invalid id: expected 400, got %d", w.Code)
+	}
+
+	c, w = testCtx(http.MethodGet, "/", "")
+	setParam(c, "id", utils.NewID())
 	broken.Upload.ServeFile(c)
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("ServeFile db error: expected 500, got %d", w.Code)

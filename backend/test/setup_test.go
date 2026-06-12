@@ -134,7 +134,7 @@ func SetupTestEnv() (*gin.Engine, *gorm.DB) {
 
 	router := gin.Default()
 	ctrl := routes.Wire(db, rdb, cfg)
-	routes.SetupRoutes(router, ctrl, rdb)
+	routes.SetupRoutes(router, ctrl, rdb, db)
 
 	return router, db
 }

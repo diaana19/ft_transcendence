@@ -117,7 +117,8 @@ type Disable2FAInput struct {
 	Code string `json:"code" binding:"required,len=6,numeric"`
 }
 
-// Disable turns off 2FA after checking the TOTP code.
+// Disable turns off 2FA after checking the TOTP code. When 2FA is already
+// disabled it is a no-op that reports success, so a repeated click never errors.
 // @Summary  Disable 2FA using a TOTP code
 // @Tags     2fa
 // @Security BearerAuth
@@ -140,6 +141,11 @@ func (tc *TwoFAController) Disable(c *gin.Context) {
 	var input Disable2FAInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})
+		return
+	}
+
+	if user, err := tc.userService.GetUser(userID); err == nil && !user.TwoFAEnabled {
+		c.JSON(http.StatusOK, gin.H{"message": "2FA disabled"})
 		return
 	}
 

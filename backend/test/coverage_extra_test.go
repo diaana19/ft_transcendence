@@ -45,14 +45,14 @@ func TestNotification_MarkSingleRead(t *testing.T) {
 	}
 }
 
-func TestNotification_MarkSingleReadNotFound(t *testing.T) {
+func TestNotification_MarkSingleReadMissingIsNoop(t *testing.T) {
 	router, _ := SetupTestEnv()
 	user := registerAndLogin(t, router, "msrnf", "msrnf@test.com", "StrongPass123!")
 
 	fakeID := "550e8400-e29b-41d4-a716-446655440000"
 	w := authedRequest(t, router, "PATCH", "/api/notification/"+fakeID+"/read", user.Token, "")
-	if w.Code != http.StatusNotFound {
-		t.Fatalf("mark unknown notification read: expected 404, got %d - body: %s", w.Code, w.Body.String())
+	if w.Code != http.StatusOK {
+		t.Fatalf("mark unknown notification read: expected 200 no-op, got %d - body: %s", w.Code, w.Body.String())
 	}
 }
 
@@ -150,7 +150,7 @@ func TestLogout_InvalidToken(t *testing.T) {
 	router, _ := SetupTestEnv()
 
 	w := authedRequest(t, router, "POST", "/api/auth/logout", "garbage-token", "")
-	if w.Code != http.StatusUnauthorized {
-		t.Fatalf("logout with invalid token: expected 401, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("logout with invalid token: expected 200, got %d", w.Code)
 	}
 }

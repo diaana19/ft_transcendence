@@ -117,7 +117,7 @@ func main() {
 	})
 
 	ctrl := routes.Wire(pdb, rdb, conf)
-	routes.SetupRoutes(router, ctrl, rdb)
+	routes.SetupRoutes(router, ctrl, rdb, pdb)
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(
 		swaggerFiles.Handler,

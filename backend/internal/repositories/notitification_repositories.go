@@ -37,18 +37,12 @@ func (r *NotificationRepositories) MarkAllReadByUserID(userID string) error {
 		Update("read", true).Error
 }
 
-// MarkReadByID marks one notification of the user as read.
+// MarkReadByID marks one notification of the user as read. Marking a notification
+// that no longer exists is a no-op, so a repeated click never errors.
 func (r *NotificationRepositories) MarkReadByID(userID, notifID string) error {
-	res := r.db.Model(&models.Notification{}).
+	return r.db.Model(&models.Notification{}).
 		Where("id = ? AND user_id = ?", notifID, userID).
-		Update("read", true)
-	if res.Error != nil {
-		return res.Error
-	}
-	if res.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-	return nil
+		Update("read", true).Error
 }
 
 // GetUsernameByID returns the username of the user with this id.

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 
 	"ft_transcendence/backend/internal/controllers"
 	"ft_transcendence/backend/internal/middleware"
@@ -13,25 +14,25 @@ import (
 
 // SetupRoutes registers all API routes on the router. It groups public, WebSocket and
 // protected routes, and applies the auth and rate limit middlewares where needed.
-func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client) {
+func SetupRoutes(router *gin.Engine, c *Controllers, rdb *redis.Client, db *gorm.DB) {
 	api := router.Group("/api")
 
-	registerPublicAuthRoutes(api, c.Auth, rdb)
+	registerPublicAuthRoutes(api, c.Auth, rdb, db)
 	registerOAuthRoutes(api, c.OAuth)
 	registerWebSocketRoutes(api, c.ChatWS)
-	registerPostRoutes(api, rdb, c.Post)
+	registerPostRoutes(api, rdb, db, c.Post)
 
 	api.GET("/trends", c.Post.GetTrends)
 	api.GET("/tags", c.Post.SearchTags)
 
 	api.GET("/users/:id/online", onlineStatusHandler(c.WSManager))
 
-	protected := api.Group("", middleware.AuthMiddleware(rdb))
+	protected := api.Group("", middleware.AuthMiddleware(rdb, db))
 	registerProtectedAuthRoutes(protected, c.Auth)
 	registerUserRoutes(protected, c.User)
 	registerFriendRoutes(protected, c.Friend)
 	registerNotificationRoutes(protected, c.Notification)
-	registerUploadRoutes(api, rdb, c.Upload)
+	registerUploadRoutes(api, rdb, db, c.Upload)
 	registerGDPRRoutes(protected, c.GDPR)
 	registerTwoFARoutes(protected, c.TwoFA)
 	registerGamificationRoutes(protected, c.Gamification)
@@ -53,14 +54,16 @@ func onlineStatusHandler(wsManager *socket.WSManager) gin.HandlerFunc {
 }
 
 // registerPublicAuthRoutes registers the public auth routes, rate limited by client IP.
-func registerPublicAuthRoutes(api *gin.RouterGroup, c *controllers.AuthController, rdb *redis.Client) {
+func registerPublicAuthRoutes(api *gin.RouterGroup, c *controllers.AuthController, rdb *redis.Client, db *gorm.DB) {
 	auth := api.Group("/auth", middleware.RateLimitMiddleware(rdb))
 	auth.POST("/register", c.RegisterUser)
 	auth.POST("/login", c.LoginUser)
 	auth.POST("/refresh", c.RefreshToken)
 	auth.POST("/2fa/verify", c.Verify2FA)
 	auth.POST("/forgot-password", c.ForgotPassword)
-	auth.GET("/session", middleware.OptionalAuthMiddleware(rdb), c.Session)
+	auth.GET("/session", middleware.OptionalAuthMiddleware(rdb, db), c.Session)
+	// Logout is public on purpose: it must succeed even with an expired token.
+	auth.POST("/logout", c.LogoutUser)
 }
 
 // registerOAuthRoutes registers the GitHub OAuth login and callback routes.
@@ -77,7 +80,6 @@ func registerWebSocketRoutes(api *gin.RouterGroup, c *socket.ChatHandler) {
 
 // registerProtectedAuthRoutes registers the auth routes that need a valid token.
 func registerProtectedAuthRoutes(protected *gin.RouterGroup, c *controllers.AuthController) {
-	protected.POST("/auth/logout", c.LogoutUser)
 	protected.GET("/auth/me", c.Me)
 	protected.POST("/auth/change-password", c.ChangePassword)
 }
@@ -111,10 +113,10 @@ func registerNotificationRoutes(protected *gin.RouterGroup, c *controllers.Notif
 }
 
 // registerUploadRoutes registers file serving (optional auth) and the protected upload route.
-func registerUploadRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controllers.UploadController) {
-	api.GET("/files/:id", middleware.OptionalAuthMiddleware(rdb), c.ServeFile)
+func registerUploadRoutes(api *gin.RouterGroup, rdb *redis.Client, db *gorm.DB, c *controllers.UploadController) {
+	api.GET("/files/:id", middleware.OptionalAuthMiddleware(rdb, db), c.ServeFile)
 
-	protected := api.Group("", middleware.AuthMiddleware(rdb))
+	protected := api.Group("", middleware.AuthMiddleware(rdb, db))
 	protected.POST("/upload", c.UploadFile)
 }
 
@@ -139,14 +141,14 @@ func registerGamificationRoutes(protected *gin.RouterGroup, c *controllers.Gamif
 
 // registerPostRoutes registers the post and comment routes. Read routes use optional auth,
 // write routes need a valid token.
-func registerPostRoutes(api *gin.RouterGroup, rdb *redis.Client, c *controllers.PostController) {
+func registerPostRoutes(api *gin.RouterGroup, rdb *redis.Client, db *gorm.DB, c *controllers.PostController) {
 	posts := api.Group("/posts")
-	posts.GET("", middleware.OptionalAuthMiddleware(rdb), c.GetPosts)
-	posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(rdb), c.GetPostsByUser)
-	posts.GET("/:id", middleware.OptionalAuthMiddleware(rdb), c.GetPost)
-	posts.GET("/:id/comments", middleware.OptionalAuthMiddleware(rdb), c.GetComments)
+	posts.GET("", middleware.OptionalAuthMiddleware(rdb, db), c.GetPosts)
+	posts.GET("/user/:userId", middleware.OptionalAuthMiddleware(rdb, db), c.GetPostsByUser)
+	posts.GET("/:id", middleware.OptionalAuthMiddleware(rdb, db), c.GetPost)
+	posts.GET("/:id/comments", middleware.OptionalAuthMiddleware(rdb, db), c.GetComments)
 
-	protected := posts.Group("", middleware.AuthMiddleware(rdb))
+	protected := posts.Group("", middleware.AuthMiddleware(rdb, db))
 	protected.POST("", c.CreatePost)
 	protected.PUT("/:id", c.UpdatePost)
 	protected.DELETE("/:id", c.DeletePost)

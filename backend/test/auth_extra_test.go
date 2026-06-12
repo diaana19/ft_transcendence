@@ -165,8 +165,8 @@ func TestLogout_MissingToken(t *testing.T) {
 	router, _ := SetupTestEnv()
 
 	w := authedRequest(t, router, "POST", "/api/auth/logout", "bad.token.here", "")
-	if w.Code != http.StatusUnauthorized {
-		t.Fatalf("logout with invalid token: expected 401, got %d", w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("logout with invalid token: expected 200, got %d", w.Code)
 	}
 }
 

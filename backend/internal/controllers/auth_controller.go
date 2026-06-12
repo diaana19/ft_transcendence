@@ -408,14 +408,15 @@ func (ac *AuthController) Session(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": user.ToResponse()})
 }
 
-// LogoutUser blacklists the active token and clears the auth cookie.
+// LogoutUser blacklists the active token and clears the auth cookie. It always
+// returns 200: a missing or expired token means the user is already logged out,
+// which is the state logout wants to reach anyway.
 // @Summary   Log out the current user
-// @Description Blacklist the active token and clear the auth cookie
+// @Description Blacklist the active token and clear the auth cookie; always succeeds
 // @Tags      auth
 // @Security  BearerAuth
 // @Produce   json
 // @Success   200 {object} map[string]string
-// @Failure   401 {object} map[string]string
 // @Failure   500 {object} map[string]string
 // @Router    /auth/logout [post]
 func (ac *AuthController) LogoutUser(c *gin.Context) {
@@ -427,20 +428,20 @@ func (ac *AuthController) LogoutUser(c *gin.Context) {
 		}
 	}
 
+	c.SetCookie("auth_token", "", -1, "/", "", true, true)
+
 	if tokenStr == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
+		c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 		return
 	}
 
 	claims, err := utils.ValidateJWT(tokenStr)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 		return
 	}
 
 	expiry := time.Until(claims.ExpiresAt.Time)
-	c.SetCookie("auth_token", "", -1, "/", "", true, true)
-
 	if err := ac.authService.LogoutAuthUserService(tokenStr, expiry, ac.rdb); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

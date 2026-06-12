@@ -7,7 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 
+	"ft_transcendence/backend/internal/models"
 	"ft_transcendence/backend/internal/utils"
 )
 
@@ -37,9 +39,19 @@ func clearAuthCookie(c *gin.Context) {
 	}
 }
 
+// userExists returns true if the user behind the token still has an active account.
+// A valid JWT can outlive the account (deleted via GDPR or profile), so the token
+// alone is not enough.
+func userExists(db *gorm.DB, userID string) bool {
+	var count int64
+	err := db.Model(&models.User{}).Where("id = ?", userID).Count(&count).Error
+	return err == nil && count > 0
+}
+
 // AuthMiddleware checks the JWT and blocks the request when it is not valid. It also rejects
-// tokens that are in the Redis blacklist, and sets user_id and username in the context.
-func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
+// tokens that are in the Redis blacklist or whose user no longer exists, and sets user_id
+// and username in the context.
+func AuthMiddleware(rdb *redis.Client, db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)
 		if token == "" {
@@ -68,6 +80,14 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 			return
 		}
 
+		if !userExists(db, claims.Subject) {
+			clearAuthCookie(c)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "invalid token",
+			})
+			return
+		}
+
 		c.Set("user_id", claims.Subject)
 		c.Set("username", claims.Username)
 		c.Next()
@@ -75,8 +95,9 @@ func AuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 }
 
 // OptionalAuthMiddleware tries to read the JWT but never blocks the request. When the token
-// is valid it sets user_id and username in the context, otherwise it just continues.
-func OptionalAuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
+// is valid and its user still exists it sets user_id and username in the context, otherwise
+// it just continues as an anonymous request.
+func OptionalAuthMiddleware(rdb *redis.Client, db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)
 		if token == "" {
@@ -92,6 +113,11 @@ func OptionalAuthMiddleware(rdb *redis.Client) gin.HandlerFunc {
 
 		claims, err := utils.ValidateJWT(token)
 		if err != nil {
+			c.Next()
+			return
+		}
+
+		if !userExists(db, claims.Subject) {
 			c.Next()
 			return
 		}

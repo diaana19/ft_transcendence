@@ -62,8 +62,8 @@ func TestTwoFA_SetupRequiresAuth(t *testing.T) {
 func TestTwoFA_SetupUnknownUser(t *testing.T) {
 	router, _ := SetupTestEnv()
 	w := authedRequest(t, router, "POST", "/api/2fa/setup", tokenFor("550e8400-e29b-41d4-a716-446655440000"), "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("setup unknown user: expected 400, got %d - body: %s", w.Code, w.Body.String())
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("setup unknown user: expected 401, got %d - body: %s", w.Code, w.Body.String())
 	}
 }
 
@@ -132,13 +132,13 @@ func TestTwoFA_EnableBadCodeFormat(t *testing.T) {
 	}
 }
 
-func TestTwoFA_DisableNotEnabled(t *testing.T) {
+func TestTwoFA_DisableNotEnabledIsNoop(t *testing.T) {
 	router, _ := SetupTestEnv()
 	u := registerAndLogin(t, router, "tfadisnone", "tfadisnone@test.com", "StrongPass123!")
 
 	w := authedRequest(t, router, "POST", "/api/2fa/disable", u.Token, `{"code":"123456"}`)
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("disable when not enabled: expected 500, got %d - body: %s", w.Code, w.Body.String())
+	if w.Code != http.StatusOK {
+		t.Fatalf("disable when not enabled: expected 200 no-op, got %d - body: %s", w.Code, w.Body.String())
 	}
 }
 
@@ -172,8 +172,8 @@ func TestTwoFA_EnableUnknownUser(t *testing.T) {
 	router, _ := SetupTestEnv()
 	w := authedRequest(t, router, "POST", "/api/2fa/enable",
 		tokenFor("550e8400-e29b-41d4-a716-446655440000"), `{"code":"123456"}`)
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("enable unknown user: expected 400, got %d", w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("enable unknown user: expected 401, got %d", w.Code)
 	}
 }
 
@@ -181,8 +181,8 @@ func TestTwoFA_DisableUnknownUser(t *testing.T) {
 	router, _ := SetupTestEnv()
 	w := authedRequest(t, router, "POST", "/api/2fa/disable",
 		tokenFor("550e8400-e29b-41d4-a716-446655440000"), `{"code":"123456"}`)
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("disable unknown user: expected 500, got %d", w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("disable unknown user: expected 401, got %d", w.Code)
 	}
 }
 

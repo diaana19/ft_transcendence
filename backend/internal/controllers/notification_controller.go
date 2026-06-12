@@ -1,11 +1,9 @@
 package controllers
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 
 	"ft_transcendence/backend/internal/services"
 )
@@ -69,7 +67,8 @@ func (nc *NotificationController) MarkAllRead(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "all notification marked as read"})
 }
 
-// MarkRead marks one notification as read by its id.
+// MarkRead marks one notification as read by its id. Marking a notification that
+// no longer exists is a no-op that reports success.
 // @Summary   Mark a single notification as read
 // @Tags      notifications
 // @Security  BearerAuth
@@ -77,7 +76,6 @@ func (nc *NotificationController) MarkAllRead(c *gin.Context) {
 // @Param     id   path      string  true  "Notification ID"
 // @Success   200  {object}  map[string]string
 // @Failure   401  {object}  map[string]string
-// @Failure   404  {object}  map[string]string
 // @Failure   500  {object}  map[string]string
 // @Router    /notification/{id}/read [patch]
 func (nc *NotificationController) MarkRead(c *gin.Context) {
@@ -89,10 +87,6 @@ func (nc *NotificationController) MarkRead(c *gin.Context) {
 	userID := userIDRaw.(string)
 
 	if err := nc.notifService.MarkRead(userID, c.Param("id")); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "notification not found"})
-			return
-		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

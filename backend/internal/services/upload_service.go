@@ -98,9 +98,11 @@ func (s *UploadService) SaveFile(
 	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
 	fileID := utils.NewID()
 	safeName := fileID + ext
-	dst := filepath.Join(s.UploadDir, safeName)
+	// filepath.Join cleans the path (strips "./"), so compare against the cleaned base.
+	baseDir := filepath.Clean(s.UploadDir)
+	dst := filepath.Join(baseDir, safeName)
 
-	if !strings.HasPrefix(dst, s.UploadDir+string(filepath.Separator)) {
+	if !strings.HasPrefix(dst, baseDir+string(filepath.Separator)) {
 		return nil, errors.New("invalid path")
 	}
 

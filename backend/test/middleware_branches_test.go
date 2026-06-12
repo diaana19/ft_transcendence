@@ -46,7 +46,7 @@ func TestRateLimitMiddleware_Branches(t *testing.T) {
 
 func TestOptionalAuthMiddleware_Branches(t *testing.T) {
 	SetupTestEnv()
-	hf := middleware.OptionalAuthMiddleware(sharedRDB)
+	hf := middleware.OptionalAuthMiddleware(sharedRDB, sharedDB)
 
 	c, _ := testCtx(http.MethodGet, "/", "")
 	c.Request.Header.Set("Authorization", "Bearer not-a-jwt")

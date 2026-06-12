@@ -60,12 +60,13 @@ func TestGDPR_DeleteUserData(t *testing.T) {
 		t.Fatalf("delete: expected 200, got %d - body: %s", w.Code, w.Body.String())
 	}
 
-	w = authedRequest(t, router, "GET", "/api/users/"+u.ID, tokenFor("any-authenticated-user"), "")
+	viewer := registerAndLogin(t, router, "gdprviewer", "gdprviewer@test.com", "StrongPass123!")
+	w = authedRequest(t, router, "GET", "/api/users/"+u.ID, viewer.Token, "")
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("deleted user should return 404, got %d", w.Code)
 	}
 
-	w = authedRequest(t, router, "GET", "/api/posts/user/"+u.ID, tokenFor("any-authenticated-user"), "")
+	w = authedRequest(t, router, "GET", "/api/posts/user/"+u.ID, viewer.Token, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("posts by deleted user: expected 200, got %d", w.Code)
 	}
