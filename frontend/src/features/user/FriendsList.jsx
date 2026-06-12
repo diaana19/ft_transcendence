@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '../../hooks/useAuth'
 import { getFollowers, getFollowing, getFriends } from '../../features/user/userService'
+import FollowersModal from './FollowersModal'
 
-// FriendsList shows the follower and following counts of a user.
 function FriendsList({ userId }) {
     const [followers, setFollowers] = useState([])
     const [following, setFollowing] = useState([])
     const [friends, setFriends] = useState([])
+    const [modal, setModal] = useState(null)
 
     useEffect(() => {
         if (!userId) return
@@ -23,18 +23,31 @@ function FriendsList({ userId }) {
 
     return (
         <div className="flex gap-4 mt-2 pb-3">
-            <span className="text-sm text-gray-700 cursor-pointer hover:underline">
+            <span
+                onClick={() => setModal('following')}
+                className="text-sm text-gray-700 cursor-pointer hover:underline"
+            >
                 <strong>{following.length}</strong>
                 <span className="text-gray-500 ml-1">Following</span>
             </span>
-            <span className="text-sm text-gray-700 cursor-pointer hover:underline">
+            <span
+                onClick={() => setModal('followers')}
+                className="text-sm text-gray-700 cursor-pointer hover:underline"
+            >
                 <strong>{followers.length}</strong>
                 <span className="text-gray-500 ml-1">Followers</span>
             </span>
-            <span className="text-sm text-gray-700 cursor-pointer hover:underline">
+            <span
+                onClick={() => setModal('friends')}
+                className="text-sm text-gray-700 cursor-pointer hover:underline"
+            >
                 <strong>{friends.length}</strong>
                 <span className="text-gray-500 ml-1">Friends</span>
             </span>
+
+            {modal && (
+                <FollowersModal userId={userId} type={modal} onClose={() => setModal(null)} />
+            )}
         </div>
     )
 }
