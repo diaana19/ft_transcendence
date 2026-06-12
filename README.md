@@ -17,7 +17,6 @@
 - [Project Management](#project-management)
 - [Technical Stack](#technical-stack)
 - [Database Schema](#database-schema)
-- [Features List](#features-list)
 - [Modules](#modules)
 - [Individual Contributions](#individual-contributions)
 - [Instructions](#instructions)
@@ -36,20 +35,18 @@ modern reactive frontend — the "Social Network" project archetype from the sub
 
 - **Accounts & security** — email/password sign-up with hashed + salted passwords (bcrypt),
   JWT access/refresh tokens, optional **TOTP 2FA**, and **GitHub OAuth 2.0** login.
-- **Social graph** — follow/unfollow and friend requests (send / accept / reject / remove),
+- **Social graph** — follow/unfollow and friend requests (send / accept / remove),
   with followers / following / friends lists.
-- **Content** — create/read/update/delete posts with image attachments, likes, and threaded
-  comments.
-- **Real-time chat** — WebSocket-based direct messages and rooms with message history,
-  threaded replies, and file attachments (backend complete; see limitations).
-- **Notifications** — in-app notifications for social actions (friend requests, likes,
-  messages, replies).
+- **Content** — create/read/update/delete posts with image attachments, likes, and reply.
+- **Real-time chat** — WebSocket-based direct messages with message history.
+- **Notifications** — in-app notifications for social actions (friend requests, followers, likes,
+  messages, replies) and create and delete actions, also for gamification actions.
 - **File management** — secure uploads (avatars, wallpapers, post media) with per-file
   visibility and access control.
 - **Privacy** — GDPR data export and account deletion.
 - **PWA** — installable, offline-capable progressive web app.
 
-The application is a three-service stack (React frontend, Go API, PostgreSQL) plus Redis and
+The application is a three-service stack (React frontend, Go API, PostgreSQL) plus Redis (Real-time caching and message broker) and
 an nginx reverse proxy, all orchestrated with Docker Compose and started with a single
 command.
 
@@ -82,7 +79,7 @@ The team is composed of 5 members. Roles follow the subject's recommended struct
 - **Version control** — Git with feature/story branches and reviewed pull requests; commits
   are SSH-signed. Work distribution is visible in `git shortlog -sne`.
 - **Task tracking** — GitHub Issues and GitHub Projects for sprint planning and task management.
-- **Communication** — Discord for day-to-day communication and coordination between frontend and backend tracks.
+- **Communication** — Whatsapp for day-to-day communication and coordination between frontend and backend tracks.
 
 ---
 
@@ -90,7 +87,7 @@ The team is composed of 5 members. Roles follow the subject's recommended struct
 
 | Layer | Technology | Why |
 |---|---|---|
-| **Frontend** | React 18 + Vite 5 + Tailwind CSS 4 | React is treated as a framework by the subject (ecosystem + architecture); Vite gives a fast dev server and an easy PWA pipeline (`vite-plugin-pwa`); Tailwind is the chosen styling solution. Routing via `react-router-dom`, HTTP via `axios`. |
+| **Frontend** | React 18 + Vite 5 + Tailwind CSS 4.2.2 | React is treated as a framework by the subject (ecosystem + architecture); Vite gives a fast dev server and an easy PWA pipeline (`vite-plugin-pwa`); Tailwind is the chosen styling solution. Routing via `react-router-dom`, HTTP via `axios`. |
 | **Backend** | Go 1.25 + Gin | Gin is a mature, high-performance HTTP framework. Go's static typing, goroutines, and standard tooling suit a concurrent real-time API (WebSocket hub + REST). |
 | **ORM** | GORM (Postgres driver) | Clean model definitions, auto-migration, soft deletes, and relations — satisfies the ORM minor module. |
 | **Database** | PostgreSQL 15 | Relational data with clear foreign-key relationships (users, posts, friendships, messages…), UUID primary keys, and strong consistency for concurrent multi-user writes. |
@@ -166,38 +163,6 @@ users ───────────────┐
 
 ---
 
-## Features List
-
-Attribution is derived from Git history (commit topics and per-file authorship); see
-[Individual Contributions](#individual-contributions).
-
-
-| Feature                     | Description                                                            | Contributor(s)        |
-| --------------------------- | ---------------------------------------------------------------------- | --------------------- |
-| Registration & login        | Email/password with bcrypt hashing, input validation (FE + BE)         | Lucas · Diana         |
-| JWT auth + refresh + logout | Access/refresh tokens, Redis-assisted session/invalidation             | Lucas · Valentin      |
-| Two-Factor Auth (TOTP)      | Setup / enable / disable / verify, with authenticator QR               | Lucas                 |
-| GitHub OAuth 2.0            | OAuth login + callback, account linking                                | Valentin · Lucas      |
-| Profiles                    | View/edit profile, avatar + wallpaper, follower/following counts       | Leonardo · Rosse            |
-| Friends & follows           | Request/accept/reject/remove friends; follow/unfollow; lists           | Lucas · Valentin      |
-| Posts                       | Create/read/update/delete posts with image attachments                 | Lucas · Diana · Rosse |
-| Likes & comments            | Toggle likes; threaded comments CRUD                                   | Lucas · Rosse         |
-| Real-time chat              | WebSocket DMs & rooms, history, threaded replies, attachments          | Valentin              |
-| File upload & management    | Multi-type uploads, validation, visibility/ACL, serving                | Lucas · Rosse        |
-| GDPR                        | Data export + account deletion                                         | Diana                 |
-| PWA                         | Installable + offline service worker                                   | Rosse                 |
-| Tests, CI & code quality    | ~81% backend coverage, CI coverage gate, golangci-lint, project layout | Valentin · Lucas · Leonardo      |
-| Infra & seed                | Docker Compose, nginx, DB seeding (Go + curl scripts)                  | Lucas · Valentin      |
-| Notifications               | Real-time notifications for all social actions (likes, comments, friend requests, follows, unfollows, friend removal); bell badge; mark-all-read | Diana · Valentin 
-| Gamification            | Badges with progress bars, leaderboard, XP/level system, badge toast notification in feed | Diana · Rosse |
-| API documentation           | Swagger docs with 30+ documented endpoints                       | Lucas · Leonardo
-| Settings page               | Password change, 2FA management, data export, account deletion with confirmation overlay | Diana · Lucas |
-| Privacy Policy & Terms      | Accessible legal pages with full GDPR-compliant content | Rosse |
-| Rate limiting               | Per-IP token bucket rate limiting on all endpoints | Lucas · Leonardo |
-| Design system          | 10+ reusable components: Button, Input, Modal, FollowButton, NotificationBell, PostCard, CreatePost, CookiesBanner, LoginModal, ProfileBadges | Diana |
-
----
-
 ## Modules
 
 The mandatory minimum is **14 points** (Major = 2, Minor = 1). The bonus part is capped at
@@ -214,10 +179,10 @@ status**, since only fully functional modules count at evaluation:
 | Module | Category | Pts | Status | How it was implemented | Owner |
 |---|---|---|---|---|---|
 | Use a framework for frontend **and** backend | Web | 2 | ✅ | Chosen to leverage mature ecosystems and separation of concerns. React (Vite) for a reactive, component-based UI; Gin (Go) for a high-performance, concurrent REST API.   | whole team |
-| Real-time features via WebSockets | Web | 2 | ✅ | Chosen to enable instant notifications and live chat without polling. gorilla/websocket hub with broadcast, connect/disconnect handling, Redis pub/sub; real-time chat UI fully wired with message history and online status. | vali |
-| User interaction (chat + profile + friends) | Web | 2 | ✅ | Core social feature required by the subject. Profiles, friends, follows, and real-time chat all implemented end-to-end. Chat UI with message history, online status, and user ordering by last message. | vali, dirituay |
-| Public API | Web | 2 | ✅ | Chosen to expose the platform data securely to external consumers. 30+ REST endpoints (GET/POST/PUT/DELETE), per-IP rate limiting, Swagger docs. | luluzuri, lepereir |
-| Standard user management | User Mgmt | 2 | ✅ | Required by the subject for a complete social platform. Profile edit, avatar with default, friends system, online status indicator (green dot), and level badge on profile. | lepereir, rmarcas-, dirituay |
+| Real-time features via WebSockets | Web | 2 | ✅ | Chosen to enable instant notifications and live chat without polling. gorilla/websocket hub with broadcast, connect/disconnect handling, Redis pub/sub; real-time chat UI fully wired with message history and online status. | vali, lepereir |
+| User interaction (chat + profile + friends) | Web | 2 | ✅ | Core social feature required by the subject. Profiles, friends, follows, and real-time chat all implemented end-to-end. Chat UI with message history, online status, and user ordering by last message. | vali, dirituay, rmarcas- |
+| Public API | Web | 2 | ✅ | Chosen to expose the platform data securely to external consumers. 30+ REST endpoints (GET/POST/PUT/DELETE), per-IP rate limiting, Swagger docs. | luluzuri, lepereir, vali |
+| Standard user management | User Mgmt | 2 | ✅ | Required by the subject for a complete social platform. Profile edit, avatar with default, friends system, online status indicator (green dot), and level badge on profile. | whole team |
 
 **Major subtotal: 10 pts**
 
@@ -227,23 +192,25 @@ status**, since only fully functional modules count at evaluation:
 |---|---|---|---|---|---|
 | ORM | Web | 1 | ✅ | Chosen to simplify database interactions. GORM with auto-migration, relations, and soft deletes. | luluzuri |
 | Notification system | Web | 1 | ✅ | Chosen to improve user engagement with real-time feedback. Notifications for all social actions via WebSocket; mark-all-read and per-notification read status. | dirituay, vali |
-| File upload & management | Web | 1 | ✅ | Chosen to support rich media content. Multi-type uploads, client+server validation, visibility/ACL, delete, serving. | luluzuri |
+| File upload & management | Web | 1 | ✅ | Chosen to support rich media content. Multi-type uploads, client+server validation, visibility/ACL, delete, serving. | luluzuri, rmarcas- |
 | Progressive Web App (PWA) | Web | 1 | ✅ | Chosen to make the app installable and available offline. vite-plugin-pwa, manifest, Workbox service worker. | rmarcas- |
-| OAuth 2.0 (GitHub) | User Mgmt | 1 | ✅ | Chosen to simplify onboarding with an existing account. OAuth login + callback, account linking. | vali, luluzuri |
+| OAuth 2.0 (GitHub) | User Mgmt | 1 | ✅ | Chosen to simplify onboarding with an existing account. OAuth login + callback, account linking. |  luluzuri |
 | Two-Factor Authentication (TOTP) | User Mgmt | 1 | ✅ | RFC-6238 TOTP setup/enable/disable/verify with authenticator apps | luluzuri |
-| GDPR compliance | Data & Analytics | 1 | ✅ | Required by European data protection law. Data export in JSON and account deletion with confirmation overlay. | dirituay |
+| GDPR compliance | Data & Analytics | 1 | ✅ | Required by European data protection law. Data export in JSON and account deletion with confirmation overlay. | lepereir, dirituay |
 | Custom-made design system | UX UI  | 1 | ✅ | Chosen to ensure visual consistency across the entire app. Color palette, typography, and 10+ reusable components: Button, Input, Modal, PostCard, CreatePost, NotificationBell, FollowButton, CookiesBanner, LoginModal, ProfileBadges. | dirituay |
-| Support for additional browsers | Accessibility  | 1 | ✅ | Chosen to maximize accessibility. Full compatibility with Firefox, Safari, and Chrome verified and tested. | rmarcas- |
+| Support for additional browsers | Accessibility  | 1 | ✅ | Chosen to maximize accessibility. Full compatibility with Firefox, Brave, and Chrome verified and tested. | whole team |
+| Search | Web | 1 | ✅ |  Implement advanced search functionality with filters, sorting, and pagination. |  lepereir, dirituay, vali |
+| Gamification system  | Gaming | 1 | ✅ |  A gamification system to reward users for their actions. |  lepereir, dirituay, rmarcas- |
 
-**Minor subtotal: 9 pts**
+**Minor subtotal: 11 pts**
 
 ### Point calculation
 
 ```
 Major modules :  5 × 2 = 10 pts
-Minor modules :  9 × 1 =  9 pts
+Minor modules :  11 × 1 =  11 pts
                        -------
-Total claimed          = 19 pts   (mandatory: 14 · bonus cap: 19 = 125%)
+Total claimed          = 21 pts   (mandatory: 14 · bonus cap: 19 = 125%)
 ```
 
 We target the **125% ceiling (19 points = 14 mandatory + 5 bonus)** and claim exactly **19**,
@@ -264,14 +231,13 @@ custom module is claimed, so no extra justification is required there.
   ~81% coverage with a CI coverage gate, achieved a clean golangci-lint pass,
   implemented GDPR export/delete, and authored the curl-based HTTP seeder.
   _Challenge:_ flaky tests from DB connection exhaustion under testcontainers — solved by
-  sharing a single DB/Redis connection across the suite.
-- **luluzuri — Developer.** Core backend: users, friends/follows, posts/likes/comments, file
-  uploads, and large parts of auth; plus infrastructure and DB seeding. _Challenge:_ correct
-  like/follow uniqueness and counters — solved with composite unique indexes and cached counts.
-- **vali — Developer.** Real-time subsystem: the WebSocket chat hub and message persistence
-  (DMs, rooms, threaded replies, attachments). _Challenge:_ delivering
-  message history without loading entire conversations — solved with `since`-based pagination
-  on room messages.
+  sharing a single DB/Redis connection across the suite, needed to pay to send emails.
+- **luluzuri — Developer.** Core backend: friends/follows, posts/likes/comments, file
+  uploads, and large parts of auth; plus infrastructure _Challenge:_ correct
+  like/follow uniqueness and counters, manage the upload of differents files — solved with composite unique indexes and cached counts.
+- **vali — Developer.** Real-time subsystem: the WebSocket and message persistence
+  (DMs, search of message, search of users), added user services and enpoints, notification system . _Challenge:_ delivering
+  message history — solved with redis.
 
 ---
 
@@ -283,8 +249,7 @@ custom module is claimed, so no extra justification is required there.
   subcommand. The Makefile auto-detects the engine (Podman first, Docker fallback); override
   with `make ENGINE=docker <target>`.
 - **GNU Make** (wraps the common workflows).
-- Optional for host-side dev: **Go 1.25+**, **Node 18+**, and **[mise](https://mise.jdx.dev/)**
-  (auto-loads `infra/.env` so host-side `go run` sees the right env vars).
+- Optional for host-side dev: **Go 1.25+**, **Node 18+**.
 
 ### Configuration (`.env`)
 
@@ -306,8 +271,8 @@ The variables are: `FT_TRANSCENDENCE_URL` (the app's public home URL), `JWT_SECR
 make up
 ```
 
-This builds the images and starts the **nginx reverse proxy + frontend + backend + PostgreSQL
-+ Redis** in the background; run `make logs` to follow output. Other useful targets:
+This builds the images and starts the **nginx reverse proxy + frontend + backend + PostgreSQL**
++ **Redis** in the background; run `make logs` to follow output. Other useful targets:
 
 | Command | Description |
 |---|---|
