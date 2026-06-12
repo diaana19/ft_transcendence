@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"ft_transcendence/backend/internal/models"
 )
@@ -29,35 +30,32 @@ type FriendService struct {
 // SendRequest creates a pending friend request from the user to the target.
 // If the target already sent a pending request to the user, it auto-accepts instead.
 func (s *FriendService) SendRequest(userID, targetID string) error {
+	// Adding yourself is a no-op rather than an error; the frontend refreshes.
 	if userID == targetID {
-		return errors.New("cannot add yourself")
+		return nil
 	}
 	var target models.User
 	if err := s.DB.First(&target, "id = ?", targetID).Error; err != nil {
 		return errors.New("target user not found")
 	}
-	var existing models.Friend
-	err := s.DB.
-		Where("user_id = ? AND friend_id = ? AND status IN (?)", userID, targetID, []string{statusPending, statusAccepted}).
-		First(&existing).Error
-	if err == nil {
-		return errors.New("relationship already exists")
-	}
 	// If target already sent us a pending request, accept it instead of creating a duplicate.
 	var reverse models.Friend
-	err = s.DB.
+	err := s.DB.
 		Where("user_id = ? AND friend_id = ? AND status = ?", targetID, userID, statusPending).
 		First(&reverse).Error
 	if err == nil {
 		reverse.Status = statusAccepted
 		return s.DB.Save(&reverse).Error
 	}
+	// Insert the pending request. The unique index on (user_id, friend_id, status)
+	// makes this a no-op if the same relationship already exists, so a repeated
+	// click reports success and the frontend just refreshes its state.
 	friend := models.Friend{
 		UserID:   userID,
 		FriendID: targetID,
 		Status:   statusPending,
 	}
-	return s.DB.Create(&friend).Error
+	return s.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&friend).Error
 }
 
 // AcceptRequest accepts a pending request sent by the requester to the user.
@@ -89,27 +87,24 @@ func (s *FriendService) AcceptRequest(userID, requesterID string) error {
 
 // Follow makes the user follow the target.
 func (s *FriendService) Follow(userID, targetID string) error {
+	// Following yourself is a no-op rather than an error; the frontend refreshes.
 	if userID == targetID {
-		return errors.New("cannot add yourself")
+		return nil
 	}
 	var target models.User
 	if err := s.DB.First(&target, "id = ?", targetID).Error; err != nil {
 		return errors.New("target user not found")
 	}
-	var existing models.Friend
-	err := s.DB.
-		Where("user_id = ? AND friend_id = ? AND status = ?", userID, targetID, statusFollow).
-		First(&existing).Error
-	if err == nil {
-		return errors.New("relationship already exists")
-	}
+	// Insert the follow. The unique index on (user_id, friend_id, status) makes
+	// this a no-op if it already exists, so a repeated click reports success and
+	// the frontend just refreshes its state.
 	follow := models.Friend{
 		UserID:   userID,
 		FriendID: targetID,
 		Status:   statusFollow,
 	}
 
-	return s.DB.Create(&follow).Error
+	return s.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&follow).Error
 }
 
 // CountFriends returns how many accepted friend relationships the given user has.

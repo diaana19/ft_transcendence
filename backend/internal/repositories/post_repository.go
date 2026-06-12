@@ -7,6 +7,7 @@ import (
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"ft_transcendence/backend/internal/models"
 	"ft_transcendence/backend/internal/utils"
@@ -253,7 +254,9 @@ func (r *postRepository) SetPostReaction(userID, postID string, value int) error
 				return err
 			}
 		default:
-			if err := tx.Create(&models.PostReaction{
+			// Ignore the insert if a concurrent request already created the
+			// reaction (unique index on user_id+post_id); the frontend refreshes.
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&models.PostReaction{
 				ID: generateUUID(), UserID: userID, PostID: postID, Value: value,
 			}).Error; err != nil {
 				return err
@@ -402,7 +405,9 @@ func (r *postRepository) SetReplyReaction(userID, replyID string, value int) err
 				return err
 			}
 		default:
-			if err := tx.Create(&models.ReplyReaction{
+			// Ignore the insert if a concurrent request already created the
+			// reaction (unique index on user_id+reply_id); the frontend refreshes.
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&models.ReplyReaction{
 				ID: generateUUID(), UserID: userID, ReplyID: replyID, Value: value,
 			}).Error; err != nil {
 				return err

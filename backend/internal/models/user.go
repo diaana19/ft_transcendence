@@ -88,7 +88,7 @@ func AnonymizedFields(userID string) map[string]any {
 // Friend is the relation between two users.
 type Friend struct {
 	ID       string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
-	UserID   string `gorm:"type:uuid;not null;index" json:"user_id"`
-	FriendID string `gorm:"type:uuid;not null;index" json:"friend_id"`
-	Status   string `json:"status"`
+	UserID   string `gorm:"type:uuid;not null;index;uniqueIndex:idx_friend_unique" json:"user_id"`
+	FriendID string `gorm:"type:uuid;not null;index;uniqueIndex:idx_friend_unique" json:"friend_id"`
+	Status   string `gorm:"uniqueIndex:idx_friend_unique" json:"status"`
 }
