@@ -412,8 +412,13 @@ def seed_likes(uids, toks, post_id):
 
     def like(task):
         idx, pi = task
-        status, _ = http("POST", f"{API}/posts/{post_id[pi]}/like", token=toks[idx])
-        return 1 if status else None
+        status, _ = http(
+            "POST",
+            f"{API}/posts/{post_id[pi]}/react",
+            body='{"value": 1}',
+            token=toks[idx],
+        )
+        return 1 if status == 200 else None
 
     n = len(fan_out(tasks, like))
     ok(f"{n} likes added")
