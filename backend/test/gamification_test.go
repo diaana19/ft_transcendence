@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"testing"
+
+	"ft_transcendence/backend/internal/models"
 )
 
 type metricResponse struct {
@@ -180,8 +182,8 @@ func TestLeaderboard_ListsUsersWithStats(t *testing.T) {
 	if !ok {
 		t.Fatal("bob missing from leaderboard")
 	}
-	if gotBob.Avatar != "" {
-		t.Errorf("bob avatar = %q, want empty string", gotBob.Avatar)
+	if gotBob.Avatar != models.DefaultAvatar {
+		t.Errorf("bob avatar = %q, want default avatar", gotBob.Avatar)
 	}
 	if gotBob.Stats.Total != 0 {
 		t.Errorf("bob total = %d, want 0", gotBob.Stats.Total)
