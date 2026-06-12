@@ -3,7 +3,7 @@
 # ft_transcendence — a real-time social network
 
 > ft_transcendence (subject v21.1, the "Surprise." open-ended edition). A multi-user
-> social web application: users register, build a profile, follow and befriend each other,
+> social web application: users register, build a profile, follow and add friends,
 > publish posts with images, like and comment, exchange real-time private messages, and
 > receive notifications — secured with JWT, optional 2FA, and GitHub OAuth, and shipped as
 > an installable PWA.
