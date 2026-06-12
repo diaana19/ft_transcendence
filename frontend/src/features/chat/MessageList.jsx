@@ -19,7 +19,7 @@ function MessageList({ messages }) {
                         className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
                     >
                         <div
-                            className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${
+                            className={`max-w-xs px-4 py-2 rounded-2xl text-sm break-all ${
                                 isMine ? 'bg-blue-400 text-white' : 'bg-gray-100 text-gray-900'
                             }`}
                         >
