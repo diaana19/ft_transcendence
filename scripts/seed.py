@@ -37,6 +37,7 @@ import ssl
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
@@ -82,10 +83,11 @@ def die(msg):
     sys.exit(1)
 
 
-def http(method, url, body=None, token=None, timeout=30):
+def http(method, url, body=None, token=None, timeout=30,
+         content_type="application/json"):
     """Perform an HTTP request, returning (status, text). Never raises on HTTP
     errors — mirrors curl echoing the response body regardless of status."""
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": content_type}
     if token:
         headers["Authorization"] = f"Bearer {token}"
     data = body.encode() if isinstance(body, str) else body
@@ -437,9 +439,17 @@ def seed_comments(uids, toks, post_id):
 
     def comment(task):
         idx, pi, content = task
-        res = api("POST", f"/posts/{post_id[pi]}/comments",
-                  json.dumps({"content": content}), toks[idx])
-        return 1 if res else None
+        # The backend reads the comment via c.PostForm("content") so it can also
+        # accept an optional file upload — it does not parse a JSON body here.
+        body = urllib.parse.urlencode({"content": content})
+        status, _ = http(
+            "POST",
+            f"{API}/posts/{post_id[pi]}/comments",
+            body=body,
+            token=toks[idx],
+            content_type="application/x-www-form-urlencoded",
+        )
+        return 1 if status == 201 else None
 
     n = len(fan_out(tasks, comment))
     ok(f"{n} comments added")
