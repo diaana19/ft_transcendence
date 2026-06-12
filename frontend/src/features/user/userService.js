@@ -54,3 +54,9 @@ export const removeFriend = async (friendId) => {
     const res = await axiosInstance.delete(`/api/friends/${friendId}`)
     return res.data
 }
+
+//Cancels a pending friend request by removing the relationship.
+export const cancelFriendRequest = async (targetId) => {
+    const res = await axiosInstance.delete(`/api/friends/${targetId}`)
+    return res.data
+}

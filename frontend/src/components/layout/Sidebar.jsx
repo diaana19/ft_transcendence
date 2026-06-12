@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import NotificationBell from '../notifications/NotificationBell'
 import {
@@ -32,13 +32,13 @@ export default function Sidebar() {
     return (
         <>
             <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-transparent px-4 py-6">
-                <div className="mb-8 px-2 flex items-center gap-3">
+                <Link to="/" className="mb-8 px-2 flex items-center gap-3">
                     <img src="/logo.png" alt="Synk logo" className="w-10 h-10 object-contain" />
                     <div className="flex flex-col leading-tight">
                         <h1 className="text-xl font-bold text-gray-900">Synk</h1>
                         <p className="text-xs text-gray-400">Join your people</p>
                     </div>
-                </div>
+                </Link>
 
                 <nav className="space-y-2">
                     <NavLink to="/" className={linkClass}>
@@ -51,7 +51,7 @@ export default function Sidebar() {
                     </NavLink>
                     <NavLink to="/badge" className={linkClass}>
                         <SparklesIcon className="w-5 h-5" />
-                        <span>Comunities</span>
+                        <span>Rewards</span>
                     </NavLink>
                     {user?.userId && <NotificationBell />}
                     {user?.userId && (

@@ -32,7 +32,7 @@ function FollowButton({ targetId, isFollowing: initialIsFollowing, onFollow }) {
                 disabled={loading}
                 onMouseEnter={() => setHovered(true)}
                 onMouseLeave={() => setHovered(false)}
-                className="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors disabled:opacity-50"
+                className="px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-colors disabled:opacity-50"
                 style={{
                     border: hovered ? '1px solid #fde8f0' : '1px solid #ede8fd',
                     color: hovered ? '#d4537e' : '#534ab7',

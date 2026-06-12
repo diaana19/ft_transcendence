@@ -9,7 +9,8 @@ export default function Layout() {
     const showRightSidebar =
         location.pathname === '/' ||
         location.pathname.startsWith('/tag/') ||
-        location.pathname === '/tags'
+        location.pathname === '/tags' ||
+        location.pathname === '/users'
 
     return (
         <div className="flex min-h-screen text-gray-900">
