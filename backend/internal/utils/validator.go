@@ -29,7 +29,7 @@ var usernameRe = regexp.MustCompile(`^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$`)
 
 // CheckUsernameFormat returns true when the username is valid (letters, numbers and dash).
 func CheckUsernameFormat(username string) bool {
-	if len(username) < 1 || len(username) > 39 {
+	if len(username) < 1 || len(username) > 25 {
 		return false
 	}
 	return usernameRe.MatchString(username)

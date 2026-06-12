@@ -1,5 +1,5 @@
 // BODY is the shared pattern for a valid username (letters, digits and dashes).
-const BODY = '[a-z\\d](?:[a-z\\d]|-(?=[a-z\\d])){0,38}'
+const BODY = '[a-z\\d](?:[a-z\\d]|-(?=[a-z\\d])){0,24}'
 
 // USERNAME_RE matches a whole string that is a valid username.
 export const USERNAME_RE = new RegExp(`^${BODY}$`, 'i')

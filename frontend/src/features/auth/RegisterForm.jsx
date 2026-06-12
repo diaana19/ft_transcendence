@@ -45,7 +45,7 @@ function RegisterForm() {
         if (!USERNAME_RE.test(formData.username)) {
             setError(
                 'Username may only contain alphanumeric characters or single hyphens, ' +
-                    'cannot begin or end with a hyphen, and must be 1-39 characters.'
+                    'cannot begin or end with a hyphen, and must be 1-25 characters.'
             )
             return
         }

@@ -151,7 +151,7 @@ func TestCheckPasswordFormat_ExactlyMinLength(t *testing.T) {
 func TestCheckUsernameFormat(t *testing.T) {
 	valid := []string{
 		"a", "0", "a-b", "a-b-123", "john", "john-due", "llp-dev",
-		repeatStr("a", 39),
+		repeatStr("a", 25),
 	}
 	for _, u := range valid {
 		if !CheckUsernameFormat(u) {
@@ -161,7 +161,7 @@ func TestCheckUsernameFormat(t *testing.T) {
 
 	invalid := []string{
 		"", "a_b", "a--b", "a-b-", "-a-b", "john due", "café",
-		repeatStr("a", 40),
+		repeatStr("a", 26),
 	}
 	for _, u := range invalid {
 		if CheckUsernameFormat(u) {
