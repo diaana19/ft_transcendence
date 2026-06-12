@@ -133,6 +133,23 @@ export default function SettingsPage() {
                         {user?.two_fa_enabled ? 'Manage' : 'Enable'}
                     </button>
                 </div>
+
+                <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                    <div>
+                        <p className="text-sm font-medium text-gray-900">
+                            Help
+                        </p>
+                        <p className="text-sm text-gray-500">
+                            Help Page and Terms and Conditions
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => navigate('/help')}
+                        className="text-sm text-blue-400 hover:underline font-medium"
+                    >
+                        View
+                    </button>
+                </div>
             </div>
 
             <div className="px-4 py-6 border-b border-gray-200">
