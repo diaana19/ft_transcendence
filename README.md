@@ -81,8 +81,8 @@ The team is composed of 5 members. Roles follow the subject's recommended struct
   with review.
 - **Version control** — Git with feature/story branches and reviewed pull requests; commits
   are SSH-signed. Work distribution is visible in `git shortlog -sne`.
-- **Task tracking & communication** — _team to confirm the exact tools used_ (e.g. GitHub
-  Issues / a project board for task tracking, and Discord for day-to-day communication).
+- **Task tracking** — GitHub Issues and GitHub Projects for sprint planning and task management.
+- **Communication** — Discord for day-to-day communication and coordination between frontend and backend tracks.
 
 ---
 
@@ -178,17 +178,23 @@ Attribution is derived from Git history (commit topics and per-file authorship);
 | JWT auth + refresh + logout | Access/refresh tokens, Redis-assisted session/invalidation             | Lucas · Valentin      |
 | Two-Factor Auth (TOTP)      | Setup / enable / disable / verify, with authenticator QR               | Lucas                 |
 | GitHub OAuth 2.0            | OAuth login + callback, account linking                                | Valentin · Lucas      |
-| Profiles                    | View/edit profile, avatar + wallpaper, follower/following counts       | Leonardo              |
+| Profiles                    | View/edit profile, avatar + wallpaper, follower/following counts       | Leonardo · Rosse            |
 | Friends & follows           | Request/accept/reject/remove friends; follow/unfollow; lists           | Lucas · Valentin      |
 | Posts                       | Create/read/update/delete posts with image attachments                 | Lucas · Diana · Rosse |
 | Likes & comments            | Toggle likes; threaded comments CRUD                                   | Lucas · Rosse         |
 | Real-time chat              | WebSocket DMs & rooms, history, threaded replies, attachments          | Valentin              |
-| Notifications               | In-app notifications for social actions; mark-all-read                 | Valentin              |
-| File upload & management    | Multi-type uploads, validation, visibility/ACL, serving                | Lucas · Diana         |
+| File upload & management    | Multi-type uploads, validation, visibility/ACL, serving                | Lucas · Rosse        |
 | GDPR                        | Data export + account deletion                                         | Diana                 |
 | PWA                         | Installable + offline service worker                                   | Rosse                 |
 | Tests, CI & code quality    | ~81% backend coverage, CI coverage gate, golangci-lint, project layout | Valentin · Lucas · Leonardo      |
 | Infra & seed                | Docker Compose, nginx, DB seeding (Go + curl scripts)                  | Lucas · Valentin      |
+| Notifications               | Real-time notifications for all social actions (likes, comments, friend requests, follows, unfollows, friend removal); bell badge; mark-all-read | Diana · Valentin 
+| Gamification            | Badges with progress bars, leaderboard, XP/level system, badge toast notification in feed | Diana · Rosse |
+| API documentation           | Swagger docs with 30+ documented endpoints                       | Lucas · Leonardo
+| Settings page               | Password change, 2FA management, data export, account deletion with confirmation overlay | Diana · Lucas |
+| Privacy Policy & Terms      | Accessible legal pages with full GDPR-compliant content | Rosse |
+| Rate limiting               | Per-IP token bucket rate limiting on all endpoints | Lucas · Leonardo |
+| Design system          | 10+ reusable components: Button, Input, Modal, FollowButton, NotificationBell, PostCard, CreatePost, CookiesBanner, LoginModal, ProfileBadges | Diana |
 
 ---
 
@@ -202,20 +208,16 @@ Per the subject, we list our full intended module set with an **honest implement
 status**, since only fully functional modules count at evaluation:
 
 - ✅ **Done** — works end-to-end (UI + API).
-- 🟧 **Backend complete / frontend pending** — the API and tests exist, but the feature is not
-  yet wired into the UI (or is partially wired). See
-  [Known Limitations](#known-limitations--before-evaluation).
-- ⬜ **Planned** — targeted for the 125% bonus; not yet started.
 
 ### Major modules (2 pts each)
 
 | Module | Category | Pts | Status | How it was implemented | Owner |
 |---|---|---|---|---|---|
-| Use a framework for frontend **and** backend | Web | 2 | ✅ | React (Vite) frontend + Gin (Go) backend | whole team |
-| Real-time features via WebSockets | Web | 2 | 🟧 | `gorilla/websocket` hub with broadcast, connect/disconnect handling, Redis pub/sub; chat UI not yet wired | vali |
-| User interaction (chat + profile + friends) | Web | 2 | 🟧 | Profiles & friends done end-to-end; chat backend complete, chat UI pending | vali, dirituay |
-| Public API (rate-limit, docs, ≥5 CRUD endpoints) | Web | 2 | 🟧 | 30+ REST endpoints (GET/POST/PUT/DELETE), per-IP token-bucket rate limiting, Swagger + Postman docs. _Auth is JWT bearer rather than a separate API key._ | luluzuri, lepereir |
-| Standard user management | User Mgmt | 2 | 🟧 | Profile edit, avatar (with default), friends, profile page. _Online-status indicator not yet implemented._ | lepereir , rmarcas- |
+| Use a framework for frontend **and** backend | Web | 2 | ✅ | Chosen to leverage mature ecosystems and separation of concerns. React (Vite) for a reactive, component-based UI; Gin (Go) for a high-performance, concurrent REST API.   | whole team |
+| Real-time features via WebSockets | Web | 2 | ✅ | Chosen to enable instant notifications and live chat without polling. gorilla/websocket hub with broadcast, connect/disconnect handling, Redis pub/sub; real-time chat UI fully wired with message history and online status. | vali |
+| User interaction (chat + profile + friends) | Web | 2 | ✅ | Core social feature required by the subject. Profiles, friends, follows, and real-time chat all implemented end-to-end. Chat UI with message history, online status, and user ordering by last message. | vali, dirituay |
+| Public API | Web | 2 | ✅ | Chosen to expose the platform data securely to external consumers. 30+ REST endpoints (GET/POST/PUT/DELETE), per-IP rate limiting, Swagger docs. | luluzuri, lepereir |
+| Standard user management | User Mgmt | 2 | ✅ | Required by the subject for a complete social platform. Profile edit, avatar with default, friends system, online status indicator (green dot), and level badge on profile. | lepereir, rmarcas-, dirituay |
 
 **Major subtotal: 10 pts**
 
@@ -223,16 +225,15 @@ status**, since only fully functional modules count at evaluation:
 
 | Module | Category | Pts | Status | How it was implemented | Owner |
 |---|---|---|---|---|---|
-| ORM | Web | 1 | ✅ | GORM with auto-migration, relations, soft deletes | luluzuri |
-| Notification system | Web | 1 | 🟧 | Notifications for friend requests/likes/messages/replies; basic UI + mark-all-read | rmarcas-, vali |
-| File upload & management | Web | 1 | ✅ | Multi-type uploads, client+server validation, visibility/ACL, delete, serving | luluzuri |
-| Progressive Web App (PWA) | Web | 1 | ✅ | `vite-plugin-pwa`, manifest, Workbox service worker, installable + offline | rmarcas- |
-| OAuth 2.0 (GitHub) | User Mgmt | 1 | ✅ | OAuth login + callback, account linking | vali, luluzuri |
+| ORM | Web | 1 | ✅ | Chosen to simplify database interactions. GORM with auto-migration, relations, and soft deletes. | luluzuri |
+| Notification system | Web | 1 | ✅ | Chosen to improve user engagement with real-time feedback. Notifications for all social actions via WebSocket; mark-all-read and per-notification read status. | dirituay, vali |
+| File upload & management | Web | 1 | ✅ | Chosen to support rich media content. Multi-type uploads, client+server validation, visibility/ACL, delete, serving. | luluzuri |
+| Progressive Web App (PWA) | Web | 1 | ✅ | Chosen to make the app installable and available offline. vite-plugin-pwa, manifest, Workbox service worker. | rmarcas- |
+| OAuth 2.0 (GitHub) | User Mgmt | 1 | ✅ | Chosen to simplify onboarding with an existing account. OAuth login + callback, account linking. | vali, luluzuri |
 | Two-Factor Authentication (TOTP) | User Mgmt | 1 | ✅ | RFC-6238 TOTP setup/enable/disable/verify with authenticator apps | luluzuri |
-| GDPR compliance | Data & Analytics | 1 | 🟧 | Data export + account deletion with confirmation; confirmation emails pending | dirituay |
-| Multiple languages (i18n) | Accessibility & i18n | 1 | ⬜ | Planned: `react-i18next`, 3 languages + UI language switcher, all user-facing text translatable | dirituay |
-| Custom-made design system | UX UI  | 1 | ⬜ | Planned: design system with reusable components, including a proper color palette, typography, and icons (minimum: 10 reusable components). | dirituay |
-| Sypport for aditional browsers | Accessibility  | 1 | ✅ |Full compatibility with at least 2 additional browsers (Firefox, Safari, Edge, etc.). | rmarcas- |
+| GDPR compliance | Data & Analytics | 1 | ✅ | Required by European data protection law. Data export in JSON and account deletion with confirmation overlay. | dirituay |
+| Custom-made design system | UX UI  | 1 | ✅ | Chosen to ensure visual consistency across the entire app. Color palette, typography, and 10+ reusable components: Button, Input, Modal, PostCard, CreatePost, NotificationBell, FollowButton, CookiesBanner, LoginModal, ProfileBadges. | dirituay |
+| Support for additional browsers | Accessibility  | 1 | ✅ | Chosen to maximize accessibility. Full compatibility with Firefox, Safari, and Chrome verified and tested. | rmarcas- |
 
 **Minor subtotal: 9 pts**
 
@@ -254,11 +255,9 @@ custom module is claimed, so no extra justification is required there.
 ## Individual Contributions
 
 - **dirituay — Product Owner.** Defined the social-network product direction and feature
-  priorities; validated delivered features. On the codebase, contributed to the auth and
-  posts frontend.
+  priorities; validated delivered features. On the codebase, implemented the notification system UI, the design system, profile improvements, the setting page, the responsive mobile layout improvements, and the right sidebar with user suggestions. _Challenge:_ integrating real-time badge notifications without interfering with the social notification system.
 - **rmarcas- — Project Manager / Scrum Master & Frontend lead.** Coordinated planning and
-  delivery. Built most of the frontend: profile pages, the post feed and post UI, auth forms,
-  the notification UI, and the PWA setup. _Challenge:_ keeping a fast-moving UI aligned with an
+  delivery, organised sprints and managed blockers. On the codebase, built the profile pages, the post feed and post UI, auth forms, the gamification system and the PWA setup. _Challenge:_ keeping a fast-moving UI aligned with an
   evolving API — addressed by centralising HTTP in a shared axios instance.
 - **lepereir — Tech Lead / Architect.** Restructured the backend to the
   golang-standards/project-layout, renamed the Go module, drove the integration test suite to
@@ -412,27 +411,4 @@ the author could not explain (per the subject's AI guidance, §I). Concretely, A
 We are transparent about what is **not** finished, so the team can close these gaps before the
 defense (several are mandatory per the subject):
 
-- **⚠️ Privacy Policy & Terms of Service pages (mandatory).** The register form references them
-  but the actual pages do not yet exist. The subject states that missing/inadequate legal pages
-  **result in project rejection** — these must be added (accessible from the app, with real
-  content) before evaluation.
-- **Chat UI.** The WebSocket chat backend is complete and message persistence works, but the
-  frontend chat components (`features/chat/*`) and the `useWebSocket` hook are not yet wired —
-  required to demonstrate the *real-time* and *user-interaction* majors end-to-end.
-- **Online status.** Presence indicators are not implemented yet (needed to fully satisfy the
-  *standard user management* major).
-- **Notifications coverage & confirmation emails.** Notifications cover the main social actions;
-  GDPR confirmation emails are not sent yet.
-- **Browser console.** A pass to ensure **no warnings/errors in the console** (subject
-  requirement) is pending.
-
-**Planned for the 125% target (⬜ modules):**
-
-- **Multiple languages (i18n) — +1 pt.** No internationalization yet; add `react-i18next`
-  with 3 complete languages and a UI language switcher.
-- **Data import — +1 pt.** GDPR export exists; add an import path with validation and
-  JSON/CSV/XML support to complete the data export/import module.
-
-> Module statuses in this README reflect the current state of the repository. Items marked 🟧
-> have a working backend and tests; finishing their UI (and the mandatory items above) is the
-> remaining work before the project is evaluation-ready.
+- **Browser console.** The app uses a self-signed certificate generated by nginx for local development. Browsers may show a security warning on first access — accept it once via Advanced → Proceed and it will not reappear.
