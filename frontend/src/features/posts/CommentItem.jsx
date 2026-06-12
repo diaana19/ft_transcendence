@@ -15,7 +15,7 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
     const [isEditing, setIsEditing] = useState(false)
     const [editContent, setEditContent] = useState(comment.content)
     const [editLoading, setEditLoading] = useState(false)
-    const [editFileUrl, setEditFileUrl] = useState(null)
+    const [editFileUrl, setEditFileUrl] = useState(comment.file_url || null)
     const [editFile, setEditFile] = useState(null)
 
     // handleReact sends a like/dislike, or opens the login modal for guests.
@@ -43,13 +43,23 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
         }
     }
 
+    // handleUpdate saves the edit, sending the new file or the remove flag.
     const handleUpdate = async () => {
         if (!editContent.trim()) return
         setEditLoading(true)
         try {
-            const updated = await updateComment(postId, comment.id, editContent)
+            const removeFile = !editFile && !editFileUrl && !!comment.file_url
+            const updated = await updateComment(
+                postId,
+                comment.id,
+                editContent,
+                editFile,
+                removeFile
+            )
             onUpdate(updated)
             setIsEditing(false)
+            setEditFile(null)
+            setEditFileUrl(updated.file_url || null)
         } catch (err) {
             console.info(err)
         } finally {
@@ -113,26 +123,26 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
                                 padding: '6px',
                             }}
                         />
-                        {(editFileUrl || comment.file_url) && !editFile?.cleared && (
+                        {editFileUrl && (
                             <div className="relative mt-2 mb-1">
-                                {(editFileUrl || comment.file_url).match(/\.(mp4|webm|ogg)$/i) ||
+                                {(comment.file_mime?.startsWith('video/') && !editFile) ||
                                 editFile?.type?.startsWith('video/') ? (
                                     <video
-                                        src={editFileUrl || comment.file_url}
+                                        src={editFileUrl}
                                         controls
                                         className="rounded-xl max-h-48 w-full object-contain"
                                     />
                                 ) : (
                                     <img
-                                        src={editFileUrl || comment.file_url}
+                                        src={editFileUrl}
                                         alt="preview"
                                         className="rounded-xl max-h-48 w-full object-contain"
                                     />
                                 )}
                                 <button
                                     onClick={() => {
-                                        setEditFileUrl('removed')
-                                        setEditFile({ cleared: true })
+                                        setEditFileUrl(null)
+                                        setEditFile(null)
                                     }}
                                     className="absolute top-2 right-2 w-5 h-5 rounded-full text-xs text-white flex items-center justify-center"
                                     style={{ background: 'rgba(83,74,183,0.7)' }}
@@ -158,7 +168,7 @@ function CommentItem({ postId, comment, isLast, onDelete, onUpdate }) {
                                 onClick={() => {
                                     setIsEditing(false)
                                     setEditContent(comment.content)
-                                    setEditFileUrl(null)
+                                    setEditFileUrl(comment.file_url || null)
                                     setEditFile(null)
                                 }}
                                 className="text-xs px-3 py-1 rounded-full"

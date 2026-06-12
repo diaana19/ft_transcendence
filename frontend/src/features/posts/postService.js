@@ -107,9 +107,20 @@ export async function getComments(postId) {
     return response.data
 }
 
-// updateComment edits a comment.
-export async function updateComment(postId, commentId, content) {
-    const res = await axiosInstance.put(`/api/posts/${postId}/comments/${commentId}`, { content })
+// updateComment edits a comment. A new file replaces the attachment,
+// and removeFile detaches the current one.
+export async function updateComment(postId, commentId, content, file = null, removeFile = false) {
+    if (file) {
+        const formData = new FormData()
+        formData.append('content', content)
+        formData.append('file', file)
+        const res = await axiosInstance.put(`/api/posts/${postId}/comments/${commentId}`, formData)
+        return res.data
+    }
+    const res = await axiosInstance.put(`/api/posts/${postId}/comments/${commentId}`, {
+        content,
+        remove_file: removeFile,
+    })
     return res.data
 }
 

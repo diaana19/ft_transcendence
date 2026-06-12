@@ -128,7 +128,28 @@ describe('postService', () => {
         await updateComment('1', 'c2', 'edit')
         expect(axiosInstance.put).toHaveBeenCalledWith('/api/posts/1/comments/c2', {
             content: 'edit',
+            remove_file: false,
         })
+    })
+
+    it('updateComment sends remove_file when asked to detach media', async () => {
+        axiosInstance.put.mockResolvedValue({ data: {} })
+        await updateComment('1', 'c2', 'edit', null, true)
+        expect(axiosInstance.put).toHaveBeenCalledWith('/api/posts/1/comments/c2', {
+            content: 'edit',
+            remove_file: true,
+        })
+    })
+
+    it('updateComment sends multipart form data when a file is given', async () => {
+        axiosInstance.put.mockResolvedValue({ data: {} })
+        const file = new File(['x'], 'pic.png', { type: 'image/png' })
+        await updateComment('1', 'c2', 'edit', file)
+        const [url, body] = axiosInstance.put.mock.calls[0]
+        expect(url).toBe('/api/posts/1/comments/c2')
+        expect(body).toBeInstanceOf(FormData)
+        expect(body.get('content')).toBe('edit')
+        expect(body.get('file')).toBe(file)
     })
 
     it('deleteComment removes the comment', async () => {
