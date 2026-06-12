@@ -6,7 +6,6 @@ import FriendsList from './FriendsList'
 import FollowButton from '../../components/common/FollowButton'
 import PostCard from '../posts/PostCard'
 import { getPostsByAuthor } from '../posts/postService'
-import FollowersModal from './FollowersModal'
 import ProfileBadges from '../gamification/ProfileBadge'
 import { getRepliesByUser } from '../posts/postService'
 import {
@@ -34,7 +33,6 @@ export default function Profile() {
     const [uploadingBanner, setUploadingBanner] = useState(false)
     const [friendRequested, setFriendRequested] = useState(false)
     const [isFriend, setIsFriend] = useState(false)
-    const [followModal, setFollowModal] = useState(null)
     const [isOnline, setIsOnline] = useState(false)
     const [userLevel, setUserLevel] = useState(null)
     const [replies, setReplies] = useState([])
@@ -321,32 +319,7 @@ export default function Profile() {
                                 {user.bio}
                             </p>
                         )}
-                        <div className="flex gap-4 mt-3">
-                            <span className="text-sm cursor-pointer hover:underline">
-                                <strong style={{ color: '#534ab7' }}>
-                                    {user.following_count ?? 0}{' '}
-                                </strong>
-                                <span
-                                    onClick={() => setFollowModal('following')}
-                                    className="ml-1"
-                                    style={{ color: '#757575' }}
-                                >
-                                    Following
-                                </span>
-                            </span>
-                            <span className="text-sm cursor-pointer hover:underline">
-                                <strong style={{ color: '#534ab7' }}>
-                                    {user.followers_count ?? 0}
-                                </strong>
-                                <span
-                                    onClick={() => setFollowModal('followers')}
-                                    className="ml-1"
-                                    style={{ color: '#757575' }}
-                                >
-                                    Followers
-                                </span>
-                            </span>
-                        </div>
+                        <FriendsList userId={userId} />
                     </div>
                 </div>
 
@@ -562,13 +535,6 @@ export default function Profile() {
                         </div>
                     </div>
                 </div>
-            )}
-            {followModal && (
-                <FollowersModal
-                    userId={userId}
-                    type={followModal}
-                    onClose={() => setFollowModal(null)}
-                />
             )}
         </div>
     )

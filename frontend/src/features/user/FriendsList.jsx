@@ -22,27 +22,36 @@ function FriendsList({ userId }) {
     }, [userId])
 
     return (
-        <div className="flex gap-4 mt-2 pb-3">
-            <span
-                onClick={() => setModal('following')}
-                className="text-sm text-gray-700 cursor-pointer hover:underline"
-            >
-                <strong>{following.length}</strong>
-                <span className="text-gray-500 ml-1">Following</span>
+        <div className="flex gap-4 mt-3">
+            <span className="text-sm cursor-pointer hover:underline">
+                <strong style={{ color: '#534ab7' }}>{following.length}</strong>
+                <span
+                    onClick={() => setModal('following')}
+                    className="ml-1"
+                    style={{ color: '#757575' }}
+                >
+                    Following
+                </span>
             </span>
-            <span
-                onClick={() => setModal('followers')}
-                className="text-sm text-gray-700 cursor-pointer hover:underline"
-            >
-                <strong>{followers.length}</strong>
-                <span className="text-gray-500 ml-1">Followers</span>
+            <span className="text-sm cursor-pointer hover:underline">
+                <strong style={{ color: '#534ab7' }}>{followers.length}</strong>
+                <span
+                    onClick={() => setModal('followers')}
+                    className="ml-1"
+                    style={{ color: '#757575' }}
+                >
+                    Followers
+                </span>
             </span>
-            <span
-                onClick={() => setModal('friends')}
-                className="text-sm text-gray-700 cursor-pointer hover:underline"
-            >
-                <strong>{friends.length}</strong>
-                <span className="text-gray-500 ml-1">Friends</span>
+            <span className="text-sm cursor-pointer hover:underline">
+                <strong style={{ color: '#534ab7' }}>{friends.length}</strong>
+                <span
+                    onClick={() => setModal('friends')}
+                    className="ml-1"
+                    style={{ color: '#757575' }}
+                >
+                    Friends
+                </span>
             </span>
 
             {modal && (
